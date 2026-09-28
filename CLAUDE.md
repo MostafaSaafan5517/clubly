@@ -44,8 +44,14 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 
 - Every schema change is a SQL migration (`pnpm supabase migration new <name>`), never a click in Studio. `pnpm supabase db reset` must rebuild the whole database from the migrations alone.
 - Helper functions that RLS policies call live in the `private` schema. The API only exposes `public` and `graphql_public`, so `private` is never reachable over HTTP.
-- New functions are not executable by anyone by default (see the first migration). Grant `execute` explicitly, only to the roles that need it. RLS policies run as the calling user, so a helper used in a policy needs `usage` on its schema and `execute` granted to that role.
+- **Deny by default, in two layers.** Supabase normally gives `anon` and `authenticated` every privilege on new tables, sequences and functions in `public`; our migrations reverse that. So every new table needs both:
+  - **grants**: which operations (and columns) an API role may attempt at all
+  - **RLS policies**: which rows those operations may touch
+- New functions are not executable by anyone by default. Grant `execute` explicitly, only to the roles that need it. RLS policies run as the calling user, so a helper used in a policy needs `usage` on its schema and `execute` granted to that role.
+- `service_role` bypasses RLS and keeps its grants. Only server code that must act across tenants (webhooks, reconciliation) uses it.
+- Tables that hold billing history (`plans`, `members`, later `subscriptions` and `payments`) use `on delete restrict`, so deleting a business or user can never silently erase them. Pure access rows (`business_staff`) cascade.
 - pgTAP tests live in `supabase/tests/database/*.test.sql`. Each file runs in a transaction and rolls back.
+- A test must be able to fail. When adding one, break the rule once (drop the trigger, disable RLS, re-grant) in a rolled-back transaction and confirm the test goes red. Prefer whole-row assertions (`results_eq`) over single values, so a missing row can't pass as `null`.
 
 ## Folder structure
 
