@@ -51,15 +51,18 @@ The product name is a working name. It lives only in `src/config/app.ts`; never 
 
 ```
 src/
-  app/            Next.js App Router routes and layouts
-  components/ui/  shadcn/ui components (owned code, edited freely)
-  config/         App-wide constants (the product name lives here)
-  lib/            Framework-free helpers (money formatting, ...)
-e2e/              Playwright end-to-end specs (*.spec.ts)
+  app/               Next.js App Router routes and layouts
+  components/ui/     shadcn/ui components (owned code, edited freely)
+  config/            App-wide constants (the product name lives here)
+  lib/               Framework-free helpers (money formatting, ...)
+e2e/                 Playwright end-to-end specs (*.spec.ts)
 supabase/
-  config.toml     Local Supabase settings (unused services are switched off)
-  migrations/     SQL migrations, applied in filename order
-  tests/database/ pgTAP tests for schema, privileges and RLS
+  config.toml        Local Supabase settings (unused services are switched off)
+  migrations/        SQL migrations, applied in filename order
+  tests/database/    pgTAP tests for schema, privileges and RLS
+.github/
+  workflows/ci.yml   CI pipeline
+  actions/setup/     Shared CI setup (pnpm, Node, dependencies)
 ```
 
 Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks inside `src/`. End-to-end specs live in `e2e/` and only Playwright runs them.
@@ -81,5 +84,17 @@ Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks insi
 | `pnpm supabase db reset`            | Rebuild the local database from migrations           |
 
 First Playwright run on a machine: `pnpm exec playwright install chromium`. With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.
+
+## CI
+
+GitHub Actions runs on every push to `main` and every pull request, as three parallel jobs:
+
+- **checks**: `format:check`, `lint`, `typecheck`, `test`
+- **database**: starts only Postgres (`pnpm supabase db start`, which applies every migration from scratch), then `test:db`
+- **e2e**: production build, then Playwright
+
+Every CI step is a `pnpm` script, so anything that fails in CI can be reproduced locally with the same command. Keep it that way.
+
+## Local setup notes
 
 Local Supabase needs Docker Desktop running (on Windows with the WSL 2 backend). The Supabase CLI is a pinned dev dependency, so always call it through `pnpm supabase`, never a global install.
