@@ -1,21 +1,11 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { formError, signIn } from "./support/forms";
 import { countEmails, getEmailLink } from "./support/mailpit";
 import {
   createConfirmedUser,
   TEST_PASSWORD,
   uniqueEmail,
 } from "./support/users";
-
-// Scoped to the form: Next.js adds its own role="alert" element (the route announcer).
-function formError(page: Page) {
-  return page.locator("form").getByRole("alert");
-}
-
-async function signIn(page: Page, email: string, password: string) {
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(password);
-  await page.getByRole("button", { name: "Sign in" }).click();
-}
 
 test("a new user signs up, confirms their email on another device, and lands on the dashboard", async ({
   page,
@@ -71,14 +61,14 @@ test("a user signs in with their password and signs out", async ({ page }) => {
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.goto("/dashboard");
-  await expect(page).toHaveURL(/\/login\?next=\/dashboard$/);
+  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard$/);
 });
 
 test("signing in returns to the page that asked for it", async ({ page }) => {
   const user = await createConfirmedUser();
 
   await page.goto("/dashboard");
-  await expect(page).toHaveURL(/\/login\?next=\/dashboard$/);
+  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard$/);
   await signIn(page, user.email, user.password);
   await expect(page).toHaveURL(/\/dashboard$/);
 });

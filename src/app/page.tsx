@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { appConfig } from "@/config/app";
 
 export default function Home() {
@@ -12,17 +12,16 @@ export default function Home() {
         {appConfig.description}
       </p>
       <div className="mt-4 flex gap-3">
-        <Button size="lg" nativeButton={false} render={<Link href="/signup" />}>
+        {/* Links styled as buttons: they navigate, so they must stay links for screen readers. */}
+        <Link href="/signup" className={buttonVariants({ size: "lg" })}>
           Get started
-        </Button>
-        <Button
-          size="lg"
-          variant="outline"
-          nativeButton={false}
-          render={<Link href="/login" />}
+        </Link>
+        <Link
+          href="/login"
+          className={buttonVariants({ size: "lg", variant: "outline" })}
         >
           Sign in
-        </Button>
+        </Link>
       </div>
     </main>
   );

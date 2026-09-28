@@ -34,6 +34,7 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Prettier formats everything (Tailwind classes are sorted automatically). ESLint must pass with zero warnings.
 - Import app code through the `@/` alias, which maps to `src/`.
 - UI primitives come from shadcn/ui (Base UI flavor, `base-nova` style). Add one with `pnpm dlx shadcn@latest add <name>`; it is copied into `src/components/ui/` and becomes our code to edit. Merge class names with `cn` from the `cn` package.
+- Anything that navigates is a `<Link>`, even when it looks like a button: style it with `buttonVariants()`. Never `<Button render={<Link />}>`, which gives the link `role="button"` and makes screen readers announce it wrongly.
 - Use theme tokens (`bg-background`, `text-muted-foreground`, `border-border`, ...) instead of raw colors, so the palette can change in one place (`src/app/globals.css`).
 - No `console.log` in app code, no commented-out code, no unused code. Unexpected server-side failures are logged with `console.error("What failed", { code, status })` (Vercel collects them); users get a plain message, never raw provider errors.
 - Handle errors explicitly; no empty `catch` blocks.
