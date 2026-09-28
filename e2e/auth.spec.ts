@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { getEmailLink } from "./support/mailpit";
+import { countEmails, getEmailLink } from "./support/mailpit";
 import {
   createConfirmedUser,
   TEST_PASSWORD,
@@ -89,4 +89,36 @@ test("a sign-in link can't send the user to another site", async ({ page }) => {
   await page.goto("/login?next=//evil.example/steal");
   await signIn(page, user.email, user.password);
   await expect(page).toHaveURL(/^http:\/\/localhost:3000\/dashboard$/);
+});
+
+test("an existing user signs in with an email link", async ({ page }) => {
+  const user = await createConfirmedUser("Morgan Link");
+
+  await page.goto("/login");
+  await page
+    .getByRole("link", { name: "Email me a sign-in link instead" })
+    .click();
+  // Both pages have an Email field: wait for the new page before typing into it.
+  await expect(page).toHaveURL(/\/magic-link$/);
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByRole("button", { name: "Email me a link" }).click();
+  await expect(page.getByText("Check your email")).toBeVisible();
+
+  await page.goto(await getEmailLink(user.email, "/auth/confirm"));
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(
+    page.getByRole("heading", { name: "Welcome, Morgan Link" }),
+  ).toBeVisible();
+});
+
+test("asking for a link for an unknown email looks the same and sends nothing", async ({
+  page,
+}) => {
+  const email = uniqueEmail("nobody");
+
+  await page.goto("/magic-link");
+  await page.getByLabel("Email").fill(email);
+  await page.getByRole("button", { name: "Email me a link" }).click();
+  await expect(page.getByText("Check your email")).toBeVisible();
+  expect(await countEmails(email)).toBe(0);
 });

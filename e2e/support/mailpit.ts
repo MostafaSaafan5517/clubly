@@ -6,11 +6,20 @@ const MAILPIT_URL = "http://127.0.0.1:54324";
 type MailpitSearch = { messages: { ID: string }[] };
 type MailpitMessage = { HTML: string };
 
-async function findLink(recipient: string, path: string) {
+async function searchByRecipient(recipient: string) {
   const query = encodeURIComponent(`to:"${recipient}"`);
   const search = await fetch(`${MAILPIT_URL}/api/v1/search?query=${query}`);
   const { messages } = (await search.json()) as MailpitSearch;
-  const latest = messages[0];
+  return messages;
+}
+
+/** How many emails `recipient` has received. */
+export async function countEmails(recipient: string) {
+  return (await searchByRecipient(recipient)).length;
+}
+
+async function findLink(recipient: string, path: string) {
+  const latest = (await searchByRecipient(recipient))[0];
   if (!latest) return undefined;
 
   const response = await fetch(`${MAILPIT_URL}/api/v1/message/${latest.ID}`);

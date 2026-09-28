@@ -116,6 +116,45 @@ export async function signIn(
   redirect(safeRedirectPath(formText(formData, "next"), "/dashboard"));
 }
 
+export async function sendSignInLink(
+  _previous: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const fields = { email: formText(formData, "email") };
+  const parsed = emailField.safeParse(fields.email);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? null, fields };
+  }
+
+  const supabase = await createServerActionClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email: parsed.data,
+    // Links only sign in existing accounts; creating an account goes through sign-up, which
+    // asks for a name and a password.
+    options: { shouldCreateUser: false },
+  });
+
+  if (error) {
+    if (error.code === "over_email_send_rate_limit") {
+      return {
+        error: "We just sent you a link. Wait a minute before asking again.",
+        fields,
+      };
+    }
+    // "otp_disabled" is how Supabase says there's no such account. Answer as if we sent the
+    // link, so this form can't be used to find out who has an account.
+    if (error.code !== "otp_disabled") {
+      console.error("Sign-in link failed", {
+        code: error.code,
+        status: error.status,
+      });
+      return { error: "We couldn't send the link. Please try again.", fields };
+    }
+  }
+
+  redirect("/check-email");
+}
+
 export async function signOut() {
   const supabase = await createServerActionClient();
   const { error } = await supabase.auth.signOut();

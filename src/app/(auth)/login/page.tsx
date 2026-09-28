@@ -39,6 +39,11 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           </p>
         )}
         <LoginForm next={nextPath} />
+        <p className="text-center text-sm">
+          <Link href="/magic-link" className="underline">
+            Email me a sign-in link instead
+          </Link>
+        </p>
         <p className="text-center text-sm text-muted-foreground">
           New here?{" "}
           <Link href="/signup" className="text-foreground underline">

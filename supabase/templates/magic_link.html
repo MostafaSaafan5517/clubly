@@ -1,0 +1,14 @@
+<h2>Your sign-in link</h2>
+
+<p>Follow this link to sign in:</p>
+
+<p>
+  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email"
+    >Sign in</a
+  >
+</p>
+
+<p>
+  The link works once and expires in an hour. If you didn't ask for it, you can
+  ignore this email.
+</p>
