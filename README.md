@@ -42,11 +42,11 @@ You need Node.js 24, [pnpm](https://pnpm.io) 11 and [Docker Desktop](https://www
 ```bash
 pnpm install
 pnpm supabase start
-cp .env.example .env.local
+pnpm env:local
 pnpm dev
 ```
 
-Fill `.env.local` with the values printed by `pnpm supabase status -o env`, then open http://localhost:3000.
+`pnpm env:local` writes the local Supabase URL and keys into `.env.local` (see `.env.example` for every variable). Then open http://localhost:3000.
 
 ## Tests
 

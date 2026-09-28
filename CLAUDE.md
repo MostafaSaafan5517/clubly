@@ -37,6 +37,7 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Use theme tokens (`bg-background`, `text-muted-foreground`, `border-border`, ...) instead of raw colors, so the palette can change in one place (`src/app/globals.css`).
 - No `console.log` in app code, no commented-out code, no unused code.
 - Handle errors explicitly; no empty `catch` blocks.
+- `src/proxy.ts` (Next.js 16's name for middleware) only refreshes the Supabase session. It never makes authorization decisions: every page and Server Action checks the user itself, and RLS checks again in the database.
 - Money is always an integer in the currency's smallest unit (cents), exactly as Stripe sends it. Convert only for display, with `formatAmount` in `src/lib/money.ts`.
 - No abstractions for single-use code.
 
@@ -64,7 +65,10 @@ src/
   app/               Next.js App Router routes and layouts
   components/ui/     shadcn/ui components (owned code, edited freely)
   config/            App-wide constants (the product name lives here)
-  lib/               Framework-free helpers (money formatting, ...)
+  lib/               Helpers (money formatting, ...)
+  lib/supabase/      Supabase settings and clients
+  proxy.ts           Runs before every request; refreshes the Supabase session
+scripts/             Dev tooling (writing .env.local)
 e2e/                 Playwright end-to-end specs (*.spec.ts)
 supabase/
   config.toml        Local Supabase settings (unused services are switched off)
@@ -90,7 +94,7 @@ Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks insi
 | `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running  |
 | `pnpm test:db`                      | pgTAP database tests (Supabase must be running)      |
 | `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)   |
-| `pnpm supabase status -o env`       | Local URLs and keys, for `.env.local`                |
+| `pnpm env:local`                    | Write local Supabase URL and keys into `.env.local`  |
 | `pnpm supabase db reset`            | Rebuild the local database from migrations           |
 
 First Playwright run on a machine: `pnpm exec playwright install chromium`. With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.

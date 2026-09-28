@@ -46,6 +46,11 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - run: pnpm exec playwright install --with-deps chromium
+      # The app talks to a real local Supabase (Auth, API, and Mailpit for emails). Studio and
+      # its metadata service are only for humans, so they stay off.
+      - run: pnpm supabase start -x studio,postgres-meta
+      # Must come before the build: NEXT_PUBLIC_ values are baked into the bundle.
+      - run: pnpm env:local
       # Playwright serves this production build when CI is set.
       - run: pnpm build
       - run: pnpm test:e2e
