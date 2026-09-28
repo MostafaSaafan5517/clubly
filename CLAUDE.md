@@ -37,6 +37,7 @@ The product name is a working name. It lives only in `src/config/app.ts`; never 
 - Use theme tokens (`bg-background`, `text-muted-foreground`, `border-border`, ...) instead of raw colors, so the palette can change in one place (`src/app/globals.css`).
 - No `console.log` in app code, no commented-out code, no unused code.
 - Handle errors explicitly; no empty `catch` blocks.
+- Money is always an integer in the currency's smallest unit (cents), exactly as Stripe sends it. Convert only for display, with `formatAmount` in `src/lib/money.ts`.
 - No abstractions for single-use code.
 
 ## Folder structure
@@ -46,7 +47,10 @@ src/
   app/            Next.js App Router routes and layouts
   components/ui/  shadcn/ui components (owned code, edited freely)
   config/         App-wide constants (the product name lives here)
+  lib/            Framework-free helpers (money formatting, ...)
 ```
+
+Unit tests sit next to the code they test as `*.test.ts`.
 
 ## Commands
 
@@ -57,3 +61,4 @@ src/
 | `pnpm lint`                         | ESLint; fails on any warning                         |
 | `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`       |
 | `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check) |
+| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode           |
