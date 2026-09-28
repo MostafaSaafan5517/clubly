@@ -51,6 +51,8 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - `service_role` bypasses RLS and keeps its grants. Only server code that must act across tenants (webhooks, reconciliation) uses it.
 - Tables that hold billing history (`plans`, `members`, later `subscriptions` and `payments`) use `on delete restrict`, so deleting a business or user can never silently erase them. Pure access rows (`business_staff`) cascade.
 - pgTAP tests live in `supabase/tests/database/*.test.sql`. Each file runs in a transaction and rolls back.
+- RLS tests act as real users: `tests.create_user(email)`, `tests.authenticate_as(email)` (the API's `authenticated` role with `auth.uid()` set), `tests.authenticate_as_anon()`, then `reset role` to go back to `postgres` for fixtures and assertions. `tests.business_id(slug)` finds a business the current user may not see. These helpers are defined in `000_setup.test.sql`, which runs first and exists only in test databases.
+- RLS denies silently on SELECT/UPDATE/DELETE (the rows just aren't there), but raises on INSERT and on missing grants. Test both kinds: check state after a refused update, and use `throws_ok` with the exact message for refused inserts and column grants.
 - A test must be able to fail. When adding one, break the rule once (drop the trigger, disable RLS, re-grant) in a rolled-back transaction and confirm the test goes red. Prefer whole-row assertions (`results_eq`) over single values, so a missing row can't pass as `null`.
 
 ## Folder structure

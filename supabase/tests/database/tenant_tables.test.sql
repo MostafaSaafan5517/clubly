@@ -18,15 +18,16 @@ select is_empty(
   'every table in public has RLS enabled'
 );
 
--- No policies yet, so the API roles must not hold any table privileges either.
+-- The full map of table-level grants to the API roles. Column-level grants (like updating only
+-- a business's name) don't appear here; the RLS test files cover them by behavior.
 select table_privs_are('public', 'profiles', 'anon', array[]::text[]);
 select table_privs_are('public', 'businesses', 'anon', array[]::text[]);
 select table_privs_are('public', 'business_staff', 'anon', array[]::text[]);
 select table_privs_are('public', 'plans', 'anon', array[]::text[]);
 select table_privs_are('public', 'members', 'anon', array[]::text[]);
-select table_privs_are('public', 'profiles', 'authenticated', array[]::text[]);
-select table_privs_are('public', 'businesses', 'authenticated', array[]::text[]);
-select table_privs_are('public', 'business_staff', 'authenticated', array[]::text[]);
+select table_privs_are('public', 'profiles', 'authenticated', array['SELECT']);
+select table_privs_are('public', 'businesses', 'authenticated', array['SELECT']);
+select table_privs_are('public', 'business_staff', 'authenticated', array['SELECT', 'INSERT', 'DELETE']);
 select table_privs_are('public', 'plans', 'authenticated', array[]::text[]);
 select table_privs_are('public', 'members', 'authenticated', array[]::text[]);
 
