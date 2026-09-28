@@ -48,6 +48,8 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
   - **grants**: which operations (and columns) an API role may attempt at all
   - **RLS policies**: which rows those operations may touch
 - New functions are not executable by anyone by default. Grant `execute` explicitly, only to the roles that need it. RLS policies run as the calling user, so a helper used in a policy needs `usage` on its schema and `execute` granted to that role.
+- A policy must not query another RLS-protected table whose policy could query back (businesses ↔ members): Postgres rejects the loop as infinite recursion. Ask through a `private` security-definer helper instead (`has_business_role`, `is_business_member`), which reads the table directly.
+- Stripe identifiers (`stripe_account_id`, `stripe_price_id`, `stripe_customer_id`) are never granted to API roles; grants on those tables are per column. Only server code with the service role reads or writes them.
 - `service_role` bypasses RLS and keeps its grants. Only server code that must act across tenants (webhooks, reconciliation) uses it.
 - Tables that hold billing history (`plans`, `members`, later `subscriptions` and `payments`) use `on delete restrict`, so deleting a business or user can never silently erase them. Pure access rows (`business_staff`) cascade.
 - pgTAP tests live in `supabase/tests/database/*.test.sql`. Each file runs in a transaction and rolls back.

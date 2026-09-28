@@ -1,8 +1,10 @@
 begin;
-select plan(8);
+select plan(9);
 
 select tests.create_user('owner-a@test.local', 'Alice Owner');
 select tests.create_user('staff-a@test.local', 'Sam Staff');
+select tests.create_user('member-1@test.local', 'Mia Member');
+select tests.create_user('member-2@test.local', 'Max Member');
 select tests.create_user('owner-b@test.local', 'Bea Owner');
 select tests.create_user('outsider@test.local', 'Olly Outsider');
 
@@ -15,6 +17,10 @@ reset role;
 insert into public.business_staff (business_id, user_id, role)
 values (tests.business_id('iron-gym'), tests.get_user_id('staff-a@test.local'), 'staff');
 
+insert into public.members (business_id, user_id) values
+  (tests.business_id('iron-gym'), tests.get_user_id('member-1@test.local')),
+  (tests.business_id('iron-gym'), tests.get_user_id('member-2@test.local'));
+
 -- Seeing profiles --------------------------------------------------------------------------
 
 select tests.authenticate_as('outsider@test.local');
@@ -26,8 +32,17 @@ select set_eq(
 select tests.authenticate_as('staff-a@test.local');
 select set_eq(
   $$ select email from public.profiles $$,
-  $$ values ('staff-a@test.local'), ('owner-a@test.local') $$,
-  'staff see their colleagues'' profiles and nobody else''s'
+  $$
+    values ('staff-a@test.local'), ('owner-a@test.local'),
+           ('member-1@test.local'), ('member-2@test.local')
+  $$,
+  'staff see their colleagues'' and their members'' profiles, and nobody else''s'
+);
+select tests.authenticate_as('member-1@test.local');
+select set_eq(
+  $$ select email from public.profiles $$,
+  $$ values ('member-1@test.local') $$,
+  'members see only their own profile, not other members or staff'
 );
 select tests.authenticate_as('owner-b@test.local');
 select set_eq(
