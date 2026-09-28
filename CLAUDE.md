@@ -33,6 +33,8 @@ The product name is a working name. It lives only in `src/config/app.ts`; never 
 
 - Prettier formats everything (Tailwind classes are sorted automatically). ESLint must pass with zero warnings.
 - Import app code through the `@/` alias, which maps to `src/`.
+- UI primitives come from shadcn/ui (Base UI flavor, `base-nova` style). Add one with `pnpm dlx shadcn@latest add <name>`; it is copied into `src/components/ui/` and becomes our code to edit. Merge class names with `cn` from the `cn` package.
+- Use theme tokens (`bg-background`, `text-muted-foreground`, `border-border`, ...) instead of raw colors, so the palette can change in one place (`src/app/globals.css`).
 - No `console.log` in app code, no commented-out code, no unused code.
 - Handle errors explicitly; no empty `catch` blocks.
 - No abstractions for single-use code.
@@ -41,8 +43,9 @@ The product name is a working name. It lives only in `src/config/app.ts`; never 
 
 ```
 src/
-  app/        Next.js App Router routes and layouts
-  config/     App-wide constants (the product name lives here)
+  app/            Next.js App Router routes and layouts
+  components/ui/  shadcn/ui components (owned code, edited freely)
+  config/         App-wide constants (the product name lives here)
 ```
 
 ## Commands
