@@ -35,15 +35,24 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Import app code through the `@/` alias, which maps to `src/`.
 - UI primitives come from shadcn/ui (Base UI flavor, `base-nova` style). Add one with `pnpm dlx shadcn@latest add <name>`; it is copied into `src/components/ui/` and becomes our code to edit. Merge class names with `cn` from the `cn` package.
 - Use theme tokens (`bg-background`, `text-muted-foreground`, `border-border`, ...) instead of raw colors, so the palette can change in one place (`src/app/globals.css`).
-- No `console.log` in app code, no commented-out code, no unused code.
+- No `console.log` in app code, no commented-out code, no unused code. Unexpected server-side failures are logged with `console.error("What failed", { code, status })` (Vercel collects them); users get a plain message, never raw provider errors.
 - Handle errors explicitly; no empty `catch` blocks.
 - `src/proxy.ts` (Next.js 16's name for middleware) only refreshes the Supabase session. It never makes authorization decisions: every page and Server Action checks the user itself, and RLS checks again in the database.
 - Money is always an integer in the currency's smallest unit (cents), exactly as Stripe sends it. Convert only for display, with `formatAmount` in `src/lib/money.ts`.
 - No abstractions for single-use code.
 
+## Auth conventions
+
+- Two server clients in `src/lib/supabase/server.ts`: `createServerComponentClient()` for pages (read-only cookies; `proxy.ts` refreshes the session) and `createServerActionClient()` for Server Actions and Route Handlers (can write the session cookies).
+- Pages check the user with `supabase.auth.getClaims()` (verifies the token) and redirect to `/login?next=<path>`. Any `next` value goes through `safeRedirectPath` before redirecting.
+- Email links go to `/auth/confirm?token_hash=...&type=email` (templates in `supabase/templates/`), not Supabase's code-exchange redirect: a token hash works on any device, the code flow only in the browser that started it. A hosted Supabase project needs the same templates.
+- Server Actions validate input with zod and return `{ error, fields }` to `useActionState` forms. Auth errors are mapped to our own messages; sign-up never reveals whether an email is registered.
+- Local email confirmation is on (like hosted Supabase), and every email lands in Mailpit (http://127.0.0.1:54324). E2E tests read links from Mailpit's API (`e2e/support/mailpit.ts`).
+
 ## Database conventions
 
 - Every schema change is a SQL migration (`pnpm supabase migration new <name>`), never a click in Studio. `pnpm supabase db reset` must rebuild the whole database from the migrations alone.
+- After changing the schema, run `pnpm db:types` and commit `src/lib/supabase/database.types.ts`. CI regenerates it and fails if it differs from the migrations.
 - Helper functions that RLS policies call live in the `private` schema. The API only exposes `public` and `graphql_public`, so `private` is never reachable over HTTP.
 - **Deny by default, in two layers.** Supabase normally gives `anon` and `authenticated` every privilege on new tables, sequences and functions in `public`; our migrations reverse that. So every new table needs both:
   - **grants**: which operations (and columns) an API role may attempt at all
@@ -66,12 +75,14 @@ src/
   components/ui/     shadcn/ui components (owned code, edited freely)
   config/            App-wide constants (the product name lives here)
   lib/               Helpers (money formatting, ...)
-  lib/supabase/      Supabase settings and clients
+  lib/supabase/      Supabase settings, clients and generated database types
   proxy.ts           Runs before every request; refreshes the Supabase session
 scripts/             Dev tooling (writing .env.local)
 e2e/                 Playwright end-to-end specs (*.spec.ts)
+  support/           E2E helpers (Mailpit links, confirmed test users)
 supabase/
   config.toml        Local Supabase settings (unused services are switched off)
+  templates/         Auth email templates
   migrations/        SQL migrations, applied in filename order
   tests/database/    pgTAP tests for schema, privileges and RLS
 .github/
@@ -96,16 +107,17 @@ Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks insi
 | `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)   |
 | `pnpm env:local`                    | Write local Supabase URL and keys into `.env.local`  |
 | `pnpm supabase db reset`            | Rebuild the local database from migrations           |
+| `pnpm db:types`                     | Regenerate TypeScript types from the local database  |
 
-First Playwright run on a machine: `pnpm exec playwright install chromium`. With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.
+First Playwright run on a machine: `pnpm exec playwright install chromium`. E2E tests need the full local Supabase (`pnpm supabase start`, then `pnpm env:local`). With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.
 
 ## CI
 
 GitHub Actions runs on every push to `main` and every pull request, as three parallel jobs:
 
 - **checks**: `format:check`, `lint`, `typecheck`, `test`
-- **database**: starts only Postgres (`pnpm supabase db start`, which applies every migration from scratch), then `test:db`
-- **e2e**: production build, then Playwright
+- **database**: starts only Postgres (`pnpm supabase db start`, which applies every migration from scratch), runs `test:db`, then checks the generated types are current
+- **e2e**: starts local Supabase (without Studio), writes `.env.local`, builds for production, then runs Playwright
 
 Every CI step is a `pnpm` script, so anything that fails in CI can be reproduced locally with the same command. Keep it that way.
 

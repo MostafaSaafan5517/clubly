@@ -1,4 +1,9 @@
+import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
+
+// Test helpers call Supabase directly (for example to create a confirmed user), so they need
+// the same local settings as the app. `pnpm env:local` writes them.
+if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 
 const isCI = Boolean(process.env.CI);
 const baseURL = "http://localhost:3000";

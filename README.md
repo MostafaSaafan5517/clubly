@@ -50,10 +50,10 @@ pnpm dev
 
 ## Tests
 
-| Suite          | Command         | Notes                                                          |
-| -------------- | --------------- | -------------------------------------------------------------- |
-| Unit           | `pnpm test`     | Vitest                                                         |
-| Database / RLS | `pnpm test:db`  | pgTAP; needs `pnpm supabase start` first                       |
-| End-to-end     | `pnpm test:e2e` | Playwright; first run: `pnpm exec playwright install chromium` |
+| Suite          | Command         | Notes                                                                                                             |
+| -------------- | --------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Unit           | `pnpm test`     | Vitest                                                                                                            |
+| Database / RLS | `pnpm test:db`  | pgTAP; needs `pnpm supabase start` first                                                                          |
+| End-to-end     | `pnpm test:e2e` | Playwright; needs local Supabase running and `pnpm env:local`; first run: `pnpm exec playwright install chromium` |
 
 `pnpm lint`, `pnpm typecheck` and `pnpm format:check` run in CI alongside all three suites.

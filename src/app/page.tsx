@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { appConfig } from "@/config/app";
 
 export default function Home() {
@@ -9,6 +11,19 @@ export default function Home() {
       <p className="max-w-md text-lg text-muted-foreground">
         {appConfig.description}
       </p>
+      <div className="mt-4 flex gap-3">
+        <Button size="lg" nativeButton={false} render={<Link href="/signup" />}>
+          Get started
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          nativeButton={false}
+          render={<Link href="/login" />}
+        >
+          Sign in
+        </Button>
+      </div>
     </main>
   );
 }

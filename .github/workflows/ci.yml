@@ -37,6 +37,9 @@ jobs:
       # Starting it applies every migration from scratch, which is itself a test.
       - run: pnpm supabase db start
       - run: pnpm test:db
+      # The generated TypeScript types must match the migrations: regenerate, fail on any change.
+      - run: pnpm db:types
+      - run: git diff --exit-code -- src/lib/supabase/database.types.ts
 
   e2e:
     name: End-to-end tests (Playwright)
