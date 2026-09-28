@@ -40,6 +40,13 @@ The product name is a working name. It lives only in `src/config/app.ts`; never 
 - Money is always an integer in the currency's smallest unit (cents), exactly as Stripe sends it. Convert only for display, with `formatAmount` in `src/lib/money.ts`.
 - No abstractions for single-use code.
 
+## Database conventions
+
+- Every schema change is a SQL migration (`pnpm supabase migration new <name>`), never a click in Studio. `pnpm supabase db reset` must rebuild the whole database from the migrations alone.
+- Helper functions that RLS policies call live in the `private` schema. The API only exposes `public` and `graphql_public`, so `private` is never reachable over HTTP.
+- New functions are not executable by anyone by default (see the first migration). Grant `execute` explicitly, only to the roles that need it. RLS policies run as the calling user, so a helper used in a policy needs `usage` on its schema and `execute` granted to that role.
+- pgTAP tests live in `supabase/tests/database/*.test.sql`. Each file runs in a transaction and rolls back.
+
 ## Folder structure
 
 ```
@@ -49,6 +56,10 @@ src/
   config/         App-wide constants (the product name lives here)
   lib/            Framework-free helpers (money formatting, ...)
 e2e/              Playwright end-to-end specs (*.spec.ts)
+supabase/
+  config.toml     Local Supabase settings (unused services are switched off)
+  migrations/     SQL migrations, applied in filename order
+  tests/database/ pgTAP tests for schema, privileges and RLS
 ```
 
 Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks inside `src/`. End-to-end specs live in `e2e/` and only Playwright runs them.
@@ -64,5 +75,11 @@ Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks insi
 | `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check) |
 | `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode           |
 | `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running  |
+| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)      |
+| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)   |
+| `pnpm supabase status -o env`       | Local URLs and keys, for `.env.local`                |
+| `pnpm supabase db reset`            | Rebuild the local database from migrations           |
 
 First Playwright run on a machine: `pnpm exec playwright install chromium`. With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.
+
+Local Supabase needs Docker Desktop running (on Windows with the WSL 2 backend). The Supabase CLI is a pinned dev dependency, so always call it through `pnpm supabase`, never a global install.
