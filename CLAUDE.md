@@ -48,9 +48,10 @@ src/
   components/ui/  shadcn/ui components (owned code, edited freely)
   config/         App-wide constants (the product name lives here)
   lib/            Framework-free helpers (money formatting, ...)
+e2e/              Playwright end-to-end specs (*.spec.ts)
 ```
 
-Unit tests sit next to the code they test as `*.test.ts`.
+Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks inside `src/`. End-to-end specs live in `e2e/` and only Playwright runs them.
 
 ## Commands
 
@@ -62,3 +63,6 @@ Unit tests sit next to the code they test as `*.test.ts`.
 | `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`       |
 | `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check) |
 | `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode           |
+| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running  |
+
+First Playwright run on a machine: `pnpm exec playwright install chromium`. With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.
