@@ -6,7 +6,7 @@ Multi-tenant membership SaaS for small businesses (gyms, studios, clubs, coachin
 
 This is a public portfolio project. Test coverage, clear decisions, and a clean commit history matter as much as features.
 
-The product name is a working name. It lives only in `src/config/app.ts`; never hard-code it anywhere else.
+The product name is a working name. In code it lives only in `src/config/app.ts`; never hard-code it anywhere else in `src/`. The docs (`README.md`, this file) use it by name.
 
 ## Stack
 

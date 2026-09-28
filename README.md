@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Clubly
 
-## Getting Started
+[![CI](https://github.com/MostafaSaafan5517/clubly/actions/workflows/ci.yml/badge.svg)](https://github.com/MostafaSaafan5517/clubly/actions/workflows/ci.yml)
 
-First, run the development server:
+A membership platform for small businesses: gyms, studios, clubs and coaching programs. A business connects its Stripe account and creates membership plans; members subscribe from the business's public page and manage their own billing. The platform takes a small application fee on every payment.
+
+> **Status: in active development.** See the [roadmap](#roadmap). Stripe runs in test mode only, so no real money moves.
+
+## What this project demonstrates
+
+The goal is production habits on a real multi-tenant billing product, not a demo:
+
+- **Tenant isolation in the database.** Postgres Row-Level Security keeps each business's data separate, with tests that prove cross-tenant access is denied.
+- **Safe webhooks.** Stripe webhooks are signature-verified and idempotent, so a duplicate or out-of-order event can never apply twice.
+- **Stripe as the source of truth.** Payment state only changes from Stripe events, and a scheduled reconciliation job repairs any drift.
+- **An append-only audit log** written by database triggers, which the application cannot edit or delete.
+
+## Stack
+
+- [Next.js](https://nextjs.org) (App Router) and TypeScript in strict mode
+- [Tailwind CSS](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com)
+- [Supabase](https://supabase.com): Postgres, Auth, Row-Level Security, SQL migrations
+- [Stripe](https://stripe.com): Checkout, Billing, Customer Portal, Connect
+- [Vitest](https://vitest.dev), [Playwright](https://playwright.dev) and [pgTAP](https://pgtap.org) for tests
+- GitHub Actions for CI, [Vercel](https://vercel.com) for hosting
+
+## Roadmap
+
+- [x] **Phase 0:** project setup, test tooling and CI
+- [ ] **Phase 1:** authentication, businesses and Row-Level Security
+- [ ] **Phase 2:** Stripe Connect onboarding and membership plans
+- [ ] **Phase 3:** member subscriptions and webhooks
+- [ ] **Phase 4:** reconciliation job and audit log
+- [ ] **Phase 5:** business and member dashboards
+- [ ] **Phase 6:** end-to-end test flows
+- [ ] **Phase 7:** documentation, demo data and live demo
+
+## Running locally
+
+You need Node.js 24, [pnpm](https://pnpm.io) 11 and [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for the local Supabase stack).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+pnpm supabase start
+cp .env.example .env.local
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Fill `.env.local` with the values printed by `pnpm supabase status -o env`, then open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tests
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Suite          | Command         | Notes                                                          |
+| -------------- | --------------- | -------------------------------------------------------------- |
+| Unit           | `pnpm test`     | Vitest                                                         |
+| Database / RLS | `pnpm test:db`  | pgTAP; needs `pnpm supabase start` first                       |
+| End-to-end     | `pnpm test:e2e` | Playwright; first run: `pnpm exec playwright install chromium` |
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`pnpm lint`, `pnpm typecheck` and `pnpm format:check` run in CI alongside all three suites.
