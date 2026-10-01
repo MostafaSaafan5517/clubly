@@ -34,6 +34,48 @@ export type Database = {
   };
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string;
+          actor: string;
+          actor_user_id: string | null;
+          business_id: string;
+          changed_columns: string[];
+          created_at: string;
+          id: number;
+          new_data: Json | null;
+          old_data: Json | null;
+          record_id: string;
+          table_name: string;
+        };
+        Insert: {
+          action: string;
+          actor: string;
+          actor_user_id?: string | null;
+          business_id: string;
+          changed_columns?: string[];
+          created_at?: string;
+          id?: never;
+          new_data?: Json | null;
+          old_data?: Json | null;
+          record_id: string;
+          table_name: string;
+        };
+        Update: {
+          action?: string;
+          actor?: string;
+          actor_user_id?: string | null;
+          business_id?: string;
+          changed_columns?: string[];
+          created_at?: string;
+          id?: never;
+          new_data?: Json | null;
+          old_data?: Json | null;
+          record_id?: string;
+          table_name?: string;
+        };
+        Relationships: [];
+      };
       business_staff: {
         Row: {
           business_id: string;

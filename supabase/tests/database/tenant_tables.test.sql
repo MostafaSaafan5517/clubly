@@ -1,5 +1,5 @@
 begin;
-select plan(30);
+select plan(33);
 select tests.clear_tenant_data();
 
 -- Structure
@@ -7,7 +7,7 @@ select tables_are(
   'public',
   array[
     'profiles', 'businesses', 'business_staff', 'plans', 'members', 'stripe_events',
-    'subscriptions', 'payments'
+    'subscriptions', 'payments', 'audit_log'
   ],
   'public contains exactly the expected tables'
 );
@@ -43,6 +43,10 @@ select table_privs_are('public', 'subscriptions', 'anon', array[]::text[]);
 select table_privs_are('public', 'subscriptions', 'authenticated', array[]::text[]);
 select table_privs_are('public', 'payments', 'anon', array[]::text[]);
 select table_privs_are('public', 'payments', 'authenticated', array[]::text[]);
+-- The audit log is read-only for everyone; triggers write it (audit_log.test.sql).
+select table_privs_are('public', 'audit_log', 'anon', array[]::text[]);
+select table_privs_are('public', 'audit_log', 'authenticated', array['SELECT']);
+select table_privs_are('public', 'audit_log', 'service_role', array['SELECT']);
 
 -- Fixtures: two users (profiles come from the auth trigger) and one business.
 insert into auth.users (id, email) values

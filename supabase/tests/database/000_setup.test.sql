@@ -87,7 +87,32 @@ begin
 end;
 $$;
 
-grant execute on all functions in schema tests to anon, authenticated;
+-- Same, as server code using the service role key (webhooks, reconciliation).
+create or replace function tests.authenticate_as_service_role()
+returns void
+language plpgsql
+as $$
+begin
+  perform set_config('role', 'service_role', true);
+  perform set_config('request.jwt.claims', json_build_object('role', 'service_role')::text, true);
+end;
+$$;
+
+-- Back to working directly in the database, like a migration: the session's own role, with no
+-- API claims left over (`reset role` alone keeps the last user's claims, so auth.uid() would
+-- still return them).
+create or replace function tests.act_as_database()
+returns void
+language plpgsql
+as $$
+begin
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+end;
+$$;
+
+grant execute on all functions in schema tests to anon, authenticated, service_role;
+grant usage on schema tests to service_role;
 
 begin;
 select plan(1);
