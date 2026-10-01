@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { appConfig } from "@/config/app";
+import { SIGNED_IN_HOME } from "@/lib/auth";
+import { createServerComponentClient } from "@/lib/supabase/server";
 
-export default function Home() {
+export default async function Home() {
+  // Signed-in visitors get a way in instead of the sign-up and sign-in buttons.
+  const supabase = await createServerComponentClient();
+  const { data } = await supabase.auth.getClaims();
+
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
       <h1 className="text-4xl font-semibold tracking-tight">
@@ -11,18 +17,27 @@ export default function Home() {
       <p className="max-w-md text-lg text-muted-foreground">
         {appConfig.description}
       </p>
-      <div className="mt-4 flex gap-3">
-        {/* Links styled as buttons: they navigate, so they must stay links for screen readers. */}
-        <Link href="/signup" className={buttonVariants({ size: "lg" })}>
-          Get started
-        </Link>
+      {/* Links styled as buttons: they navigate, so they must stay links for screen readers. */}
+      {data ? (
         <Link
-          href="/login"
-          className={buttonVariants({ size: "lg", variant: "outline" })}
+          href={SIGNED_IN_HOME}
+          className={buttonVariants({ size: "lg", className: "mt-4" })}
         >
-          Sign in
+          Continue
         </Link>
-      </div>
+      ) : (
+        <div className="mt-4 flex gap-3">
+          <Link href="/signup" className={buttonVariants({ size: "lg" })}>
+            Get started
+          </Link>
+          <Link
+            href="/login"
+            className={buttonVariants({ size: "lg", variant: "outline" })}
+          >
+            Sign in
+          </Link>
+        </div>
+      )}
     </main>
   );
 }

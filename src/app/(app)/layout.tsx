@@ -2,6 +2,7 @@ import Link from "next/link";
 import { signOut } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
 import { appConfig } from "@/config/app";
+import { SIGNED_IN_HOME } from "@/lib/auth";
 
 // The signed-in part of the app: businesses people run (/dashboard) and memberships they hold
 // (/account). Each page checks the user itself (requireUser); a layout is not re-run on every
@@ -9,12 +10,12 @@ import { appConfig } from "@/config/app";
 export default function SignedInLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="font-semibold tracking-tight">
+      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:gap-x-6 sm:px-6">
+        <div className="flex items-center gap-4 sm:gap-6">
+          <Link href={SIGNED_IN_HOME} className="font-semibold tracking-tight">
             {appConfig.name}
           </Link>
-          <nav aria-label="Main" className="flex gap-4 text-sm">
+          <nav aria-label="Main" className="flex gap-3 text-sm sm:gap-4">
             <Link
               href="/dashboard"
               className="text-muted-foreground hover:text-foreground"
@@ -30,7 +31,7 @@ export default function SignedInLayout({ children }: LayoutProps<"/">) {
           </nav>
         </div>
         <form action={signOut}>
-          <Button type="submit" variant="outline">
+          <Button type="submit" variant="outline" size="sm">
             Sign out
           </Button>
         </form>

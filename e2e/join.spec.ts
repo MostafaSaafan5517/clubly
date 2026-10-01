@@ -5,7 +5,7 @@ import {
   enableCharges,
   uniqueBusinessName,
 } from "./support/businesses";
-import { signInToDashboard } from "./support/forms";
+import { signInAs } from "./support/forms";
 import { createConfirmedUser } from "./support/users";
 
 test("visitors see a business's plans that can be bought, cheapest first", async ({
@@ -60,7 +60,7 @@ test("signed-in staff see the same public page as visitors", async ({
   });
   await addPlan(business.id, "Half-made plan");
 
-  await signInToDashboard(page, owner);
+  await signInAs(page, owner);
   await page.goto(`/dashboard/b/${business.slug}`);
   await page.getByRole("link", { name: `/b/${business.slug}` }).click();
   await expect(page).toHaveURL(new RegExp(`/b/${business.slug}$`));

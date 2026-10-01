@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SIGNED_IN_HOME } from "@/lib/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { createServerComponentClient } from "@/lib/supabase/server";
 
@@ -21,7 +22,7 @@ export default async function MagicLinkPage({
   const nextPath = readNext((await searchParams).next);
   const supabase = await createServerComponentClient();
   const { data } = await supabase.auth.getClaims();
-  if (data) redirect(safeRedirectPath(nextPath, "/dashboard"));
+  if (data) redirect(safeRedirectPath(nextPath, SIGNED_IN_HOME));
 
   return (
     <Card>

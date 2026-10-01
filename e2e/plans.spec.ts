@@ -5,7 +5,7 @@ import {
   createBusinessFor,
   uniqueBusinessName,
 } from "./support/businesses";
-import { formError, signInToDashboard } from "./support/forms";
+import { formError, signInAs } from "./support/forms";
 import {
   connectStripeAccount,
   deleteStripeAccount,
@@ -28,7 +28,7 @@ test("an owner creates a plan, and Stripe gets a matching product and price", as
   const accountId = await connectStripeAccount(business.id);
 
   try {
-    await signInToDashboard(page, owner);
+    await signInAs(page, owner);
     await page.goto(`/dashboard/b/${business.slug}`);
     await page.getByRole("link", { name: "New plan" }).click();
     await expect(page).toHaveURL(/\/plans\/new$/);
@@ -72,7 +72,7 @@ test("the server rejects a price below Stripe's minimum, even if the browser is 
   const accountId = await connectStripeAccount(business.id);
 
   try {
-    await signInToDashboard(page, owner);
+    await signInAs(page, owner);
     await page.goto(`/dashboard/b/${business.slug}/plans/new`);
     // Turn off the browser's own checks to prove the server enforces the rule too.
     await page
@@ -103,7 +103,7 @@ test("plans can't be created before payouts are connected", async ({
     uniqueBusinessName("Quiet Quarry Climbing"),
   );
 
-  await signInToDashboard(page, owner);
+  await signInAs(page, owner);
   await page.goto(`/dashboard/b/${business.slug}`);
   await expect(page.getByRole("link", { name: "New plan" })).toHaveCount(0);
 
@@ -129,7 +129,7 @@ test("staff members can't create plans", async ({ page }) => {
   try {
     await addPlan(business.id, "Drop-in");
 
-    await signInToDashboard(page, staffMember);
+    await signInAs(page, staffMember);
     await page.goto(`/dashboard/b/${business.slug}`);
     await expect(page.getByRole("link", { name: "New plan" })).toHaveCount(0);
     await expect(page.getByText("Drop-in")).toBeVisible();
@@ -158,7 +158,7 @@ test("archiving a plan stops it being sold in the app and in Stripe, and restori
   const accountId = await connectStripeAccount(business.id);
 
   try {
-    await signInToDashboard(page, owner);
+    await signInAs(page, owner);
     await page.goto(`/dashboard/b/${business.slug}/plans/new`);
     await page.getByLabel("Plan name").fill("Yearly swim pass");
     await page.getByLabel("Price (USD)").fill("300");

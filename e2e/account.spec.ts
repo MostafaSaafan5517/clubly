@@ -6,7 +6,7 @@ import {
   createBusinessFor,
   uniqueBusinessName,
 } from "./support/businesses";
-import { signInToDashboard } from "./support/forms";
+import { signInAs } from "./support/forms";
 import { createConfirmedUser } from "./support/users";
 
 test("members see each membership with its plan, status and what happens next", async ({
@@ -47,7 +47,7 @@ test("members see each membership with its plan, status and what happens next", 
   );
   await addMember(club.id, member.email);
 
-  await signInToDashboard(page, member);
+  await signInAs(page, member);
   await page
     .getByRole("navigation")
     .getByRole("link", { name: "Memberships" })
@@ -100,7 +100,7 @@ test("staff don't see their business's members as their own memberships", async 
 
   // The owner can read this member's row (RLS allows it, for the members list), but it isn't
   // the owner's membership.
-  await signInToDashboard(page, owner);
+  await signInAs(page, owner);
   await page.goto("/account");
   await expect(
     page.getByText("You're not a member anywhere yet"),
@@ -121,7 +121,7 @@ test("after Checkout, the membership shows as active only once Stripe's webhook 
   const planId = await addPlan(business.id, "Monthly");
 
   // Where Stripe Checkout sends the member back to; anyone could open this URL.
-  await signInToDashboard(page, member);
+  await signInAs(page, member);
   await page.goto(`/account?joined=${business.slug}`);
   await expect(page.getByRole("status")).toHaveText(
     `Thanks! Stripe is confirming your payment to ${business.name}. This page updates on its own.`,

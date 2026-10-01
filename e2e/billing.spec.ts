@@ -11,7 +11,7 @@ import {
   suspendMembership,
   uniqueBusinessName,
 } from "./support/businesses";
-import { formError, signInToDashboard } from "./support/forms";
+import { formError, signInAs } from "./support/forms";
 import {
   reconciliationCorrections,
   runReconciliation,
@@ -53,7 +53,7 @@ test("a signed-in member joins a plan and is sent to Stripe Checkout for it", as
   });
 
   try {
-    await signInToDashboard(page, member);
+    await signInAs(page, member);
     await page.goto(`/b/${business.slug}`);
     await page.getByRole("button", { name: "Join" }).click();
     await page.waitForURL(/^https:\/\/checkout\.stripe\.com\//, {
@@ -120,7 +120,7 @@ test("Manage billing opens Stripe's Customer Portal, configured once per busines
 
   let configurationId: string | null = null;
   try {
-    await signInToDashboard(page, member);
+    await signInAs(page, member);
     const openPortal = async () => {
       await page.goto("/account");
       await page.getByRole("button", { name: "Manage billing" }).click();
@@ -189,7 +189,7 @@ test("a suspended member can't start a new subscription", async ({ page }) => {
   });
   await suspendMembership(business.id, member.email);
 
-  await signInToDashboard(page, member);
+  await signInAs(page, member);
   await page.goto(`/b/${business.slug}`);
   await page.getByRole("button", { name: "Join" }).click();
   await expect(formError(page)).toHaveText(
@@ -289,7 +289,7 @@ test("the owner sees their Stripe balance and recent payouts, read live from Str
       .map(({ amount, currency }) => formatAmount(amount, currency))
       .join(" + ");
 
-  await signInToDashboard(page, owner);
+  await signInAs(page, owner);
   await page.goto(`/dashboard/b/${business.slug}`);
   await page
     .getByRole("navigation", { name: "Business" })

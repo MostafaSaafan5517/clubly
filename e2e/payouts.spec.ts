@@ -4,7 +4,7 @@ import {
   createBusinessFor,
   uniqueBusinessName,
 } from "./support/businesses";
-import { signInToDashboard } from "./support/forms";
+import { signInAs } from "./support/forms";
 import {
   connectStripeAccount,
   deleteStripeAccount,
@@ -25,7 +25,7 @@ test("the owner starts Stripe onboarding, and continuing reuses the same account
   let accountId: string | null = null;
 
   try {
-    await signInToDashboard(page, owner);
+    await signInAs(page, owner);
     await page.goto(`/dashboard/b/${business.slug}`);
     await page.getByRole("button", { name: "Connect payouts" }).click();
     // Stripe's hosted onboarding; no need to wait for the external page to finish loading.
@@ -65,7 +65,7 @@ test("staff who aren't the owner see the payments status but can't connect payou
   );
   await addStaff(business.id, admin.email, "admin");
 
-  await signInToDashboard(page, admin);
+  await signInAs(page, admin);
   await page.goto(`/dashboard/b/${business.slug}`);
   await expect(
     page.getByText("Only the owner can set up payouts."),
@@ -91,7 +91,7 @@ test("an expired onboarding link sends the owner back to Stripe, and nobody else
 
   try {
     // Where Stripe sends the owner when an onboarding link has expired or was already used.
-    await signInToDashboard(page, owner);
+    await signInAs(page, owner);
     await page.goto(refreshUrl, { waitUntil: "commit" });
     await page.waitForURL(/^https:\/\/connect\.stripe\.com\//, {
       waitUntil: "commit",
@@ -99,7 +99,7 @@ test("an expired onboarding link sends the owner back to Stripe, and nobody else
     expect(await getStripeAccountId(business.id)).toBe(accountId);
 
     const adminPage = await (await browser.newContext()).newPage();
-    await signInToDashboard(adminPage, admin);
+    await signInAs(adminPage, admin);
     await adminPage.goto(refreshUrl);
     await expect(adminPage).toHaveURL(
       new RegExp(`/dashboard/b/${business.slug}$`),
@@ -121,7 +121,7 @@ test("only the owner has a Payouts page, and it asks for payouts to be connected
   );
   await addStaff(business.id, admin.email, "admin");
 
-  await signInToDashboard(page, owner);
+  await signInAs(page, owner);
   await page.goto(`/dashboard/b/${business.slug}/payouts`);
   await expect(page.getByText("Connect payouts first.")).toBeVisible();
   await expect(
@@ -129,7 +129,7 @@ test("only the owner has a Payouts page, and it asks for payouts to be connected
   ).toHaveCount(0);
 
   const adminPage = await (await browser.newContext()).newPage();
-  await signInToDashboard(adminPage, admin);
+  await signInAs(adminPage, admin);
   await adminPage.goto(`/dashboard/b/${business.slug}`);
   await expect(
     adminPage

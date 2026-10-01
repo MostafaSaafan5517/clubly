@@ -8,7 +8,7 @@ import {
   createBusinessFor,
   uniqueBusinessName,
 } from "./support/businesses";
-import { signInToDashboard } from "./support/forms";
+import { signInAs } from "./support/forms";
 import { createConfirmedUser } from "./support/users";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -55,7 +55,7 @@ test("owners see recurring revenue, the last 30 days and recent payments", async
   });
   await addPayment(business.id, patId, { amount: 3000, status: "failed" });
 
-  await signInToDashboard(page, owner);
+  await signInAs(page, owner);
   await page.goto(`/dashboard/b/${business.slug}`);
   await page
     .getByRole("navigation", { name: "Business" })
@@ -101,12 +101,12 @@ test("admins see revenue; plain staff don't get the tab or the page", async ({
   await addStaff(business.id, admin.email, "admin");
   await addStaff(business.id, staff.email, "staff");
 
-  await signInToDashboard(page, admin);
+  await signInAs(page, admin);
   await page.goto(`/dashboard/b/${business.slug}/revenue`);
   await expect(page.getByText("No revenue yet.")).toBeVisible();
 
   const staffPage = await (await browser.newContext()).newPage();
-  await signInToDashboard(staffPage, staff);
+  await signInAs(staffPage, staff);
   await staffPage.goto(`/dashboard/b/${business.slug}`);
   await expect(
     staffPage

@@ -6,7 +6,7 @@ import {
   createBusinessFor,
   uniqueBusinessName,
 } from "./support/businesses";
-import { signInToDashboard } from "./support/forms";
+import { signInAs } from "./support/forms";
 import { createConfirmedUser } from "./support/users";
 
 test("owners see who changed what, newest first", async ({ page }) => {
@@ -20,7 +20,7 @@ test("owners see who changed what, newest first", async ({ page }) => {
   await addPlan(business.id, "Gold");
   await addMember(business.id, mona.email);
 
-  await signInToDashboard(page, owner);
+  await signInAs(page, owner);
   await page.goto(`/dashboard/b/${business.slug}/members`);
   await page
     .getByRole("listitem")
@@ -63,7 +63,7 @@ test("the history pages back through older entries", async ({ page }) => {
     ),
   );
 
-  await signInToDashboard(page, owner);
+  await signInAs(page, owner);
   await page.goto(`/dashboard/b/${business.slug}/history`);
   const entries = page
     .getByRole("region", { name: "History" })
@@ -95,12 +95,12 @@ test("admins see the history; plain staff don't get the tab or the page", async 
   await addStaff(business.id, admin.email, "admin");
   await addStaff(business.id, staff.email, "staff");
 
-  await signInToDashboard(page, admin);
+  await signInAs(page, admin);
   await page.goto(`/dashboard/b/${business.slug}/history`);
   await expect(page.getByText("Created the business")).toBeVisible();
 
   const staffPage = await (await browser.newContext()).newPage();
-  await signInToDashboard(staffPage, staff);
+  await signInAs(staffPage, staff);
   await staffPage.goto(`/dashboard/b/${business.slug}`);
   await expect(
     staffPage

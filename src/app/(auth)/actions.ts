@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { SIGNED_IN_HOME } from "@/lib/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { createServerActionClient } from "@/lib/supabase/server";
 
@@ -51,7 +52,7 @@ async function emailRedirectTo(formData: FormData) {
     throw new Error("Server Action request without an Origin header.");
   }
   return new URL(
-    safeRedirectPath(formText(formData, "next"), "/dashboard"),
+    safeRedirectPath(formText(formData, "next"), SIGNED_IN_HOME),
     origin,
   ).toString();
 }
@@ -133,7 +134,7 @@ export async function signIn(
     return { error: "We couldn't sign you in. Please try again.", fields };
   }
 
-  redirect(safeRedirectPath(formText(formData, "next"), "/dashboard"));
+  redirect(safeRedirectPath(formText(formData, "next"), SIGNED_IN_HOME));
 }
 
 export async function sendSignInLink(

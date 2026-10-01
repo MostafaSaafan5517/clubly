@@ -5,7 +5,7 @@ import {
   enableCharges,
   uniqueBusinessName,
 } from "./support/businesses";
-import { formError, signInToDashboard } from "./support/forms";
+import { formError, signInAs } from "./support/forms";
 import { createConfirmedUser } from "./support/users";
 
 test("a new owner creates their business from the dashboard", async ({
@@ -14,7 +14,7 @@ test("a new owner creates their business from the dashboard", async ({
   const owner = await createConfirmedUser("Olivia Owner");
   const businessName = uniqueBusinessName("Iron Gym");
 
-  await signInToDashboard(page, owner);
+  await signInAs(page, owner);
   await expect(page.getByText("You don't have a business yet")).toBeVisible();
   await page.getByRole("link", { name: "Create a business" }).click();
   await expect(page).toHaveURL(/\/dashboard\/new-business$/);
@@ -41,14 +41,14 @@ test("two owners: web addresses are unique, and each sees only their own busines
   const firstName = uniqueBusinessName("Harbor Yoga");
   const secondName = uniqueBusinessName("Summit Climbing");
 
-  await signInToDashboard(page, firstOwner);
+  await signInAs(page, firstOwner);
   await page.goto("/dashboard/new-business");
   await page.getByLabel("Business name").fill(firstName);
   await page.getByRole("button", { name: "Create business" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
 
   const secondPage = await (await browser.newContext()).newPage();
-  await signInToDashboard(secondPage, secondOwner);
+  await signInAs(secondPage, secondOwner);
   await secondPage.goto("/dashboard/new-business");
   await secondPage.getByLabel("Business name").fill(secondName);
   await secondPage.getByLabel("Web address").fill(slugify(firstName));
@@ -82,7 +82,7 @@ test("staff open their business page from the dashboard", async ({ page }) => {
     uniqueBusinessName("Riverside Boxing"),
   );
 
-  await signInToDashboard(page, owner);
+  await signInAs(page, owner);
   await page.getByRole("link", { name: business.name }).click();
   await expect(page).toHaveURL(new RegExp(`/dashboard/b/${business.slug}$`));
   await expect(
@@ -105,7 +105,7 @@ test("another business's page is a 404, even once that business is public", asyn
   // join page). Its admin page must still refuse anyone who isn't staff.
   await enableCharges(business.id);
 
-  await signInToDashboard(page, outsider);
+  await signInAs(page, outsider);
   const response = await page.goto(`/dashboard/b/${business.slug}`);
   expect(response?.status()).toBe(404);
   await expect(page.getByText(business.name)).toHaveCount(0);

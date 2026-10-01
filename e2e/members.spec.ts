@@ -8,7 +8,7 @@ import {
   findMembership,
   uniqueBusinessName,
 } from "./support/businesses";
-import { signInToDashboard } from "./support/forms";
+import { signInAs } from "./support/forms";
 import { createConfirmedUser } from "./support/users";
 
 test("owners see their members with plan and status, and can suspend and reactivate them", async ({
@@ -30,7 +30,7 @@ test("owners see their members with plan and status, and can suspend and reactiv
   );
   await addMember(business.id, browsing.email);
 
-  await signInToDashboard(page, owner);
+  await signInAs(page, owner);
   await page.goto(`/dashboard/b/${business.slug}`);
   await page
     .getByRole("navigation", { name: "Business" })
@@ -58,7 +58,7 @@ test("owners see their members with plan and status, and can suspend and reactiv
 
   // The member sees it on their own account page.
   const memberPage = await (await browser.newContext()).newPage();
-  await signInToDashboard(memberPage, paying);
+  await signInAs(memberPage, paying);
   await memberPage.goto("/account");
   await expect(
     memberPage.getByRole("listitem").filter({ hasText: business.name }),
@@ -83,7 +83,7 @@ test("plain staff see the members but can't suspend them", async ({ page }) => {
   await addStaff(business.id, staff.email, "staff");
   await addMember(business.id, member.email);
 
-  await signInToDashboard(page, staff);
+  await signInAs(page, staff);
   await page.goto(`/dashboard/b/${business.slug}/members`);
   await expect(
     page.getByRole("listitem").filter({ hasText: "Mona Member" }),
@@ -101,7 +101,7 @@ test("another business's members page is a 404", async ({ page }) => {
   );
   await addMember(business.id, member.email);
 
-  await signInToDashboard(page, outsider);
+  await signInAs(page, outsider);
   const response = await page.goto(`/dashboard/b/${business.slug}/members`);
   expect(response?.status()).toBe(404);
   await expect(page.getByText("Mona Member")).toHaveCount(0);

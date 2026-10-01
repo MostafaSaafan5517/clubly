@@ -12,12 +12,15 @@ export async function signIn(page: Page, email: string, password: string) {
   await page.getByRole("button", { name: "Sign in" }).click();
 }
 
-/** Signs in from the sign-in page and waits for the dashboard. */
-export async function signInToDashboard(
+/**
+ * Signs in from the sign-in page and waits to land: on the dashboard, or on the account page
+ * for someone who is only a member somewhere.
+ */
+export async function signInAs(
   page: Page,
   user: { email: string; password: string },
 ) {
   await page.goto("/login");
   await signIn(page, user.email, user.password);
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page).toHaveURL(/\/(dashboard|account)$/);
 }
