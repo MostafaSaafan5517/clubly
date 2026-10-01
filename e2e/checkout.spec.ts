@@ -80,6 +80,10 @@ test("a signed-in member joins a plan and is sent to Stripe Checkout for it", as
     expect(session.line_items.data).toHaveLength(1);
   } finally {
     await archiveStripeProduct(accountId, plan.productId);
+    // Joining created a Stripe customer on the shared account; it goes too.
+    const customerId = (await findMembership(business.id, member.email))
+      ?.stripe_customer_id;
+    if (customerId) await deleteStripeCustomer(accountId, customerId);
   }
 });
 
