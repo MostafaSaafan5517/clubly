@@ -319,6 +319,77 @@ export type Database = {
         };
         Relationships: [];
       };
+      reconciliation_corrections: {
+        Row: {
+          business_id: string;
+          created_at: string;
+          id: number;
+          new_data: NonNullable<Json>;
+          object_type: string;
+          old_data: Json | null;
+          run_id: string;
+          stripe_id: string;
+        };
+        Insert: {
+          business_id: string;
+          created_at?: string;
+          id?: never;
+          new_data: NonNullable<Json>;
+          object_type: string;
+          old_data?: Json | null;
+          run_id: string;
+          stripe_id: string;
+        };
+        Update: {
+          business_id?: string;
+          created_at?: string;
+          id?: never;
+          new_data?: NonNullable<Json>;
+          object_type?: string;
+          old_data?: Json | null;
+          run_id?: string;
+          stripe_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_corrections_run_id_fkey";
+            columns: ["run_id"];
+            isOneToOne: false;
+            referencedRelation: "reconciliation_runs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      reconciliation_runs: {
+        Row: {
+          businesses_checked: number;
+          corrections: number;
+          errors: NonNullable<Json>;
+          finished_at: string | null;
+          id: string;
+          started_at: string;
+          status: string;
+        };
+        Insert: {
+          businesses_checked?: number;
+          corrections?: number;
+          errors?: NonNullable<Json>;
+          finished_at?: string | null;
+          id?: string;
+          started_at?: string;
+          status?: string;
+        };
+        Update: {
+          businesses_checked?: number;
+          corrections?: number;
+          errors?: NonNullable<Json>;
+          finished_at?: string | null;
+          id?: string;
+          started_at?: string;
+          status?: string;
+        };
+        Relationships: [];
+      };
       stripe_events: {
         Row: {
           account_id: string | null;
@@ -436,6 +507,18 @@ export type Database = {
       create_business: {
         Args: { business_name: string; business_slug: string };
         Returns: string;
+      };
+      reconcile_account: {
+        Args: { account_id: string; charges_enabled: boolean; run_id: string };
+        Returns: number;
+      };
+      reconcile_payments: {
+        Args: { account_id: string; run_id: string; snapshots: Json };
+        Returns: number;
+      };
+      reconcile_subscriptions: {
+        Args: { account_id: string; run_id: string; snapshots: Json };
+        Returns: number;
       };
     };
     Enums: {

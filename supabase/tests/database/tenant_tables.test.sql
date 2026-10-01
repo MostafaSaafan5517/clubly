@@ -1,5 +1,5 @@
 begin;
-select plan(33);
+select plan(38);
 select tests.clear_tenant_data();
 
 -- Structure
@@ -7,7 +7,7 @@ select tables_are(
   'public',
   array[
     'profiles', 'businesses', 'business_staff', 'plans', 'members', 'stripe_events',
-    'subscriptions', 'payments', 'audit_log'
+    'subscriptions', 'payments', 'audit_log', 'reconciliation_runs', 'reconciliation_corrections'
   ],
   'public contains exactly the expected tables'
 );
@@ -47,6 +47,12 @@ select table_privs_are('public', 'payments', 'authenticated', array[]::text[]);
 select table_privs_are('public', 'audit_log', 'anon', array[]::text[]);
 select table_privs_are('public', 'audit_log', 'authenticated', array['SELECT']);
 select table_privs_are('public', 'audit_log', 'service_role', array['SELECT']);
+-- Reconciliation data is for server code only, and its corrections can't be rewritten.
+select table_privs_are('public', 'reconciliation_runs', 'anon', array[]::text[]);
+select table_privs_are('public', 'reconciliation_runs', 'authenticated', array[]::text[]);
+select table_privs_are('public', 'reconciliation_corrections', 'anon', array[]::text[]);
+select table_privs_are('public', 'reconciliation_corrections', 'authenticated', array[]::text[]);
+select table_privs_are('public', 'reconciliation_corrections', 'service_role', array['SELECT', 'INSERT']);
 
 -- Fixtures: two users (profiles come from the auth trigger) and one business.
 insert into auth.users (id, email) values
