@@ -89,10 +89,7 @@ export async function setPlanActive(
   } catch (stripeError) {
     console.error("Updating the plan in Stripe failed", {
       planId,
-      message:
-        stripeError instanceof Error
-          ? stripeError.message
-          : String(stripeError),
+      message: errorMessage(stripeError),
     });
     // Put the plan back, so the app and Stripe never disagree about whether it can be sold.
     const { error: revertError } = await supabase
