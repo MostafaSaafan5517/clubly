@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { formatAmount } from "@/lib/money";
 import {
   addMember,
   addPlan,
@@ -24,13 +25,14 @@ import {
   deleteStripeCustomer,
   getPortalConfiguration,
   getPortalConfigurationId,
+  getStripeBalanceAndPayouts,
   latestCheckoutSession,
   useChargeReadyAccount,
 } from "./support/stripe";
 import { createConfirmedUser } from "./support/users";
 
 // Everything that needs the shared charge-ready Stripe account (Checkout, the billing portal,
-// reconciliation) lives in this file, so those tests run one at a time.
+// payouts, reconciliation) lives in this file, so those tests run one at a time.
 test.describe.configure({ mode: "serial" });
 
 test("a signed-in member joins a plan and is sent to Stripe Checkout for it", async ({
@@ -269,4 +271,51 @@ test("reconciliation records what the webhooks missed, and a second run changes 
     await deleteStripeCustomer(accountId, customerId);
     await archiveStripeProduct(accountId, plan.productId);
   }
+});
+
+test("the owner sees their Stripe balance and recent payouts, read live from Stripe", async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  const owner = await createConfirmedUser();
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Payout Gym"),
+  );
+  const accountId = await useChargeReadyAccount(business.id);
+  const stripeSide = await getStripeBalanceAndPayouts(accountId);
+  const shown = (balance: { amount: number; currency: string }[]) =>
+    balance
+      .map(({ amount, currency }) => formatAmount(amount, currency))
+      .join(" + ");
+
+  await signInToDashboard(page, owner);
+  await page.goto(`/dashboard/b/${business.slug}`);
+  await page
+    .getByRole("navigation", { name: "Business" })
+    .getByRole("link", { name: "Payouts" })
+    .click();
+  await expect(page).toHaveURL(
+    new RegExp(`/dashboard/b/${business.slug}/payouts$`),
+  );
+
+  const figures = page.getByRole("definition");
+  await expect(figures.nth(0)).toHaveText(shown(stripeSide.available));
+  await expect(figures.nth(1)).toHaveText(shown(stripeSide.pending));
+  if (stripeSide.payoutCount === 0) {
+    await expect(page.getByText("No payouts yet.")).toBeVisible();
+  } else {
+    await expect(
+      page
+        .getByRole("region", { name: "Recent payouts" })
+        .getByRole("listitem"),
+    ).toHaveCount(stripeSide.payoutCount);
+  }
+
+  // Stripe only signs owners in to an Express dashboard their account has. This shared test
+  // account has none, so Stripe refuses, and the owner gets a message instead of an error page.
+  await page.getByRole("button", { name: "Open Stripe dashboard" }).click();
+  await expect(formError(page)).toHaveText(
+    "Stripe couldn't open your dashboard. Please try again.",
+  );
 });

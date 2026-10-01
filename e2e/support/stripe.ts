@@ -381,3 +381,24 @@ export async function createPaidSubscription(
   }
   return subscription.id;
 }
+
+type Balance = { amount: number; currency: string }[];
+
+/** The account's balance and payouts as Stripe reports them, to compare with the app's page. */
+export async function getStripeBalanceAndPayouts(accountId: string) {
+  const balance = await stripeRequest<{ available: Balance; pending: Balance }>(
+    "GET",
+    "/v1/balance",
+    { account: accountId },
+  );
+  const payouts = await stripeRequest<{ data: unknown[] }>(
+    "GET",
+    "/v1/payouts?limit=10",
+    { account: accountId },
+  );
+  return {
+    available: balance.available,
+    pending: balance.pending,
+    payoutCount: payouts.data.length,
+  };
+}

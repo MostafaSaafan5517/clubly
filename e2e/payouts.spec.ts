@@ -108,3 +108,36 @@ test("an expired onboarding link sends the owner back to Stripe, and nobody else
     await deleteStripeAccount(accountId);
   }
 });
+
+test("only the owner has a Payouts page, and it asks for payouts to be connected first", async ({
+  page,
+  browser,
+}) => {
+  const owner = await createConfirmedUser();
+  const admin = await createConfirmedUser();
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Owner Only Payouts"),
+  );
+  await addStaff(business.id, admin.email, "admin");
+
+  await signInToDashboard(page, owner);
+  await page.goto(`/dashboard/b/${business.slug}/payouts`);
+  await expect(page.getByText("Connect payouts first.")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Open Stripe dashboard" }),
+  ).toHaveCount(0);
+
+  const adminPage = await (await browser.newContext()).newPage();
+  await signInToDashboard(adminPage, admin);
+  await adminPage.goto(`/dashboard/b/${business.slug}`);
+  await expect(
+    adminPage
+      .getByRole("navigation", { name: "Business" })
+      .getByRole("link", { name: "Payouts" }),
+  ).toHaveCount(0);
+  const response = await adminPage.goto(
+    `/dashboard/b/${business.slug}/payouts`,
+  );
+  expect(response?.status()).toBe(404);
+});
