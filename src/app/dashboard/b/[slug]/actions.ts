@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import type { ActionState } from "@/components/action-button";
 import { getStaffBusiness } from "@/lib/business";
 import {
   createOnboardingUrl,
@@ -11,8 +12,6 @@ import {
 } from "@/lib/stripe/connect";
 import { setPlanProductActive } from "@/lib/stripe/plans";
 import { createServerActionClient } from "@/lib/supabase/server";
-
-export type ActionState = { error: string | null };
 
 // These actions are bound to their arguments on the server; useActionState's previous-state
 // argument isn't needed. Every argument still comes from the browser, so each action checks the

@@ -106,3 +106,160 @@ export async function getPlanId(businessId: string, name: string) {
   if (error) throw error;
   return data.id as string;
 }
+
+const CHARGE_READY_PURPOSE = "clubly-e2e-charge-ready";
+
+type StripeAccount = {
+  id: string;
+  charges_enabled: boolean;
+  metadata: Record<string, string>;
+};
+
+/**
+ * A connected account that can really take payments, shared by every test run (local and CI).
+ * Stripe takes over a minute to verify a new account, so it's created once, with Stripe's
+ * documented test values through the API, and found again by its metadata after that.
+ */
+async function chargeReadyAccountId() {
+  const { data } = await stripeRequest<{ data: StripeAccount[] }>(
+    "GET",
+    "/v1/accounts?limit=100",
+  );
+  const existing = data.find(
+    (account) =>
+      account.metadata.purpose === CHARGE_READY_PURPOSE &&
+      account.charges_enabled,
+  );
+  if (existing) return existing.id;
+
+  const created = await stripeRequest<StripeAccount>("POST", "/v1/accounts", {
+    body: new URLSearchParams({
+      country: "US",
+      "controller[stripe_dashboard][type]": "none",
+      "controller[fees][payer]": "application",
+      "controller[losses][payments]": "application",
+      "controller[requirement_collection]": "application",
+      "capabilities[card_payments][requested]": "true",
+      "capabilities[transfers][requested]": "true",
+      business_type: "individual",
+      "business_profile[mcc]": "7997",
+      "business_profile[url]": "https://accessible.stripe.com",
+      "business_profile[product_description]": "Test memberships",
+      "individual[first_name]": "Test",
+      "individual[last_name]": "Owner",
+      "individual[email]": "owner@example.com",
+      "individual[phone]": "0000000000",
+      "individual[dob][day]": "1",
+      "individual[dob][month]": "1",
+      "individual[dob][year]": "1901",
+      "individual[address][line1]": "address_full_match",
+      "individual[address][city]": "Schenectady",
+      "individual[address][state]": "NY",
+      "individual[address][postal_code]": "12345",
+      "individual[address][country]": "US",
+      "individual[id_number]": "000000000",
+      external_account: "btok_us_verified",
+      "tos_acceptance[date]": String(Math.floor(Date.now() / 1000)),
+      "tos_acceptance[ip]": "8.8.8.8",
+      "metadata[purpose]": CHARGE_READY_PURPOSE,
+    }),
+  });
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    const account = await stripeRequest<StripeAccount>(
+      "GET",
+      `/v1/accounts/${created.id}`,
+    );
+    if (account.charges_enabled) return account.id;
+    await new Promise((resolve) => setTimeout(resolve, 3_000));
+  }
+  throw new Error(`Stripe never enabled charges on ${created.id}`);
+}
+
+/**
+ * Gives the business the shared charge-ready account (taking it back from an older test
+ * business in this database first: account ids are unique) and marks it able to take payments.
+ * Tests that use it must not run in parallel with each other.
+ */
+export async function useChargeReadyAccount(businessId: string) {
+  const accountId = await chargeReadyAccountId();
+  const admin = adminClient();
+  const { error: releaseError } = await admin
+    .from("businesses")
+    .update({ stripe_account_id: null })
+    .eq("stripe_account_id", accountId);
+  if (releaseError) throw releaseError;
+  const { error } = await admin
+    .from("businesses")
+    .update({ stripe_account_id: accountId, charges_enabled: true })
+    .eq("id", businessId);
+  if (error) throw error;
+  return accountId;
+}
+
+/** A plan with a real Stripe price on the given account, as the app would have created it. */
+export async function createPricedPlan(
+  businessId: string,
+  accountId: string,
+  plan: { name: string; amount: number },
+) {
+  const price = await stripeRequest<{ id: string; product: string }>(
+    "POST",
+    "/v1/prices",
+    {
+      account: accountId,
+      body: new URLSearchParams({
+        currency: "usd",
+        unit_amount: String(plan.amount),
+        "recurring[interval]": "month",
+        "product_data[name]": plan.name,
+      }),
+    },
+  );
+  const { data, error } = await adminClient()
+    .from("plans")
+    .insert({
+      business_id: businessId,
+      name: plan.name,
+      billing_interval: "month",
+      amount: plan.amount,
+      stripe_price_id: price.id,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return { id: data.id as string, productId: price.product };
+}
+
+/** Archives a test product, so the shared account's catalog doesn't fill up with live ones. */
+export async function archiveStripeProduct(
+  accountId: string,
+  productId: string,
+) {
+  await stripeRequest("POST", `/v1/products/${productId}`, {
+    account: accountId,
+    body: new URLSearchParams({ active: "false" }),
+  });
+}
+
+export type CheckoutSession = {
+  mode: string;
+  success_url: string;
+  cancel_url: string;
+  metadata: Record<string, string>;
+  line_items: { data: { price: { id: string } }[] };
+};
+
+/** The latest Checkout session for a Stripe customer on the given account. */
+export async function latestCheckoutSession(
+  accountId: string,
+  customerId: string,
+) {
+  const { data } = await stripeRequest<{ data: CheckoutSession[] }>(
+    "GET",
+    `/v1/checkout/sessions?customer=${customerId}&limit=1&expand[]=data.line_items`,
+    { account: accountId },
+  );
+  const session = data[0];
+  if (!session) throw new Error(`No Checkout session for ${customerId}`);
+  return session;
+}

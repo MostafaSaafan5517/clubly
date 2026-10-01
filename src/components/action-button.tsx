@@ -1,8 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
-import type { ActionState } from "@/app/dashboard/b/[slug]/actions";
 import { Button } from "@/components/ui/button";
+
+/** What a Server Action behind an ActionButton returns. */
+export type ActionState = { error: string | null };
 
 const initialState: ActionState = { error: null };
 

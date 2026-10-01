@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ActionButton } from "@/app/dashboard/b/[slug]/action-button";
 import {
   setPlanActive,
   startStripeOnboarding,
 } from "@/app/dashboard/b/[slug]/actions";
+import { ActionButton } from "@/components/action-button";
 import { buttonVariants } from "@/components/ui/button";
 import { appConfig } from "@/config/app";
 import { requireUser } from "@/lib/auth";

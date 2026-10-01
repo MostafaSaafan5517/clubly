@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { joinPlan } from "@/app/b/[slug]/actions";
+import { ActionButton } from "@/components/action-button";
 import { appConfig } from "@/config/app";
 import { formatAmount } from "@/lib/money";
 import { createServerComponentClient } from "@/lib/supabase/server";
@@ -44,8 +46,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function JoinPage({ params }: PageProps<"/b/[slug]">) {
+export default async function JoinPage({
+  params,
+  searchParams,
+}: PageProps<"/b/[slug]">) {
   const page = await getJoinPage((await params).slug);
+  const { checkout } = await searchParams;
   if (!page) notFound();
   const { business, plans } = page;
 
@@ -64,6 +70,20 @@ export default async function JoinPage({ params }: PageProps<"/b/[slug]">) {
           <p className="text-muted-foreground">Choose a membership.</p>
         </div>
 
+        {/* Where Stripe Checkout sends people back. A successful payment shows up once Stripe's
+            webhook confirms it, never because of this redirect. */}
+        {checkout === "success" && (
+          <p role="status" className="rounded-lg border p-4">
+            Thanks! Stripe is confirming your payment. Your membership will be
+            active in a moment.
+          </p>
+        )}
+        {checkout === "canceled" && (
+          <p role="status" className="rounded-lg border p-4">
+            Checkout was canceled, and you haven&apos;t been charged.
+          </p>
+        )}
+
         {plans.length === 0 ? (
           <p className="rounded-lg border p-4 text-sm text-muted-foreground">
             No memberships are available right now.
@@ -71,7 +91,7 @@ export default async function JoinPage({ params }: PageProps<"/b/[slug]">) {
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2">
             {plans.map((plan) => (
-              <li key={plan.id} className="grid gap-2 rounded-lg border p-5">
+              <li key={plan.id} className="grid gap-3 rounded-lg border p-5">
                 <h2 className="font-medium">{plan.name}</h2>
                 <p>
                   <span className="text-2xl font-semibold">
@@ -81,6 +101,11 @@ export default async function JoinPage({ params }: PageProps<"/b/[slug]">) {
                     per {plan.billing_interval}
                   </span>
                 </p>
+                <ActionButton
+                  action={joinPlan.bind(null, business.slug, plan.id)}
+                  label="Join"
+                  pendingLabel="Opening checkout..."
+                />
               </li>
             ))}
           </ul>

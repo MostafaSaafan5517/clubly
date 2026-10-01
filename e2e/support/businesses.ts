@@ -84,3 +84,40 @@ export async function addStaff(
     .insert({ business_id: businessId, user_id: profile.id, role });
   if (error) throw error;
 }
+
+/** The user's membership at a business (service role), or null if they haven't joined. */
+export async function findMembership(businessId: string, email: string) {
+  const admin = adminClient();
+  const { data: profile, error: profileError } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .single();
+  if (profileError) throw profileError;
+  const { data, error } = await admin
+    .from("members")
+    .select("id, status, stripe_customer_id")
+    .eq("business_id", businessId)
+    .eq("user_id", profile.id)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/** Suspends (or creates as suspended) a user's membership, as an owner or admin could. */
+export async function suspendMembership(businessId: string, email: string) {
+  const admin = adminClient();
+  const { data: profile, error: profileError } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .single();
+  if (profileError) throw profileError;
+  const { error } = await admin
+    .from("members")
+    .upsert(
+      { business_id: businessId, user_id: profile.id, status: "suspended" },
+      { onConflict: "business_id,user_id" },
+    );
+  if (error) throw error;
+}
