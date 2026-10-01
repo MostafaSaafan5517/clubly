@@ -5,7 +5,11 @@ import {
   uniqueBusinessName,
 } from "./support/businesses";
 import { signInToDashboard } from "./support/forms";
-import { deleteStripeAccount, getStripeAccountId } from "./support/stripe";
+import {
+  connectStripeAccount,
+  deleteStripeAccount,
+  getStripeAccountId,
+} from "./support/stripe";
 import { createConfirmedUser } from "./support/users";
 
 // These tests talk to the real Stripe sandbox (test mode) and clean up the accounts they create.
@@ -69,4 +73,38 @@ test("staff who aren't the owner see the payments status but can't connect payou
   await expect(
     page.getByRole("button", { name: "Connect payouts" }),
   ).toHaveCount(0);
+});
+
+test("an expired onboarding link sends the owner back to Stripe, and nobody else", async ({
+  page,
+  browser,
+}) => {
+  const owner = await createConfirmedUser();
+  const admin = await createConfirmedUser();
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Ridge Runners"),
+  );
+  await addStaff(business.id, admin.email, "admin");
+  const accountId = await connectStripeAccount(business.id);
+  const refreshUrl = `/dashboard/b/${business.slug}/stripe/refresh`;
+
+  try {
+    // Where Stripe sends the owner when an onboarding link has expired or was already used.
+    await signInToDashboard(page, owner);
+    await page.goto(refreshUrl, { waitUntil: "commit" });
+    await page.waitForURL(/^https:\/\/connect\.stripe\.com\//, {
+      waitUntil: "commit",
+    });
+    expect(await getStripeAccountId(business.id)).toBe(accountId);
+
+    const adminPage = await (await browser.newContext()).newPage();
+    await signInToDashboard(adminPage, admin);
+    await adminPage.goto(refreshUrl);
+    await expect(adminPage).toHaveURL(
+      new RegExp(`/dashboard/b/${business.slug}$`),
+    );
+  } finally {
+    await deleteStripeAccount(accountId);
+  }
 });
