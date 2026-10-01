@@ -34,7 +34,7 @@ export default async function AccountPage({
       `id, status,
        businesses (name, slug),
        subscriptions (
-         status, current_period_end, cancel_at_period_end, created_at,
+         status, current_period_end, cancel_at, created_at,
          plans (name, amount, currency, billing_interval)
        )`,
     )

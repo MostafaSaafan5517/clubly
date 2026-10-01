@@ -301,7 +301,7 @@ export type Database = {
       subscriptions: {
         Row: {
           business_id: string;
-          cancel_at_period_end: boolean;
+          cancel_at: string | null;
           created_at: string;
           current_period_end: string | null;
           id: string;
@@ -313,7 +313,7 @@ export type Database = {
         };
         Insert: {
           business_id: string;
-          cancel_at_period_end?: boolean;
+          cancel_at?: string | null;
           created_at?: string;
           current_period_end?: string | null;
           id?: string;
@@ -325,7 +325,7 @@ export type Database = {
         };
         Update: {
           business_id?: string;
-          cancel_at_period_end?: boolean;
+          cancel_at?: string | null;
           created_at?: string;
           current_period_end?: string | null;
           id?: string;

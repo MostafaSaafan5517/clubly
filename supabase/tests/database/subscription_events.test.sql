@@ -1,5 +1,5 @@
 begin;
-select plan(22);
+select plan(24);
 select tests.clear_tenant_data();
 truncate public.stripe_events;
 
@@ -33,17 +33,17 @@ insert into public.members (business_id, user_id, stripe_customer_id) values
 select is(
   public.apply_subscription_event('evt_1', 'customer.subscription.created', 'acct_iron',
     '{"id": "sub_1", "customer_id": "cus_1", "price_id": "price_monthly", "status": "active",
-      "current_period_end": 1798761600, "cancel_at_period_end": false}'),
+      "current_period_end": 1798761600, "cancel_at": null}'),
   'applied',
   'a new subscription event is applied'
 );
 select results_eq(
   $$
-    select s.status::text, p.name, s.current_period_end, s.cancel_at_period_end
+    select s.status::text, p.name, s.current_period_end, s.cancel_at
     from public.subscriptions s join public.plans p on p.id = s.plan_id
     where s.stripe_subscription_id = 'sub_1'
   $$,
-  $$ values ('active', 'Iron Monthly', to_timestamp(1798761600), false) $$,
+  $$ values ('active', 'Iron Monthly', to_timestamp(1798761600), null::timestamptz) $$,
   'it creates the subscription, linked to the member''s plan'
 );
 select is(
@@ -56,7 +56,7 @@ select is(
 select is(
   public.apply_subscription_event('evt_1', 'customer.subscription.created', 'acct_iron',
     '{"id": "sub_1", "customer_id": "cus_1", "price_id": "price_monthly", "status": "canceled",
-      "current_period_end": 1798761600, "cancel_at_period_end": false}'),
+      "current_period_end": 1798761600, "cancel_at": null}'),
   'duplicate',
   'the same event delivered again is reported as a duplicate'
 );
@@ -69,18 +69,30 @@ select is(
 select is(
   public.apply_subscription_event('evt_2', 'customer.subscription.updated', 'acct_iron',
     '{"id": "sub_1", "customer_id": "cus_1", "price_id": "price_yearly", "status": "past_due",
-      "current_period_end": 1830297600, "cancel_at_period_end": true}'),
+      "current_period_end": 1830297600, "cancel_at": 1830297600}'),
   'applied',
   'a later event for the same subscription is applied'
 );
 select results_eq(
   $$
-    select s.status::text, p.name, s.cancel_at_period_end
+    select s.status::text, p.name, s.cancel_at
     from public.subscriptions s join public.plans p on p.id = s.plan_id
     where s.stripe_subscription_id = 'sub_1'
   $$,
-  $$ values ('past_due', 'Iron Yearly', true) $$,
-  'and updates it in place, including a switch to another plan'
+  $$ values ('past_due', 'Iron Yearly', to_timestamp(1830297600)) $$,
+  'and updates it in place, including a switch to another plan and a scheduled end'
+);
+select is(
+  public.apply_subscription_event('evt_2b', 'customer.subscription.updated', 'acct_iron',
+    '{"id": "sub_1", "customer_id": "cus_1", "price_id": "price_yearly", "status": "active",
+      "current_period_end": 1830297600, "cancel_at": null}'),
+  'applied',
+  'a member who renews after canceling sends another update'
+);
+select is(
+  (select cancel_at from public.subscriptions where stripe_subscription_id = 'sub_1'),
+  null::timestamptz,
+  'which clears the scheduled end'
 );
 select is(
   (select count(*)::int from public.subscriptions),
@@ -93,21 +105,21 @@ select is(
 select is(
   public.apply_subscription_event('evt_3', 'customer.subscription.created', 'acct_iron',
     '{"id": "sub_x", "customer_id": "cus_unknown", "price_id": "price_monthly",
-      "status": "active", "current_period_end": null, "cancel_at_period_end": false}'),
+      "status": "active", "current_period_end": null, "cancel_at": null}'),
   'ignored',
   'a subscription for an unknown customer is ignored'
 );
 select is(
   public.apply_subscription_event('evt_4', 'customer.subscription.created', 'acct_yoga',
     '{"id": "sub_y", "customer_id": "cus_1", "price_id": "price_monthly",
-      "status": "active", "current_period_end": null, "cancel_at_period_end": false}'),
+      "status": "active", "current_period_end": null, "cancel_at": null}'),
   'ignored',
   'an event from another business''s Stripe account cannot touch this business''s member'
 );
 select is(
   public.apply_subscription_event('evt_5', 'customer.subscription.created', 'acct_iron',
     '{"id": "sub_z", "customer_id": "cus_1", "price_id": "price_yoga",
-      "status": "active", "current_period_end": null, "cancel_at_period_end": false}'),
+      "status": "active", "current_period_end": null, "cancel_at": null}'),
   'ignored',
   'a price from another business cannot be linked to this business''s member'
 );
@@ -127,7 +139,7 @@ select results_eq(
 select is(
   public.apply_invoice_event('evt_6', 'invoice.payment_failed', 'acct_iron',
     '{"id": "sub_1", "customer_id": "cus_1", "price_id": "price_yearly", "status": "past_due",
-      "current_period_end": 1830297600, "cancel_at_period_end": false}',
+      "current_period_end": 1830297600, "cancel_at": null}',
     '{"id": "in_1", "amount": 30000, "application_fee": 0, "currency": "usd",
       "status": "failed", "paid_at": null}'),
   'applied',
@@ -142,7 +154,7 @@ select results_eq(
 select is(
   public.apply_invoice_event('evt_7', 'invoice.paid', 'acct_iron',
     '{"id": "sub_1", "customer_id": "cus_1", "price_id": "price_yearly", "status": "active",
-      "current_period_end": 1830297600, "cancel_at_period_end": false}',
+      "current_period_end": 1830297600, "cancel_at": null}',
     '{"id": "in_1", "amount": 30000, "application_fee": 1500, "currency": "usd",
       "status": "paid", "paid_at": 1799000000}'),
   'applied',
@@ -166,7 +178,7 @@ select is(
 select is(
   public.apply_invoice_event('evt_8', 'invoice.paid', 'acct_yoga',
     '{"id": "sub_b", "customer_id": "cus_b", "price_id": "price_yoga", "status": "active",
-      "current_period_end": 1798761600, "cancel_at_period_end": false}',
+      "current_period_end": 1798761600, "cancel_at": null}',
     '{"id": "in_b", "amount": 4000, "application_fee": 200, "currency": "usd",
       "status": "paid", "paid_at": 1798000000}'),
   'applied',

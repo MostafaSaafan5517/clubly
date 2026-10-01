@@ -7,7 +7,8 @@ export type SubscriptionSnapshot = {
   price_id: string | null;
   status: Stripe.Subscription.Status;
   current_period_end: number | null;
-  cancel_at_period_end: boolean;
+  /** When Stripe will end the subscription, if an end is scheduled. */
+  cancel_at: number | null;
 };
 
 /** The parts of a Stripe invoice we keep, shaped as the database functions expect. */
@@ -33,6 +34,7 @@ export function toSubscriptionSnapshot(
 ): SubscriptionSnapshot {
   // Each of our subscriptions has exactly one item: the plan's price.
   const item = subscription.items.data[0];
+  const periodEnd = item?.current_period_end ?? null;
   return {
     id: subscription.id,
     customer_id:
@@ -42,8 +44,12 @@ export function toSubscriptionSnapshot(
     price_id: item?.price.id ?? null,
     status: subscription.status,
     // Billing periods live on subscription items in current Stripe API versions.
-    current_period_end: item?.current_period_end ?? null,
-    cancel_at_period_end: subscription.cancel_at_period_end,
+    current_period_end: periodEnd,
+    // Stripe schedules an end either with a date (what the Customer Portal does) or with the
+    // cancel_at_period_end flag (the date is then the period's end).
+    cancel_at:
+      subscription.cancel_at ??
+      (subscription.cancel_at_period_end ? periodEnd : null),
   };
 }
 

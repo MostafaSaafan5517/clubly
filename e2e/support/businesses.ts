@@ -159,7 +159,7 @@ export async function addSubscription(
   subscription: {
     status: "active" | "trialing" | "past_due" | "canceled";
     currentPeriodEnd?: string;
-    cancelAtPeriodEnd?: boolean;
+    cancelAt?: string;
   },
 ) {
   const { error } = await adminClient()
@@ -171,7 +171,7 @@ export async function addSubscription(
       stripe_subscription_id: `sub_test_${crypto.randomUUID()}`,
       status: subscription.status,
       current_period_end: subscription.currentPeriodEnd ?? null,
-      cancel_at_period_end: subscription.cancelAtPeriodEnd ?? false,
+      cancel_at: subscription.cancelAt ?? null,
     });
   if (error) throw error;
 }

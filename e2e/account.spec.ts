@@ -42,7 +42,7 @@ test("members see each membership with its plan, status and what happens next", 
     {
       status: "active",
       currentPeriodEnd: "2027-03-01T12:00:00Z",
-      cancelAtPeriodEnd: true,
+      cancelAt: "2027-03-01T12:00:00Z",
     },
   );
   await addMember(club.id, member.email);

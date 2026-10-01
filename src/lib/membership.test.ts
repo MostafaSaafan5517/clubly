@@ -59,26 +59,26 @@ describe("describeSubscription", () => {
       describeSubscription({
         status: "active",
         current_period_end: periodEnd,
-        cancel_at_period_end: false,
+        cancel_at: null,
       }),
     ).toEqual({ label: "Active", detail: "Renews on November 1, 2026" });
   });
 
-  it("shows when a canceled-at-period-end subscription stops", () => {
+  it("shows when a subscription that's been canceled stops", () => {
     expect(
       describeSubscription({
         status: "active",
         current_period_end: periodEnd,
-        cancel_at_period_end: true,
+        cancel_at: periodEnd,
       }),
     ).toEqual({ label: "Canceling", detail: "Ends on November 1, 2026" });
     expect(
       describeSubscription({
         status: "trialing",
         current_period_end: periodEnd,
-        cancel_at_period_end: true,
+        cancel_at: "2026-10-20T12:00:00+00:00",
       }),
-    ).toEqual({ label: "Trial", detail: "Ends on November 1, 2026" });
+    ).toEqual({ label: "Trial", detail: "Ends on October 20, 2026" });
   });
 
   it("shows when a trial's first payment is due", () => {
@@ -86,7 +86,7 @@ describe("describeSubscription", () => {
       describeSubscription({
         status: "trialing",
         current_period_end: periodEnd,
-        cancel_at_period_end: false,
+        cancel_at: null,
       }),
     ).toEqual({ label: "Trial", detail: "First payment on November 1, 2026" });
   });
@@ -97,7 +97,7 @@ describe("describeSubscription", () => {
         status: "active",
         // Already November 1 east of UTC (Cairo, for one).
         current_period_end: "2026-10-31T23:30:00+00:00",
-        cancel_at_period_end: false,
+        cancel_at: null,
       }).detail,
     ).toBe("Renews on October 31, 2026");
   });
@@ -107,7 +107,7 @@ describe("describeSubscription", () => {
       describeSubscription({
         status: "past_due",
         current_period_end: periodEnd,
-        cancel_at_period_end: false,
+        cancel_at: null,
       }),
     ).toEqual({
       label: "Payment failed",
@@ -120,7 +120,7 @@ describe("describeSubscription", () => {
       describeSubscription({
         status: "active",
         current_period_end: null,
-        cancel_at_period_end: false,
+        cancel_at: null,
       }),
     ).toEqual({ label: "Active", detail: null });
   });
@@ -130,7 +130,7 @@ describe("describeSubscription", () => {
       describeSubscription({
         status: "canceled",
         current_period_end: periodEnd,
-        cancel_at_period_end: false,
+        cancel_at: null,
       }),
     ).toEqual({ label: "Ended", detail: null });
   });

@@ -46,7 +46,7 @@ function subscription(
     price_id: "price_1",
     status: "active",
     current_period_end: 1_800_000_000,
-    cancel_at_period_end: false,
+    cancel_at: null,
     ...overrides,
   };
 }
@@ -408,25 +408,55 @@ describe("Stripe webhook: invoices", () => {
 });
 
 describe("snapshots of Stripe objects", () => {
-  it("reads a subscription's price and billing period from its item", () => {
-    const snapshot = toSubscriptionSnapshot({
+  function stripeSubscription(
+    cancellation: Pick<
+      Stripe.Subscription,
+      "cancel_at" | "cancel_at_period_end"
+    >,
+  ) {
+    return {
       id: "sub_1",
       customer: { id: "cus_1" },
       status: "trialing",
-      cancel_at_period_end: true,
+      ...cancellation,
       items: {
         data: [{ price: { id: "price_1" }, current_period_end: 1_800_000_000 }],
       },
-    } as unknown as Stripe.Subscription);
+    } as unknown as Stripe.Subscription;
+  }
 
-    expect(snapshot).toEqual({
+  it("reads a subscription's price and billing period from its item", () => {
+    expect(
+      toSubscriptionSnapshot(
+        stripeSubscription({ cancel_at: null, cancel_at_period_end: false }),
+      ),
+    ).toEqual({
       id: "sub_1",
       customer_id: "cus_1",
       price_id: "price_1",
       status: "trialing",
       current_period_end: 1_800_000_000,
-      cancel_at_period_end: true,
+      cancel_at: null,
     });
+  });
+
+  it("keeps the end date the Customer Portal schedules (cancel_at, flag left false)", () => {
+    expect(
+      toSubscriptionSnapshot(
+        stripeSubscription({
+          cancel_at: 1_800_000_000,
+          cancel_at_period_end: false,
+        }),
+      ).cancel_at,
+    ).toBe(1_800_000_000);
+  });
+
+  it("turns cancel_at_period_end into the period's end date", () => {
+    expect(
+      toSubscriptionSnapshot(
+        stripeSubscription({ cancel_at: null, cancel_at_period_end: true }),
+      ).cancel_at,
+    ).toBe(1_800_000_000);
   });
 
   it("takes a paid invoice's application fee from its payment, where Stripe records it", () => {

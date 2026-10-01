@@ -45,22 +45,22 @@ const dateFormat = new Intl.DateTimeFormat("en-US", {
 export function describeSubscription(subscription: {
   status: SubscriptionStatus;
   current_period_end: string | null;
-  cancel_at_period_end: boolean;
+  cancel_at: string | null;
 }): { label: string; detail: string | null } {
-  const periodEnd = subscription.current_period_end
-    ? dateFormat.format(new Date(subscription.current_period_end))
-    : null;
+  const format = (date: string | null) =>
+    date ? dateFormat.format(new Date(date)) : null;
+  const periodEnd = format(subscription.current_period_end);
+  const endsOn = format(subscription.cancel_at);
+  // A scheduled end wins over the next renewal: that renewal won't happen.
   const endsOrRenews = (renewal: string) => {
-    if (!periodEnd) return null;
-    return subscription.cancel_at_period_end
-      ? `Ends on ${periodEnd}`
-      : `${renewal} ${periodEnd}`;
+    if (endsOn) return `Ends on ${endsOn}`;
+    return periodEnd ? `${renewal} ${periodEnd}` : null;
   };
 
   switch (subscription.status) {
     case "active":
       return {
-        label: subscription.cancel_at_period_end ? "Canceling" : "Active",
+        label: endsOn ? "Canceling" : "Active",
         detail: endsOrRenews("Renews on"),
       };
     case "trialing":
