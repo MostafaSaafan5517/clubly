@@ -9,3 +9,14 @@ const dateFormat = new Intl.DateTimeFormat("en-US", {
 export function formatDate(timestamp: string | Date) {
   return dateFormat.format(new Date(timestamp));
 }
+
+const dateTimeFormat = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "UTC",
+});
+
+/** A timestamp with its time of day, in UTC ("Nov 1, 2026, 9:05 PM UTC"). */
+export function formatDateTime(timestamp: string | Date) {
+  return `${dateTimeFormat.format(new Date(timestamp))} UTC`;
+}
