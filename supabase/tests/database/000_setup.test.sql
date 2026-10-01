@@ -43,6 +43,16 @@ as $$
   select id from public.businesses where businesses.slug = business_id.slug;
 $$;
 
+-- Empties the tenant tables for the rest of the transaction, so a test sees only its own
+-- fixtures, not data left in a local database by the app or by Playwright runs. TRUNCATE is
+-- transactional in Postgres: the test's final rollback brings everything back.
+create or replace function tests.clear_tenant_data()
+returns void
+language sql
+as $$
+  truncate public.members, public.plans, public.business_staff, public.businesses;
+$$;
+
 -- Makes the rest of the transaction run as that user, exactly as the API would: the
 -- `authenticated` role, with auth.uid() returning their id. `reset role` switches back.
 -- (Security invoker on purpose: Postgres forbids changing role inside a security definer.)

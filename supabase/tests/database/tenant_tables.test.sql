@@ -1,5 +1,6 @@
 begin;
 select plan(24);
+select tests.clear_tenant_data();
 
 -- Structure
 select tables_are(

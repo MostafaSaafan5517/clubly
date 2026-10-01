@@ -1,5 +1,6 @@
 begin;
 select plan(16);
+select tests.clear_tenant_data();
 
 select tests.create_user('owner-a@test.local');
 select tests.create_user('admin-a@test.local');

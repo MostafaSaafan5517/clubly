@@ -2,6 +2,7 @@
 -- needs, and nothing else.
 begin;
 select plan(11);
+select tests.clear_tenant_data();
 
 select tests.create_user('owner-a@test.local');
 select tests.create_user('owner-b@test.local');
