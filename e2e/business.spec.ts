@@ -1,17 +1,18 @@
 import { expect, test } from "@playwright/test";
 import { slugify } from "@/lib/slug";
+import {
+  createBusinessFor,
+  enableCharges,
+  uniqueBusinessName,
+} from "./support/businesses";
 import { formError, signInToDashboard } from "./support/forms";
 import { createConfirmedUser } from "./support/users";
-
-function uniqueName(base: string) {
-  return `${base} ${crypto.randomUUID().slice(0, 8)}`;
-}
 
 test("a new owner creates their business from the dashboard", async ({
   page,
 }) => {
   const owner = await createConfirmedUser("Olivia Owner");
-  const businessName = uniqueName("Iron Gym");
+  const businessName = uniqueBusinessName("Iron Gym");
 
   await signInToDashboard(page, owner);
   await expect(page.getByText("You don't have a business yet")).toBeVisible();
@@ -37,8 +38,8 @@ test("two owners: web addresses are unique, and each sees only their own busines
 }) => {
   const firstOwner = await createConfirmedUser("First Owner");
   const secondOwner = await createConfirmedUser("Second Owner");
-  const firstName = uniqueName("Harbor Yoga");
-  const secondName = uniqueName("Summit Climbing");
+  const firstName = uniqueBusinessName("Harbor Yoga");
+  const secondName = uniqueBusinessName("Summit Climbing");
 
   await signInToDashboard(page, firstOwner);
   await page.goto("/dashboard/new-business");
@@ -72,4 +73,40 @@ test("two owners: web addresses are unique, and each sees only their own busines
 test("creating a business requires signing in", async ({ page }) => {
   await page.goto("/dashboard/new-business");
   await expect(page).toHaveURL(/\/login\?next=%2Fdashboard%2Fnew-business$/);
+});
+
+test("staff open their business page from the dashboard", async ({ page }) => {
+  const owner = await createConfirmedUser("Bianca Business");
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Riverside Boxing"),
+  );
+
+  await signInToDashboard(page, owner);
+  await page.getByRole("link", { name: business.name }).click();
+  await expect(page).toHaveURL(new RegExp(`/dashboard/b/${business.slug}$`));
+  await expect(
+    page.getByRole("heading", { level: 1, name: business.name }),
+  ).toBeVisible();
+  await expect(page.getByText("You own this business.")).toBeVisible();
+  await expect(page.getByText("No plans yet.")).toBeVisible();
+});
+
+test("another business's page is a 404, even once that business is public", async ({
+  page,
+}) => {
+  const owner = await createConfirmedUser();
+  const outsider = await createConfirmedUser();
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Private Pilates"),
+  );
+  // Once a business takes payments, every signed-in user may read its public details (for the
+  // join page). Its admin page must still refuse anyone who isn't staff.
+  await enableCharges(business.id);
+
+  await signInToDashboard(page, outsider);
+  const response = await page.goto(`/dashboard/b/${business.slug}`);
+  expect(response?.status()).toBe(404);
+  await expect(page.getByText(business.name)).toHaveCount(0);
 });

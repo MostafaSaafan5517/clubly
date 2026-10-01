@@ -87,7 +87,12 @@ export default async function DashboardPage() {
                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-4"
               >
                 <div className="grid gap-0.5">
-                  <span className="font-medium">{business.name}</span>
+                  <Link
+                    href={`/dashboard/b/${business.slug}`}
+                    className="font-medium underline-offset-4 hover:underline"
+                  >
+                    {business.name}
+                  </Link>
                   <span className="text-sm text-muted-foreground">
                     {roleLabels[role]}
                   </span>
