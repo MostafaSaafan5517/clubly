@@ -142,6 +142,70 @@ export type Database = {
           },
         ];
       };
+      payments: {
+        Row: {
+          amount: number;
+          application_fee: number;
+          business_id: string;
+          created_at: string;
+          currency: string;
+          id: string;
+          member_id: string;
+          paid_at: string | null;
+          status: Database["public"]["Enums"]["payment_status"];
+          stripe_invoice_id: string;
+          subscription_id: string | null;
+        };
+        Insert: {
+          amount: number;
+          application_fee?: number;
+          business_id: string;
+          created_at?: string;
+          currency: string;
+          id?: string;
+          member_id: string;
+          paid_at?: string | null;
+          status: Database["public"]["Enums"]["payment_status"];
+          stripe_invoice_id: string;
+          subscription_id?: string | null;
+        };
+        Update: {
+          amount?: number;
+          application_fee?: number;
+          business_id?: string;
+          created_at?: string;
+          currency?: string;
+          id?: string;
+          member_id?: string;
+          paid_at?: string | null;
+          status?: Database["public"]["Enums"]["payment_status"];
+          stripe_invoice_id?: string;
+          subscription_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payments_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payments_member_id_business_id_fkey";
+            columns: ["member_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "members";
+            referencedColumns: ["id", "business_id"];
+          },
+          {
+            foreignKeyName: "payments_subscription_id_fkey";
+            columns: ["subscription_id"];
+            isOneToOne: false;
+            referencedRelation: "subscriptions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       plans: {
         Row: {
           active: boolean;
@@ -231,6 +295,67 @@ export type Database = {
         };
         Relationships: [];
       };
+      subscriptions: {
+        Row: {
+          business_id: string;
+          cancel_at_period_end: boolean;
+          created_at: string;
+          current_period_end: string | null;
+          id: string;
+          member_id: string;
+          plan_id: string;
+          status: Database["public"]["Enums"]["subscription_status"];
+          stripe_subscription_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          business_id: string;
+          cancel_at_period_end?: boolean;
+          created_at?: string;
+          current_period_end?: string | null;
+          id?: string;
+          member_id: string;
+          plan_id: string;
+          status: Database["public"]["Enums"]["subscription_status"];
+          stripe_subscription_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          business_id?: string;
+          cancel_at_period_end?: boolean;
+          created_at?: string;
+          current_period_end?: string | null;
+          id?: string;
+          member_id?: string;
+          plan_id?: string;
+          status?: Database["public"]["Enums"]["subscription_status"];
+          stripe_subscription_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "subscriptions_member_id_business_id_fkey";
+            columns: ["member_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "members";
+            referencedColumns: ["id", "business_id"];
+          },
+          {
+            foreignKeyName: "subscriptions_plan_id_business_id_fkey";
+            columns: ["plan_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "plans";
+            referencedColumns: ["id", "business_id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -252,7 +377,17 @@ export type Database = {
     Enums: {
       billing_interval: "month" | "year";
       member_status: "active" | "suspended";
+      payment_status: "paid" | "failed";
       staff_role: "owner" | "admin" | "staff";
+      subscription_status:
+        | "incomplete"
+        | "incomplete_expired"
+        | "trialing"
+        | "active"
+        | "past_due"
+        | "canceled"
+        | "unpaid"
+        | "paused";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -385,7 +520,18 @@ export const Constants = {
     Enums: {
       billing_interval: ["month", "year"],
       member_status: ["active", "suspended"],
+      payment_status: ["paid", "failed"],
       staff_role: ["owner", "admin", "staff"],
+      subscription_status: [
+        "incomplete",
+        "incomplete_expired",
+        "trialing",
+        "active",
+        "past_due",
+        "canceled",
+        "unpaid",
+        "paused",
+      ],
     },
   },
 } as const;

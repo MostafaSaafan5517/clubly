@@ -1,11 +1,14 @@
 begin;
-select plan(26);
+select plan(30);
 select tests.clear_tenant_data();
 
 -- Structure
 select tables_are(
   'public',
-  array['profiles', 'businesses', 'business_staff', 'plans', 'members', 'stripe_events'],
+  array[
+    'profiles', 'businesses', 'business_staff', 'plans', 'members', 'stripe_events',
+    'subscriptions', 'payments'
+  ],
   'public contains exactly the expected tables'
 );
 
@@ -35,6 +38,11 @@ select table_privs_are('public', 'members', 'authenticated', array[]::text[]);
 -- Processed Stripe events are for the webhook route (service role) only.
 select table_privs_are('public', 'stripe_events', 'anon', array[]::text[]);
 select table_privs_are('public', 'stripe_events', 'authenticated', array[]::text[]);
+-- Subscriptions and payments are read per column and written only by server code.
+select table_privs_are('public', 'subscriptions', 'anon', array[]::text[]);
+select table_privs_are('public', 'subscriptions', 'authenticated', array[]::text[]);
+select table_privs_are('public', 'payments', 'anon', array[]::text[]);
+select table_privs_are('public', 'payments', 'authenticated', array[]::text[]);
 
 -- Fixtures: two users (profiles come from the auth trigger) and one business.
 insert into auth.users (id, email) values
