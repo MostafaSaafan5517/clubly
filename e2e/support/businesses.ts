@@ -39,15 +39,35 @@ export async function createBusinessFor(
   return { id: id as string, name, slug };
 }
 
+function adminClient() {
+  const { url, secretKey } = supabaseSettings();
+  return createClient(url, secretKey, { auth: { persistSession: false } });
+}
+
 /** Marks a business as able to take payments, which is what the Stripe webhook will do. */
 export async function enableCharges(businessId: string) {
-  const { url, secretKey } = supabaseSettings();
-  const admin = createClient(url, secretKey, {
-    auth: { persistSession: false },
-  });
-  const { error } = await admin
+  const { error } = await adminClient()
     .from("businesses")
     .update({ charges_enabled: true })
     .eq("id", businessId);
+  if (error) throw error;
+}
+
+/** Adds an existing user to a business's staff (what an owner or admin can do). */
+export async function addStaff(
+  businessId: string,
+  email: string,
+  role: "admin" | "staff",
+) {
+  const admin = adminClient();
+  const { data: profile, error: profileError } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .single();
+  if (profileError) throw profileError;
+  const { error } = await admin
+    .from("business_staff")
+    .insert({ business_id: businessId, user_id: profile.id, role });
   if (error) throw error;
 }

@@ -50,6 +50,15 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Server Actions validate input with zod and return `{ error, fields }` to `useActionState` forms. Auth errors are mapped to our own messages. Neither sign-up nor the email-link form (`/magic-link`, existing accounts only) reveals whether an email is registered: both always answer "check your email".
 - Local email confirmation is on (like hosted Supabase), and every email lands in Mailpit (http://127.0.0.1:54324). E2E tests read links from Mailpit's API (`e2e/support/mailpit.ts`).
 
+## Stripe conventions
+
+- Test mode only. `src/lib/stripe/server.ts` refuses any key that isn't `sk_test_`. Stripe and service-role code is `server-only`, so importing it from a client component fails the build.
+- Every business gets one connected account. Express-style accounts are created through `controller` settings (Stripe hosts onboarding and a light dashboard; the platform pays Stripe fees and covers negative balances), with `type: "express"` avoided because it's deprecated. We use the v1 Accounts API; the SDK's suggestion to move to Accounts v2 is a possible later upgrade.
+- Account creation uses an idempotency key per business, and the id is stored only into an empty slot, so double-clicks and races can't create or overwrite a second account.
+- Only the owner can start onboarding (payouts go to their bank). Returning from Stripe never marks a business as ready: only Stripe's `account.updated` webhook sets `charges_enabled`.
+- Pages and actions find the business through `getStaffBusiness()` (`src/lib/business.ts`): the staff row, not just the business, because public businesses are readable by every signed-in user. Non-staff get a 404.
+- E2E tests that create Stripe objects run against the sandbox and delete them afterwards (`e2e/support/stripe.ts`). CI reads the key from the `STRIPE_SECRET_KEY` repository secret.
+
 ## Database conventions
 
 - Every schema change is a SQL migration (`pnpm supabase migration new <name>`), never a click in Studio. `pnpm supabase db reset` must rebuild the whole database from the migrations alone.
@@ -76,7 +85,8 @@ src/
   components/ui/     shadcn/ui components (owned code, edited freely)
   config/            App-wide constants (the product name lives here)
   lib/               Helpers (money formatting, ...)
-  lib/supabase/      Supabase settings, clients and generated database types
+  lib/supabase/      Supabase settings, clients (incl. server-only admin) and generated types
+  lib/stripe/        Server-only Stripe client and Connect helpers
   proxy.ts           Runs before every request; refreshes the Supabase session
 scripts/             Dev tooling (writing .env.local)
 e2e/                 Playwright end-to-end specs (*.spec.ts)

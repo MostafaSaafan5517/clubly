@@ -45,6 +45,10 @@ jobs:
     name: End-to-end tests (Playwright)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # Stripe sandbox (test-mode) key, stored as an encrypted repository secret. The app
+      # refuses to start with a live key.
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup

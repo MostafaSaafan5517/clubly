@@ -1,5 +1,5 @@
 begin;
-select plan(16);
+select plan(19);
 select tests.clear_tenant_data();
 
 select tests.create_user('owner-a@test.local');
@@ -130,6 +130,30 @@ select results_eq(
   $$ values ('iron-gym', false, null::text) $$,
   'the business is unchanged after the refused changes'
 );
+
+-- Stripe connection status ----------------------------------------------------------------
+
+-- What server code does once the owner starts Stripe onboarding.
+update public.businesses set stripe_account_id = 'acct_iron' where slug = 'iron-gym';
+
+select tests.authenticate_as('owner-a@test.local');
+select results_eq(
+  $$ select has_stripe_account from public.businesses where slug = 'iron-gym' $$,
+  $$ values (true) $$,
+  'staff can see whether their business has a Stripe account'
+);
+select throws_ok(
+  $$ select stripe_account_id from public.businesses $$,
+  '42501', 'permission denied for table businesses',
+  'staff cannot read the Stripe account id itself'
+);
+-- Postgres rejects writes to a generated column before it even checks privileges.
+select throws_ok(
+  $$ update public.businesses set has_stripe_account = false where slug = 'iron-gym' $$,
+  '428C9', 'column "has_stripe_account" can only be updated to DEFAULT',
+  'nobody can change the flag; it always follows the account id'
+);
+reset role;
 
 select * from finish();
 rollback;

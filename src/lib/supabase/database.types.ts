@@ -74,6 +74,7 @@ export type Database = {
         Row: {
           charges_enabled: boolean;
           created_at: string;
+          has_stripe_account: boolean | null;
           id: string;
           name: string;
           slug: string;
@@ -82,6 +83,7 @@ export type Database = {
         Insert: {
           charges_enabled?: boolean;
           created_at?: string;
+          has_stripe_account?: never;
           id?: string;
           name: string;
           slug: string;
@@ -90,6 +92,7 @@ export type Database = {
         Update: {
           charges_enabled?: boolean;
           created_at?: string;
+          has_stripe_account?: never;
           id?: string;
           name?: string;
           slug?: string;

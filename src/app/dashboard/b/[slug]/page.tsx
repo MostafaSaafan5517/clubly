@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { startStripeOnboarding } from "@/app/dashboard/b/[slug]/actions";
+import { PayoutsButton } from "@/app/dashboard/b/[slug]/payouts-button";
+import { appConfig } from "@/config/app";
 import { requireUser } from "@/lib/auth";
+import { getStaffBusiness } from "@/lib/business";
 import { formatAmount } from "@/lib/money";
 
 export const metadata: Metadata = { title: "Business" };
@@ -13,23 +17,17 @@ const roleDescriptions = {
 
 export default async function BusinessPage({
   params,
+  searchParams,
 }: PageProps<"/dashboard/b/[slug]">) {
   const { slug } = await params;
+  const { stripe: stripeReturn } = await searchParams;
   const { supabase, userId } = await requireUser(`/dashboard/b/${slug}`);
 
-  // Staff only. Reading the business alone isn't enough: once a business takes payments, RLS
-  // lets every signed-in user read its public details for the join page. A 404 (not a 403)
-  // also avoids confirming that a business exists to someone who doesn't work there.
-  const { data: staffRow, error } = await supabase
-    .from("business_staff")
-    .select("role, businesses!inner(id, name, slug, charges_enabled)")
-    .eq("user_id", userId)
-    .eq("businesses.slug", slug)
-    .maybeSingle();
-  if (error) throw new Error(`Could not load the business: ${error.message}`);
-  if (!staffRow) notFound();
+  // Staff only; a 404 (not a 403) also avoids confirming the business exists to outsiders.
+  const staff = await getStaffBusiness(supabase, userId, slug);
+  if (!staff) notFound();
+  const { business, role } = staff;
 
-  const business = staffRow.businesses;
   const { data: plans, error: plansError } = await supabase
     .from("plans")
     .select("id, name, billing_interval, amount, currency, active")
@@ -39,16 +37,64 @@ export default async function BusinessPage({
     throw new Error(`Could not load plans: ${plansError.message}`);
   }
 
+  const isOwner = role === "owner";
+  const connectPayouts = startStripeOnboarding.bind(null, business.slug);
+
   return (
     <>
       <div className="grid gap-1">
         <h1 className="text-2xl font-semibold tracking-tight">
           {business.name}
         </h1>
-        <p className="text-muted-foreground">
-          {roleDescriptions[staffRow.role]}
-        </p>
+        <p className="text-muted-foreground">{roleDescriptions[role]}</p>
       </div>
+
+      <section className="grid gap-3" aria-labelledby="payments-heading">
+        <h2 id="payments-heading" className="text-lg font-semibold">
+          Payments
+        </h2>
+        <div className="grid gap-3 rounded-lg border p-4">
+          {business.charges_enabled ? (
+            <p>
+              Ready to take payments. Members pay straight into your Stripe
+              account.
+            </p>
+          ) : business.has_stripe_account ? (
+            <>
+              <p>Stripe setup isn&apos;t finished yet.</p>
+              {stripeReturn === "returned" && (
+                <p role="status" className="text-sm text-muted-foreground">
+                  Thanks! Stripe is checking your details. This page shows
+                  &ldquo;Ready to take payments&rdquo; as soon as Stripe
+                  confirms, which can take a minute.
+                </p>
+              )}
+              {isOwner && (
+                <PayoutsButton action={connectPayouts} label="Continue setup" />
+              )}
+            </>
+          ) : (
+            <>
+              <p>
+                Connect a Stripe account to get paid. Members&apos; payments go
+                straight to it, and {appConfig.name} keeps a small fee on each
+                one.
+              </p>
+              {isOwner && (
+                <PayoutsButton
+                  action={connectPayouts}
+                  label="Connect payouts"
+                />
+              )}
+            </>
+          )}
+          {!isOwner && !business.charges_enabled && (
+            <p className="text-sm text-muted-foreground">
+              Only the owner can set up payouts.
+            </p>
+          )}
+        </div>
+      </section>
 
       <section className="grid gap-3" aria-labelledby="plans-heading">
         <h2 id="plans-heading" className="text-lg font-semibold">
