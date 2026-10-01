@@ -2,7 +2,8 @@ import "server-only";
 import { stripe } from "@/lib/stripe/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
-async function storedAccountId(businessId: string) {
+/** The business's connected Stripe account id, or null if it hasn't connected one. */
+export async function storedAccountId(businessId: string) {
   const { data, error } = await supabaseAdmin
     .from("businesses")
     .select("stripe_account_id")

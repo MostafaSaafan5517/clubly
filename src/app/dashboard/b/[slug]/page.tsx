@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { startStripeOnboarding } from "@/app/dashboard/b/[slug]/actions";
 import { PayoutsButton } from "@/app/dashboard/b/[slug]/payouts-button";
+import { buttonVariants } from "@/components/ui/button";
 import { appConfig } from "@/config/app";
 import { requireUser } from "@/lib/auth";
 import { getStaffBusiness } from "@/lib/business";
@@ -30,7 +32,9 @@ export default async function BusinessPage({
 
   const { data: plans, error: plansError } = await supabase
     .from("plans")
-    .select("id, name, billing_interval, amount, currency, active")
+    .select(
+      "id, name, billing_interval, amount, currency, active, has_stripe_price",
+    )
     .eq("business_id", business.id)
     .order("created_at");
   if (plansError) {
@@ -38,6 +42,7 @@ export default async function BusinessPage({
   }
 
   const isOwner = role === "owner";
+  const canManagePlans = role !== "staff" && business.has_stripe_account;
   const connectPayouts = startStripeOnboarding.bind(null, business.slug);
 
   return (
@@ -97,9 +102,19 @@ export default async function BusinessPage({
       </section>
 
       <section className="grid gap-3" aria-labelledby="plans-heading">
-        <h2 id="plans-heading" className="text-lg font-semibold">
-          Plans
-        </h2>
+        <div className="flex items-center justify-between gap-4">
+          <h2 id="plans-heading" className="text-lg font-semibold">
+            Plans
+          </h2>
+          {canManagePlans && (
+            <Link
+              href={`/dashboard/b/${business.slug}/plans/new`}
+              className={buttonVariants({ variant: "outline" })}
+            >
+              New plan
+            </Link>
+          )}
+        </div>
         {plans.length === 0 ? (
           <p className="rounded-lg border p-4 text-sm text-muted-foreground">
             No plans yet.
@@ -118,10 +133,17 @@ export default async function BusinessPage({
                     {plan.billing_interval}
                   </span>
                 </div>
-                {!plan.active && (
+                {!plan.active ? (
                   <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
                     Archived
                   </span>
+                ) : (
+                  !plan.has_stripe_price && (
+                    // Only seen if creating the Stripe price was interrupted.
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                      Not ready
+                    </span>
+                  )
                 )}
               </li>
             ))}

@@ -15,7 +15,9 @@ export default defineConfig({
   retries: isCI ? 2 : 0,
   reporter: isCI ? [["github"], ["html", { open: "never" }]] : "list",
   // Locally the dev server compiles each route on its first visit, which can take several
-  // seconds while tests run in parallel. CI runs the production build and keeps the default.
+  // seconds while tests run in parallel (and some tests also wait on the Stripe sandbox). CI
+  // runs the production build and keeps Playwright's defaults.
+  timeout: isCI ? 30_000 : 60_000,
   expect: { timeout: isCI ? 5_000 : 15_000 },
   use: {
     baseURL,

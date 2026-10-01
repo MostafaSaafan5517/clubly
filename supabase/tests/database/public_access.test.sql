@@ -21,6 +21,8 @@ where slug = 'iron-gym';
 insert into public.plans (business_id, name, billing_interval, amount, active, stripe_price_id) values
   (tests.business_id('iron-gym'), 'Monthly', 'month', 3000, true, 'price_iron_monthly'),
   (tests.business_id('iron-gym'), 'Old Yearly', 'year', 25000, false, null),
+  -- Active, but its Stripe price hasn't been created yet, so nobody could buy it.
+  (tests.business_id('iron-gym'), 'Half-made', 'month', 1000, true, null),
   (tests.business_id('yoga-loft'), 'Yoga Monthly', 'month', 4000, true, null);
 
 insert into public.members (business_id, user_id)
@@ -37,7 +39,7 @@ select results_eq(
 select results_eq(
   $$ select name, billing_interval::text, amount, currency from public.plans $$,
   $$ values ('Monthly', 'month', 3000, 'usd') $$,
-  'visitors see only active plans of businesses that take payments'
+  'visitors see only active plans with a Stripe price, of businesses that take payments'
 );
 
 -- What it must not read

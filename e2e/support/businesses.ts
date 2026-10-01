@@ -1,15 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { slugify } from "@/lib/slug";
-
-function supabaseSettings() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  const secretKey = process.env.SUPABASE_SECRET_KEY;
-  if (!url || !publishableKey || !secretKey) {
-    throw new Error("Missing Supabase settings: run `pnpm env:local` first.");
-  }
-  return { url, publishableKey, secretKey };
-}
+import { adminClient, supabaseSettings } from "./supabase";
 
 export function uniqueBusinessName(base: string) {
   return `${base} ${crypto.randomUUID().slice(0, 8)}`;
@@ -37,11 +28,6 @@ export async function createBusinessFor(
   });
   if (error) throw error;
   return { id: id as string, name, slug };
-}
-
-function adminClient() {
-  const { url, secretKey } = supabaseSettings();
-  return createClient(url, secretKey, { auth: { persistSession: false } });
 }
 
 /** Marks a business as able to take payments, which is what the Stripe webhook will do. */

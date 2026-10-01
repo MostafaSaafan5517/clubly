@@ -150,6 +150,7 @@ export type Database = {
           business_id: string;
           created_at: string;
           currency: string;
+          has_stripe_price: boolean | null;
           id: string;
           name: string;
           stripe_price_id: string | null;
@@ -161,6 +162,7 @@ export type Database = {
           business_id: string;
           created_at?: string;
           currency?: string;
+          has_stripe_price?: never;
           id?: string;
           name: string;
           stripe_price_id?: string | null;
@@ -172,6 +174,7 @@ export type Database = {
           business_id?: string;
           created_at?: string;
           currency?: string;
+          has_stripe_price?: never;
           id?: string;
           name?: string;
           stripe_price_id?: string | null;

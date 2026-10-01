@@ -1,5 +1,5 @@
 begin;
-select plan(12);
+select plan(13);
 select tests.clear_tenant_data();
 
 select tests.create_user('owner-a@test.local');
@@ -24,6 +24,7 @@ update public.businesses set charges_enabled = true where slug = 'iron-gym';
 insert into public.plans (business_id, name, billing_interval, amount, active, stripe_price_id) values
   (tests.business_id('iron-gym'), 'Monthly', 'month', 3000, true, 'price_iron_monthly'),
   (tests.business_id('iron-gym'), 'Old Yearly', 'year', 25000, false, null),
+  (tests.business_id('iron-gym'), 'Half-made', 'month', 1000, true, null),
   (tests.business_id('yoga-loft'), 'Yoga Monthly', 'month', 4000, true, null);
 
 -- Seeing plans -----------------------------------------------------------------------------
@@ -31,16 +32,21 @@ insert into public.plans (business_id, name, billing_interval, amount, active, s
 select tests.authenticate_as('staff-a@test.local');
 select set_eq(
   $$ select name from public.plans where business_id = tests.business_id('iron-gym') $$,
-  $$ values ('Monthly'), ('Old Yearly') $$,
-  'staff see all of their business''s plans, archived ones included'
+  $$ values ('Monthly'), ('Old Yearly'), ('Half-made') $$,
+  'staff see all of their business''s plans, archived and unfinished ones included'
 );
 select tests.authenticate_as('outsider@test.local');
 select set_eq(
   $$ select name from public.plans $$,
   $$ values ('Monthly') $$,
-  'other users see only active plans of businesses that take payments'
+  'other users see only active plans with a Stripe price, of businesses that take payments'
 );
 select tests.authenticate_as('staff-a@test.local');
+select set_eq(
+  $$ select name from public.plans where not has_stripe_price $$,
+  $$ values ('Old Yearly'), ('Half-made') $$,
+  'staff can see which plans have no Stripe price yet'
+);
 select throws_ok(
   $$ select stripe_price_id from public.plans $$,
   '42501', 'permission denied for table plans',
