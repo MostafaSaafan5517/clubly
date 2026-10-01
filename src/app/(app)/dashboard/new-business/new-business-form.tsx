@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import {
   createBusiness,
   type NewBusinessFormState,
-} from "@/app/dashboard/new-business/actions";
+} from "@/app/(app)/dashboard/new-business/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

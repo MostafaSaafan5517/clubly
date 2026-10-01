@@ -70,14 +70,8 @@ export default async function JoinPage({
           <p className="text-muted-foreground">Choose a membership.</p>
         </div>
 
-        {/* Where Stripe Checkout sends people back. A successful payment shows up once Stripe's
-            webhook confirms it, never because of this redirect. */}
-        {checkout === "success" && (
-          <p role="status" className="rounded-lg border p-4">
-            Thanks! Stripe is confirming your payment. Your membership will be
-            active in a moment.
-          </p>
-        )}
+        {/* Where Stripe Checkout sends people who back out. (A completed checkout goes to the
+            account page instead.) */}
         {checkout === "canceled" && (
           <p role="status" className="rounded-lg border p-4">
             Checkout was canceled, and you haven&apos;t been charged.

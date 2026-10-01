@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import {
   setPlanActive,
   startStripeOnboarding,
-} from "@/app/dashboard/b/[slug]/actions";
+} from "@/app/(app)/dashboard/b/[slug]/actions";
 import { ActionButton } from "@/components/action-button";
 import { buttonVariants } from "@/components/ui/button";
 import { appConfig } from "@/config/app";

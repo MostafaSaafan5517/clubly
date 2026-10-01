@@ -61,7 +61,9 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - A plan's price, currency and interval never change (Stripe prices are immutable too); to reprice, archive the plan and create a new one.
 - Archiving or restoring a plan (`setPlanActive`) updates the row through RLS, then the Stripe product's `active` flag; if Stripe fails, the row is put back so the app and Stripe never disagree. Only the product is archived: its price is the product's default price, which Stripe won't archive, and a price on an archived product can't start new subscriptions.
 - Prices typed by users are parsed as text into cents (`parseDollarsToCents`), never with `parseFloat`.
-- Joining (`joinPlan` on `/b/[slug]`) re-checks the business and plan as the public page shows them, creates the membership through RLS, refuses suspended members and anyone with a live subscription there, creates the member's Stripe customer on the business's account (idempotency key per member), then opens Stripe Checkout in subscription mode with `application_fee_percent` from `appConfig`. Checkout's success URL only shows a "confirming" message: subscriptions appear when webhooks say so.
+- Joining (`joinPlan` on `/b/[slug]`) re-checks the business and plan as the public page shows them, creates the membership through RLS, refuses suspended members and anyone with a live subscription there, creates the member's Stripe customer on the business's account (idempotency key per member), then opens Stripe Checkout in subscription mode with `application_fee_percent` from `appConfig`. Checkout returns to `/account?joined=<slug>`, which says Stripe is confirming the payment and re-reads the database every 2 seconds (for up to 30) until a webhook has stored a live subscription. The redirect itself activates nothing.
+- Members manage billing in Stripe's Customer Portal (`openBillingPortal` on `/account`). Express accounts have no portal settings of their own, so each business gets one configuration created through the API on its connected account (idempotency key per business, id stored into an empty slot of `businesses.stripe_portal_configuration_id`) and passed explicitly to every portal session. Members can update their card, see invoices and cancel at the end of the period; their email is changed in the app, not in Stripe. Stripe makes an account's first configuration its default and won't deactivate it.
+- The portal acts as the member (their card, their invoices), so `openBillingPortal` checks the membership's `user_id` is the signed-in user, not only that RLS lets them see it: staff can read their business's members too.
 - Payments are direct charges: customers, products, prices and subscriptions all live on the business's connected account (`stripeAccount` option on every call).
 - Webhooks (`/api/stripe/webhook`, a Connect endpoint): verify the signature on the raw body, then handle the event. Handled: `account.updated`, `checkout.session.completed`, `customer.subscription.created|updated|deleted`, `invoice.paid`, `invoice.payment_failed`. Each family has a SQL function (`apply_account_updated`, `apply_subscription_event`, `apply_invoice_event`) that records the event in `stripe_events` and applies it in one transaction; a duplicate delivery reports `duplicate` and changes nothing. Answer 200 when handled or ignored, 400 for a bad signature (never retried), 500 when processing fails (Stripe retries, which is safe).
 - Treat events as nudges: re-read the object from Stripe on the event's connected account (`event.account`) and store that snapshot, never the payload. Late, repeated or out-of-order events then can't regress anything (in practice `invoice.paid` often arrives before `customer.subscription.created`; an invoice event upserts its subscription too).
@@ -82,11 +84,11 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
   - **RLS policies**: which rows those operations may touch
 - New functions are not executable by anyone by default. Grant `execute` explicitly, only to the roles that need it. RLS policies run as the calling user, so a helper used in a policy needs `usage` on its schema and `execute` granted to that role.
 - A policy must not query another RLS-protected table whose policy could query back (businesses ↔ members): Postgres rejects the loop as infinite recursion. Ask through a `private` security-definer helper instead (`has_business_role`, `is_business_member`), which reads the table directly.
-- Stripe identifiers (`stripe_account_id`, `stripe_price_id`, `stripe_customer_id`) are never granted to API roles; grants on those tables are per column. Only server code with the service role reads or writes them.
+- Stripe identifiers (`stripe_account_id`, `stripe_portal_configuration_id`, `stripe_price_id`, `stripe_customer_id`) are never granted to API roles; grants on those tables are per column. Only server code with the service role reads or writes them.
 - `service_role` bypasses RLS and keeps its grants. Only server code that must act across tenants (webhooks, reconciliation) uses it.
 - Tables that hold billing history (`plans`, `members`, `subscriptions`, `payments`) use `on delete restrict`, so deleting a business or user can never silently erase them. Pure access rows (`business_staff`) cascade.
 - Rows that belong to a business through more than one path use composite foreign keys (`(member_id, business_id)` → `members (id, business_id)`), so the database itself guarantees a subscription can't join a member of one business to a plan of another.
-- `subscriptions` and `payments` are written only by server code (webhooks, reconciliation). Members read their own; staff read their business's subscriptions; only owners and admins read payments (revenue).
+- `subscriptions` and `payments` are written only by server code (webhooks, reconciliation). Members read their own; staff read their business's subscriptions; only owners and admins read payments (revenue). Members also see every plan they subscribe or subscribed to (`subscribes_to_plan`), even once it's archived.
 - pgTAP tests live in `supabase/tests/database/*.test.sql`. Each file runs in a transaction and rolls back, and starts with `select tests.clear_tenant_data();` so it only sees its own fixtures, never data left in a local database by the app or Playwright (the rollback restores that data).
 - RLS tests act as real users: `tests.create_user(email)`, `tests.authenticate_as(email)` (the API's `authenticated` role with `auth.uid()` set), `tests.authenticate_as_anon()`, then `reset role` to go back to `postgres` for fixtures and assertions. `tests.business_id(slug)` finds a business the current user may not see. These helpers are defined in `000_setup.test.sql`, which runs first and exists only in test databases.
 - RLS denies silently on SELECT/UPDATE/DELETE (the rows just aren't there), but raises on INSERT and on missing grants. Test both kinds: check state after a refused update, and use `throws_ok` with the exact message for refused inserts and column grants.
@@ -97,15 +99,18 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 ```
 src/
   app/               Next.js App Router routes and layouts
+    (auth)/          Sign-in, sign-up and email-link pages
+    (app)/           Signed-in pages (/dashboard for staff, /account for members), one shared header
+    b/[slug]/        A business's public join page
   components/ui/     shadcn/ui components (owned code, edited freely)
   config/            App-wide constants (the product name lives here)
-  lib/               Helpers (money formatting, ...)
+  lib/               Helpers (money, memberships, slugs, safe redirects, ...)
   lib/supabase/      Supabase settings, clients (incl. server-only admin) and generated types
-  lib/stripe/        Server-only Stripe client and Connect helpers
+  lib/stripe/        Server-only Stripe client; Connect, plan, Checkout, portal and webhook helpers
   proxy.ts           Runs before every request; refreshes the Supabase session
 scripts/             Dev tooling (writing .env.local)
 e2e/                 Playwright end-to-end specs (*.spec.ts)
-  support/           E2E helpers (Mailpit links, confirmed test users)
+  support/           E2E helpers (test users and businesses, Mailpit links, Stripe sandbox)
 supabase/
   config.toml        Local Supabase settings (unused services are switched off)
   templates/         Auth email templates

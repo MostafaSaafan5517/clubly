@@ -1,5 +1,5 @@
 begin;
-select plan(18);
+select plan(21);
 select tests.clear_tenant_data();
 
 select tests.create_user('owner-a@test.local');
@@ -22,6 +22,7 @@ insert into public.business_staff (business_id, user_id, role) values
 
 insert into public.plans (business_id, name, billing_interval, amount, stripe_price_id) values
   (tests.business_id('iron-gym'), 'Iron Monthly', 'month', 3000, 'price_iron'),
+  (tests.business_id('iron-gym'), 'Iron Yearly', 'year', 30000, 'price_iron_yearly'),
   (tests.business_id('yoga-loft'), 'Yoga Monthly', 'month', 4000, 'price_yoga');
 
 insert into public.members (business_id, user_id) values
@@ -144,6 +145,35 @@ select set_eq(
   $$ values (4000) $$,
   'the owner of business B cannot see business A''s payments'
 );
+
+-- Reading plans ------------------------------------------------------------------------------
+
+-- Neither business takes payments here, so no plan is on sale: whatever members see, they see
+-- because they subscribe to it.
+update public.plans set active = false where name = 'Iron Monthly';
+
+select tests.authenticate_as('member-1@test.local');
+select set_eq(
+  $$ select name from public.plans $$,
+  $$ values ('Iron Monthly') $$,
+  'members see the plan they subscribe to, even once it is archived'
+);
+select tests.authenticate_as('member-b@test.local');
+select set_eq(
+  $$ select name from public.plans $$,
+  $$ values ('Yoga Monthly') $$,
+  'members do not see plans of other businesses'
+);
+reset role;
+insert into public.members (business_id, user_id)
+values (tests.business_id('iron-gym'), tests.get_user_id('owner-b@test.local'));
+select tests.authenticate_as('owner-b@test.local');
+select set_eq(
+  $$ select name from public.plans $$,
+  $$ values ('Yoga Monthly') $$,
+  'joining a business without subscribing does not reveal its plans that are off sale'
+);
+reset role;
 
 -- Visitors, Stripe ids and writes ------------------------------------------------------------
 

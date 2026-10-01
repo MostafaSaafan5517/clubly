@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { NewBusinessForm } from "@/app/dashboard/new-business/new-business-form";
+import { NewBusinessForm } from "@/app/(app)/dashboard/new-business/new-business-form";
 import {
   Card,
   CardContent,

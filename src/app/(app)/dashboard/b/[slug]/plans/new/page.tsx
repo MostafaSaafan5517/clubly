@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createPlan } from "@/app/dashboard/b/[slug]/plans/new/actions";
-import { NewPlanForm } from "@/app/dashboard/b/[slug]/plans/new/new-plan-form";
+import { createPlan } from "@/app/(app)/dashboard/b/[slug]/plans/new/actions";
+import { NewPlanForm } from "@/app/(app)/dashboard/b/[slug]/plans/new/new-plan-form";
 import {
   Card,
   CardContent,

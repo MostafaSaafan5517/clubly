@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import type { NewPlanFormState } from "@/app/dashboard/b/[slug]/plans/new/actions";
+import type { NewPlanFormState } from "@/app/(app)/dashboard/b/[slug]/plans/new/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

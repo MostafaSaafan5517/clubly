@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 import {
+  addMember,
   addPlan,
+  addSubscription,
   createBusinessFor,
   enableCharges,
   findMembership,
@@ -11,12 +13,18 @@ import { formError, signInToDashboard } from "./support/forms";
 import {
   archiveStripeProduct,
   createPricedPlan,
+  createStripeCustomer,
+  retirePortalConfiguration,
+  deleteStripeCustomer,
+  getPortalConfiguration,
+  getPortalConfigurationId,
   latestCheckoutSession,
   useChargeReadyAccount,
 } from "./support/stripe";
 import { createConfirmedUser } from "./support/users";
 
-// These tests share one charge-ready Stripe account, so they run one at a time.
+// Everything that needs the shared charge-ready Stripe account lives in this file, so those
+// tests run one at a time.
 test.describe.configure({ mode: "serial" });
 
 test("a signed-in member joins a plan and is sent to Stripe Checkout for it", async ({
@@ -49,7 +57,8 @@ test("a signed-in member joins a plan and is sent to Stripe Checkout for it", as
     expect(membership).toMatchObject({ status: "active" });
     expect(membership?.stripe_customer_id).toMatch(/^cus_/);
 
-    // ...and a subscription Checkout for exactly this plan, that comes back to the join page.
+    // ...and a subscription Checkout for exactly this plan. Paying returns to the account page
+    // (which waits for the webhook); backing out returns to the join page.
     const session = await latestCheckoutSession(
       accountId,
       membership?.stripe_customer_id ?? "",
@@ -63,7 +72,7 @@ test("a signed-in member joins a plan and is sent to Stripe Checkout for it", as
       },
     });
     expect(session.success_url).toMatch(
-      new RegExp(`/b/${business.slug}\\?checkout=success$`),
+      new RegExp(`/account\\?joined=${business.slug}$`),
     );
     expect(session.cancel_url).toMatch(
       new RegExp(`/b/${business.slug}\\?checkout=canceled$`),
@@ -71,6 +80,67 @@ test("a signed-in member joins a plan and is sent to Stripe Checkout for it", as
     expect(session.line_items.data).toHaveLength(1);
   } finally {
     await archiveStripeProduct(accountId, plan.productId);
+  }
+});
+
+test("Manage billing opens Stripe's Customer Portal, configured once per business", async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  const owner = await createConfirmedUser();
+  const member = await createConfirmedUser();
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Portal Gym"),
+  );
+  const accountId = await useChargeReadyAccount(business.id);
+  const customerId = await createStripeCustomer(accountId, member.email);
+  await addSubscription(
+    business.id,
+    await addMember(business.id, member.email, {
+      stripeCustomerId: customerId,
+    }),
+    await addPlan(business.id, "Monthly", {
+      stripePriceId: `price_test_${crypto.randomUUID()}`,
+    }),
+    { status: "active" },
+  );
+
+  let configurationId: string | null = null;
+  try {
+    await signInToDashboard(page, member);
+    const openPortal = async () => {
+      await page.goto("/account");
+      await page.getByRole("button", { name: "Manage billing" }).click();
+      await page.waitForURL(/^https:\/\/billing\.stripe\.com\//, {
+        waitUntil: "commit",
+      });
+    };
+
+    await openPortal();
+    configurationId = await getPortalConfigurationId(business.id);
+    expect(configurationId).toMatch(/^bpc_/);
+    expect(
+      await getPortalConfiguration(accountId, configurationId ?? ""),
+    ).toMatchObject({
+      active: true,
+      metadata: { business_id: business.id },
+      features: {
+        customer_update: { enabled: false },
+        invoice_history: { enabled: true },
+        payment_method_update: { enabled: true },
+        subscription_cancel: { enabled: true, mode: "at_period_end" },
+      },
+    });
+
+    // The next visit reuses the business's configuration instead of creating another.
+    await openPortal();
+    expect(await getPortalConfigurationId(business.id)).toBe(configurationId);
+  } finally {
+    if (configurationId) {
+      await retirePortalConfiguration(accountId, configurationId);
+    }
+    await deleteStripeCustomer(accountId, customerId);
   }
 });
 

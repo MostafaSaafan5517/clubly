@@ -79,6 +79,7 @@ export type Database = {
           name: string;
           slug: string;
           stripe_account_id: string | null;
+          stripe_portal_configuration_id: string | null;
         };
         Insert: {
           charges_enabled?: boolean;
@@ -88,6 +89,7 @@ export type Database = {
           name: string;
           slug: string;
           stripe_account_id?: string | null;
+          stripe_portal_configuration_id?: string | null;
         };
         Update: {
           charges_enabled?: boolean;
@@ -97,6 +99,7 @@ export type Database = {
           name?: string;
           slug?: string;
           stripe_account_id?: string | null;
+          stripe_portal_configuration_id?: string | null;
         };
         Relationships: [];
       };

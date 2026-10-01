@@ -1,5 +1,5 @@
 begin;
-select plan(19);
+select plan(21);
 select tests.clear_tenant_data();
 
 select tests.create_user('owner-a@test.local');
@@ -146,6 +146,16 @@ select throws_ok(
   $$ select stripe_account_id from public.businesses $$,
   '42501', 'permission denied for table businesses',
   'staff cannot read the Stripe account id itself'
+);
+select throws_ok(
+  $$ select stripe_portal_configuration_id from public.businesses $$,
+  '42501', 'permission denied for table businesses',
+  'staff cannot read the billing portal configuration id'
+);
+select throws_ok(
+  $$ update public.businesses set stripe_portal_configuration_id = 'bpc_fake' where slug = 'iron-gym' $$,
+  '42501', 'permission denied for table businesses',
+  'owners cannot point their members at a different billing portal configuration'
 );
 -- Postgres rejects writes to a generated column before it even checks privileges.
 select throws_ok(

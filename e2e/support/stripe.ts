@@ -263,3 +263,77 @@ export async function latestCheckoutSession(
   if (!session) throw new Error(`No Checkout session for ${customerId}`);
   return session;
 }
+
+/** A customer on the given account, like the one joining creates for a member. */
+export async function createStripeCustomer(accountId: string, email: string) {
+  const customer = await stripeRequest<{ id: string }>(
+    "POST",
+    "/v1/customers",
+    { account: accountId, body: new URLSearchParams({ email }) },
+  );
+  return customer.id;
+}
+
+export async function deleteStripeCustomer(
+  accountId: string,
+  customerId: string,
+) {
+  await stripeRequest("DELETE", `/v1/customers/${customerId}`, {
+    account: accountId,
+  });
+}
+
+/** The Customer Portal configuration id stored for a business (service role), if any. */
+export async function getPortalConfigurationId(businessId: string) {
+  const { data, error } = await adminClient()
+    .from("businesses")
+    .select("stripe_portal_configuration_id")
+    .eq("id", businessId)
+    .single();
+  if (error) throw error;
+  return data.stripe_portal_configuration_id;
+}
+
+export type PortalConfiguration = {
+  active: boolean;
+  is_default: boolean;
+  metadata: Record<string, string>;
+  features: {
+    customer_update: { enabled: boolean };
+    invoice_history: { enabled: boolean };
+    payment_method_update: { enabled: boolean };
+    subscription_cancel: { enabled: boolean; mode: string };
+  };
+};
+
+export async function getPortalConfiguration(
+  accountId: string,
+  configurationId: string,
+) {
+  return stripeRequest<PortalConfiguration>(
+    "GET",
+    `/v1/billing_portal/configurations/${configurationId}`,
+    { account: accountId },
+  );
+}
+
+/**
+ * Portal configurations can't be deleted, only deactivated; this keeps the shared account's
+ * list of active ones short. Stripe makes an account's first configuration its default and
+ * refuses to deactivate that one, so it stays.
+ */
+export async function retirePortalConfiguration(
+  accountId: string,
+  configurationId: string,
+) {
+  const configuration = await getPortalConfiguration(
+    accountId,
+    configurationId,
+  );
+  if (configuration.is_default) return;
+  await stripeRequest(
+    "POST",
+    `/v1/billing_portal/configurations/${configurationId}`,
+    { account: accountId, body: new URLSearchParams({ active: "false" }) },
+  );
+}

@@ -8,11 +8,10 @@ import {
   getOrCreateCustomer,
   planPriceId,
 } from "@/lib/stripe/checkout";
+import { LIVE_SUBSCRIPTION_STATUSES } from "@/lib/membership";
 import { storedAccountId } from "@/lib/stripe/connect";
 import { createServerActionClient } from "@/lib/supabase/server";
 
-// Subscription statuses that already count as being a member.
-const LIVE_STATUSES = ["active", "trialing", "past_due"] as const;
 const UNIQUE_VIOLATION = "23505";
 
 /** Joins a business on a plan: creates the membership if needed, then opens Stripe Checkout. */
@@ -82,7 +81,7 @@ export async function joinPlan(
     .from("subscriptions")
     .select("id")
     .eq("member_id", member.id)
-    .in("status", LIVE_STATUSES)
+    .in("status", LIVE_SUBSCRIPTION_STATUSES)
     .limit(1);
   if (liveError) throw new Error(liveError.message);
   if (live.length > 0) {
@@ -117,7 +116,8 @@ export async function joinPlan(
       businessId: business.id,
       memberId: member.id,
       planId: plan.id,
-      successUrl: `${origin}/b/${slug}?checkout=success`,
+      // The account page waits for Stripe's webhook to confirm the payment.
+      successUrl: `${origin}/account?joined=${slug}`,
       cancelUrl: `${origin}/b/${slug}?checkout=canceled`,
     });
   } catch (error) {

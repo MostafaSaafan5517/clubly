@@ -3,7 +3,8 @@ import { appConfig } from "@/config/app";
 import { stripe } from "@/lib/stripe/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
-async function storedCustomerId(memberId: string) {
+/** The member's Stripe customer id, or null before their first checkout (service role). */
+export async function storedCustomerId(memberId: string) {
   const { data, error } = await supabaseAdmin
     .from("members")
     .select("stripe_customer_id")
