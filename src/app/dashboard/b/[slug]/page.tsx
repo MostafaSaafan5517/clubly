@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { startStripeOnboarding } from "@/app/dashboard/b/[slug]/actions";
-import { PayoutsButton } from "@/app/dashboard/b/[slug]/payouts-button";
+import { ActionButton } from "@/app/dashboard/b/[slug]/action-button";
+import {
+  setPlanActive,
+  startStripeOnboarding,
+} from "@/app/dashboard/b/[slug]/actions";
 import { buttonVariants } from "@/components/ui/button";
 import { appConfig } from "@/config/app";
 import { requireUser } from "@/lib/auth";
@@ -42,7 +45,7 @@ export default async function BusinessPage({
   }
 
   const isOwner = role === "owner";
-  const canManagePlans = role !== "staff" && business.has_stripe_account;
+  const canManagePlans = role !== "staff";
   const connectPayouts = startStripeOnboarding.bind(null, business.slug);
 
   return (
@@ -75,7 +78,11 @@ export default async function BusinessPage({
                 </p>
               )}
               {isOwner && (
-                <PayoutsButton action={connectPayouts} label="Continue setup" />
+                <ActionButton
+                  action={connectPayouts}
+                  label="Continue setup"
+                  pendingLabel="Opening Stripe..."
+                />
               )}
             </>
           ) : (
@@ -86,9 +93,10 @@ export default async function BusinessPage({
                 one.
               </p>
               {isOwner && (
-                <PayoutsButton
+                <ActionButton
                   action={connectPayouts}
                   label="Connect payouts"
+                  pendingLabel="Opening Stripe..."
                 />
               )}
             </>
@@ -106,7 +114,7 @@ export default async function BusinessPage({
           <h2 id="plans-heading" className="text-lg font-semibold">
             Plans
           </h2>
-          {canManagePlans && (
+          {canManagePlans && business.has_stripe_account && (
             <Link
               href={`/dashboard/b/${business.slug}/plans/new`}
               className={buttonVariants({ variant: "outline" })}
@@ -133,18 +141,36 @@ export default async function BusinessPage({
                     {plan.billing_interval}
                   </span>
                 </div>
-                {!plan.active ? (
-                  <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                    Archived
-                  </span>
-                ) : (
-                  !plan.has_stripe_price && (
-                    // Only seen if creating the Stripe price was interrupted.
+                <div className="flex flex-wrap items-center gap-2">
+                  {!plan.active ? (
                     <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                      Not ready
+                      Archived
                     </span>
-                  )
-                )}
+                  ) : (
+                    !plan.has_stripe_price && (
+                      // Only seen if creating the Stripe price was interrupted.
+                      <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                        Not ready
+                      </span>
+                    )
+                  )}
+                  {canManagePlans && (
+                    // Archiving stops new sign-ups; members already on the plan keep it.
+                    <ActionButton
+                      action={setPlanActive.bind(
+                        null,
+                        business.slug,
+                        plan.id,
+                        !plan.active,
+                      )}
+                      label={plan.active ? "Archive" : "Restore"}
+                      pendingLabel={
+                        plan.active ? "Archiving..." : "Restoring..."
+                      }
+                      variant="outline"
+                    />
+                  )}
+                </div>
               </li>
             ))}
           </ul>

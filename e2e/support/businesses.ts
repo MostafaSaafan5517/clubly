@@ -39,6 +39,17 @@ export async function enableCharges(businessId: string) {
   if (error) throw error;
 }
 
+/** Adds a plan straight to the database (no Stripe price), for tests that only need it listed. */
+export async function addPlan(businessId: string, name: string) {
+  const { error } = await adminClient().from("plans").insert({
+    business_id: businessId,
+    name,
+    billing_interval: "month",
+    amount: 2000,
+  });
+  if (error) throw error;
+}
+
 /** Adds an existing user to a business's staff (what an owner or admin can do). */
 export async function addStaff(
   businessId: string,

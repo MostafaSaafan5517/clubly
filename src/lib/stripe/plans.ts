@@ -40,6 +40,33 @@ export async function createPlanPrice(plan: NewPlan, accountId: string) {
 }
 
 /**
+ * Makes the plan's Stripe product match whether the plan can be sold. Callers must have changed
+ * the plan through RLS first. Plans that never got a price have nothing in Stripe.
+ *
+ * Only the product is archived: the price is its product's default price, which Stripe refuses
+ * to archive, and a price on an archived product can't start new subscriptions anyway.
+ */
+export async function setPlanProductActive(
+  planId: string,
+  accountId: string,
+  active: boolean,
+) {
+  const { data, error } = await supabaseAdmin
+    .from("plans")
+    .select("stripe_price_id")
+    .eq("id", planId)
+    .single();
+  if (error) throw new Error(`Could not read the plan: ${error.message}`);
+  if (!data.stripe_price_id) return;
+
+  const options = { stripeAccount: accountId };
+  const price = await stripe.prices.retrieve(data.stripe_price_id, {}, options);
+  const productId =
+    typeof price.product === "string" ? price.product : price.product.id;
+  await stripe.products.update(productId, { active }, options);
+}
+
+/**
  * Removes a plan whose Stripe price couldn't be created, so a half-made plan doesn't linger.
  * Safe because such a plan can't have subscriptions yet.
  */

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
+  addPlan,
   addStaff,
   createBusinessFor,
   uniqueBusinessName,
@@ -126,9 +127,13 @@ test("staff members can't create plans", async ({ page }) => {
   const accountId = await connectStripeAccount(business.id);
 
   try {
+    await addPlan(business.id, "Drop-in");
+
     await signInToDashboard(page, staffMember);
     await page.goto(`/dashboard/b/${business.slug}`);
     await expect(page.getByRole("link", { name: "New plan" })).toHaveCount(0);
+    await expect(page.getByText("Drop-in")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Archive" })).toHaveCount(0);
 
     await page.goto(`/dashboard/b/${business.slug}/plans/new`);
     await expect(
@@ -137,6 +142,47 @@ test("staff members can't create plans", async ({ page }) => {
     await expect(page.getByRole("button", { name: "Create plan" })).toHaveCount(
       0,
     );
+  } finally {
+    await deleteStripeAccount(accountId);
+  }
+});
+
+test("archiving a plan stops it being sold in the app and in Stripe, and restoring undoes it", async ({
+  page,
+}) => {
+  const owner = await createConfirmedUser();
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Saltmarsh Swim Club"),
+  );
+  const accountId = await connectStripeAccount(business.id);
+
+  try {
+    await signInToDashboard(page, owner);
+    await page.goto(`/dashboard/b/${business.slug}/plans/new`);
+    await page.getByLabel("Plan name").fill("Yearly swim pass");
+    await page.getByLabel("Price (USD)").fill("300");
+    await page.getByLabel("Billed").selectOption("year");
+    await page.getByRole("button", { name: "Create plan" }).click();
+    await expect(page).toHaveURL(new RegExp(`/dashboard/b/${business.slug}$`));
+    const planId = await getPlanId(business.id, "Yearly swim pass");
+    const plan = page
+      .getByRole("listitem")
+      .filter({ hasText: "Yearly swim pass" });
+
+    await plan.getByRole("button", { name: "Archive" }).click();
+    await expect(plan).toContainText("Archived");
+    // The product is archived (its price is the default price, which Stripe keeps active).
+    expect(await getPlanStripePrice(planId, accountId)).toMatchObject({
+      product: { active: false },
+    });
+
+    await plan.getByRole("button", { name: "Restore" }).click();
+    await expect(plan).not.toContainText("Archived");
+    await expect(plan.getByRole("button", { name: "Archive" })).toBeVisible();
+    expect(await getPlanStripePrice(planId, accountId)).toMatchObject({
+      product: { active: true },
+    });
   } finally {
     await deleteStripeAccount(accountId);
   }
