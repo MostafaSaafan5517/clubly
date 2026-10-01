@@ -504,6 +504,16 @@ export type Database = {
         };
         Returns: string;
       };
+      business_revenue: {
+        Args: { target_business_id: string; window_days: number };
+        Returns: {
+          currency: string;
+          failed_payments: number;
+          gross_revenue: number;
+          monthly_recurring_revenue: number;
+          platform_fees: number;
+        }[];
+      };
       create_business: {
         Args: { business_name: string; business_slug: string };
         Returns: string;

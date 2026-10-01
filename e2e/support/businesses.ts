@@ -184,3 +184,32 @@ export async function addSubscription(
     });
   if (error) throw error;
 }
+
+/** Records a payment the way Stripe's webhook does (service role). */
+export async function addPayment(
+  businessId: string,
+  memberId: string,
+  payment: {
+    amount: number;
+    applicationFee?: number;
+    status: "paid" | "failed";
+    paidAt?: string;
+  },
+) {
+  const { error } = await adminClient()
+    .from("payments")
+    .insert({
+      business_id: businessId,
+      member_id: memberId,
+      stripe_invoice_id: `in_test_${crypto.randomUUID()}`,
+      amount: payment.amount,
+      application_fee: payment.applicationFee ?? 0,
+      currency: "usd",
+      status: payment.status,
+      paid_at:
+        payment.status === "paid"
+          ? (payment.paidAt ?? new Date().toISOString())
+          : null,
+    });
+  if (error) throw error;
+}
