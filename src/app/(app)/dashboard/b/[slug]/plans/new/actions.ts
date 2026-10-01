@@ -8,6 +8,7 @@ import {
   MIN_PLAN_AMOUNT,
   parseDollarsToCents,
 } from "@/lib/money";
+import { errorMessage } from "@/lib/redact";
 import { storedAccountId } from "@/lib/stripe/connect";
 import { createPlanPrice, discardUnpricedPlan } from "@/lib/stripe/plans";
 import { createServerActionClient } from "@/lib/supabase/server";
@@ -109,7 +110,7 @@ export async function createPlan(
   } catch (error) {
     console.error("Creating the plan's Stripe price failed", {
       planId: plan.id,
-      message: error instanceof Error ? error.message : String(error),
+      message: errorMessage(error),
     });
     await discardUnpricedPlan(plan.id);
     return {

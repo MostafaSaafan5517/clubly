@@ -4,6 +4,7 @@ import {
   addPlan,
   addSubscription,
   createBusinessFor,
+  disableCharges,
   enableCharges,
   findMembership,
   suspendMembership,
@@ -11,7 +12,12 @@ import {
 } from "./support/businesses";
 import { formError, signInToDashboard } from "./support/forms";
 import {
+  reconciliationCorrections,
+  runReconciliation,
+} from "./support/reconciliation";
+import {
   archiveStripeProduct,
+  createPaidSubscription,
   createPricedPlan,
   createStripeCustomer,
   retirePortalConfiguration,
@@ -23,8 +29,8 @@ import {
 } from "./support/stripe";
 import { createConfirmedUser } from "./support/users";
 
-// Everything that needs the shared charge-ready Stripe account lives in this file, so those
-// tests run one at a time.
+// Everything that needs the shared charge-ready Stripe account (Checkout, the billing portal,
+// reconciliation) lives in this file, so those tests run one at a time.
 test.describe.configure({ mode: "serial" });
 
 test("a signed-in member joins a plan and is sent to Stripe Checkout for it", async ({
@@ -188,4 +194,79 @@ test("a suspended member can't start a new subscription", async ({ page }) => {
     `Your membership at ${business.name} is suspended. Please contact them.`,
   );
   await expect(page).toHaveURL(new RegExp(`/b/${business.slug}$`));
+});
+
+test("reconciliation records what the webhooks missed, and a second run changes nothing", async ({
+  request,
+}) => {
+  test.setTimeout(240_000);
+  const owner = await createConfirmedUser();
+  const member = await createConfirmedUser();
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Reconciled Gym"),
+  );
+  const accountId = await useChargeReadyAccount(business.id);
+  const plan = await createPricedPlan(business.id, accountId, {
+    name: "Monthly",
+    amount: 2000,
+  });
+  const customerId = await createStripeCustomer(accountId, member.email);
+  await addMember(business.id, member.email, { stripeCustomerId: customerId });
+
+  try {
+    // In Stripe the business can take payments and the member has paid; this database has heard
+    // none of it (no webhooks reach it in tests).
+    await disableCharges(business.id);
+    const subscriptionId = await createPaidSubscription(
+      accountId,
+      customerId,
+      plan.priceId,
+    );
+
+    const first = await runReconciliation(request);
+    const corrections = await reconciliationCorrections(
+      first.runId,
+      business.id,
+    );
+    expect(corrections).toEqual([
+      {
+        object_type: "account",
+        stripe_id: accountId,
+        old_data: { charges_enabled: false },
+        new_data: { charges_enabled: true },
+      },
+      {
+        object_type: "subscription",
+        stripe_id: subscriptionId,
+        old_data: null,
+        new_data: expect.objectContaining({
+          status: "active",
+          plan_id: plan.id,
+          cancel_at: null,
+        }),
+      },
+      {
+        object_type: "payment",
+        stripe_id: expect.stringMatching(/^in_/),
+        old_data: null,
+        // 5% of $20.00 is the platform's fee.
+        new_data: expect.objectContaining({
+          status: "paid",
+          amount: 2000,
+          application_fee: 100,
+          currency: "usd",
+        }),
+      },
+    ]);
+
+    const second = await runReconciliation(request);
+    expect(await reconciliationCorrections(second.runId, business.id)).toEqual(
+      [],
+    );
+  } finally {
+    // Deleting the customer cancels its subscription.
+    await deleteStripeCustomer(accountId, customerId);
+    await archiveStripeProduct(accountId, plan.productId);
+  }
 });

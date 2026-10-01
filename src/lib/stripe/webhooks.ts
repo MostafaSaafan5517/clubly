@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { errorMessage } from "@/lib/redact";
 
 /** The parts of a Stripe subscription we keep, shaped as the database functions expect. */
 export type SubscriptionSnapshot = {
@@ -236,7 +237,7 @@ export async function handleWebhookRequest(
     console.error("Stripe webhook failed", {
       eventId: event.id,
       type: event.type,
-      message: error instanceof Error ? error.message : String(error),
+      message: errorMessage(error),
     });
     return new Response("Processing failed", { status: 500 });
   }

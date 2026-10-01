@@ -30,6 +30,15 @@ export async function createBusinessFor(
   return { id: id as string, name, slug };
 }
 
+/** Marks a business as unable to take payments, as if a Stripe webhook had been missed. */
+export async function disableCharges(businessId: string) {
+  const { error } = await adminClient()
+    .from("businesses")
+    .update({ charges_enabled: false })
+    .eq("id", businessId);
+  if (error) throw error;
+}
+
 /** Marks a business as able to take payments, which is what the Stripe webhook will do. */
 export async function enableCharges(businessId: string) {
   const { error } = await adminClient()

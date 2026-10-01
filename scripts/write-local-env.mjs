@@ -1,8 +1,9 @@
-// Writes the local Supabase URL and keys into .env.local.
+// Writes the local Supabase URL and keys into .env.local, and a cron secret if there isn't one.
 // Usage (via `pnpm env:local`): supabase status -o json | node scripts/write-local-env.mjs
-// Only the Supabase lines are replaced; anything else in .env.local (Stripe keys, ...) is kept.
+// Only those lines are written; anything else in .env.local (Stripe keys, ...) is kept.
+import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { ENV_FILE, setEnvValues } from "./env-file.mjs";
+import { ENV_FILE, readEnvValue, setEnvValues } from "./env-file.mjs";
 
 const input = readFileSync(0, "utf8");
 const jsonStart = input.indexOf("{");
@@ -28,6 +29,10 @@ if (missing.length > 0) {
       "`pnpm supabase start` (not `db start`).",
   );
 }
+
+// Any random value works locally; generated once and then kept.
+values.CRON_SECRET =
+  readEnvValue("CRON_SECRET") ?? randomBytes(32).toString("hex");
 
 setEnvValues(values);
 process.stdout.write(

@@ -63,9 +63,17 @@ export async function connectStripeAccount(businessId: string) {
   return account.id;
 }
 
-/** Removes a connected account (and everything on it) that a test created. */
+/**
+ * Removes a connected account (and everything on it) that a test created, and detaches it from
+ * its business, so later reconciliation runs don't keep asking Stripe for it.
+ */
 export async function deleteStripeAccount(accountId: string) {
   await stripeRequest("DELETE", `/v1/accounts/${accountId}`);
+  const { error } = await adminClient()
+    .from("businesses")
+    .update({ stripe_account_id: null })
+    .eq("stripe_account_id", accountId);
+  if (error) throw error;
 }
 
 export type StripePrice = {
@@ -227,7 +235,7 @@ export async function createPricedPlan(
     .select("id")
     .single();
   if (error) throw error;
-  return { id: data.id as string, productId: price.product };
+  return { id: data.id as string, priceId: price.id, productId: price.product };
 }
 
 /** Archives a test product, so the shared account's catalog doesn't fill up with live ones. */
@@ -336,4 +344,40 @@ export async function retirePortalConfiguration(
     `/v1/billing_portal/configurations/${configurationId}`,
     { account: accountId, body: new URLSearchParams({ active: "false" }) },
   );
+}
+
+/**
+ * A subscription created straight in Stripe and paid at once with Stripe's test card, on the
+ * member's customer. No webhook reaches the test database, so to the app it's a subscription
+ * whose events were missed.
+ */
+export async function createPaidSubscription(
+  accountId: string,
+  customerId: string,
+  priceId: string,
+) {
+  const paymentMethod = await stripeRequest<{ id: string }>(
+    "POST",
+    "/v1/payment_methods/pm_card_visa/attach",
+    { account: accountId, body: new URLSearchParams({ customer: customerId }) },
+  );
+  const subscription = await stripeRequest<{ id: string; status: string }>(
+    "POST",
+    "/v1/subscriptions",
+    {
+      account: accountId,
+      body: new URLSearchParams({
+        customer: customerId,
+        "items[0][price]": priceId,
+        default_payment_method: paymentMethod.id,
+        application_fee_percent: "5",
+      }),
+    },
+  );
+  if (subscription.status !== "active") {
+    throw new Error(
+      `Subscription ${subscription.id} is ${subscription.status}`,
+    );
+  }
+  return subscription.id;
 }

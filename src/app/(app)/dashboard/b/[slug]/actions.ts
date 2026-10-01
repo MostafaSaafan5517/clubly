@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/action-button";
 import { getStaffBusiness } from "@/lib/business";
+import { errorMessage } from "@/lib/redact";
 import {
   createOnboardingUrl,
   getOrCreateConnectedAccount,
@@ -49,7 +50,7 @@ export async function startStripeOnboarding(
   } catch (error) {
     console.error("Starting Stripe onboarding failed", {
       businessId: staff.business.id,
-      message: error instanceof Error ? error.message : String(error),
+      message: errorMessage(error),
     });
     return { error: "Stripe couldn't start the setup. Please try again." };
   }

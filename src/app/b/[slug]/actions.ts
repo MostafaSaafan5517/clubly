@@ -3,12 +3,13 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/action-button";
+import { LIVE_SUBSCRIPTION_STATUSES } from "@/lib/membership";
+import { errorMessage } from "@/lib/redact";
 import {
   createSubscriptionCheckout,
   getOrCreateCustomer,
   planPriceId,
 } from "@/lib/stripe/checkout";
-import { LIVE_SUBSCRIPTION_STATUSES } from "@/lib/membership";
 import { storedAccountId } from "@/lib/stripe/connect";
 import { createServerActionClient } from "@/lib/supabase/server";
 
@@ -124,7 +125,7 @@ export async function joinPlan(
     console.error("Starting checkout failed", {
       memberId: member.id,
       planId: plan.id,
-      message: error instanceof Error ? error.message : String(error),
+      message: errorMessage(error),
     });
     return { error: "We couldn't start checkout. Please try again." };
   }

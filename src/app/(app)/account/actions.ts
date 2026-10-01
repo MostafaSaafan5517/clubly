@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/action-button";
+import { errorMessage } from "@/lib/redact";
 import { storedCustomerId } from "@/lib/stripe/checkout";
 import { storedAccountId } from "@/lib/stripe/connect";
 import {
@@ -57,10 +58,7 @@ export async function openBillingPortal(
   } catch (portalError) {
     console.error("Opening the billing portal failed", {
       memberId: member.id,
-      message:
-        portalError instanceof Error
-          ? portalError.message
-          : String(portalError),
+      message: errorMessage(portalError),
     });
     return { error: "We couldn't open billing. Please try again." };
   }
