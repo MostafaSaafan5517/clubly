@@ -1,7 +1,7 @@
 -- What a visitor who is not signed in can reach: exactly what a business's public join page
 -- needs, and nothing else.
 begin;
-select plan(11);
+select plan(12);
 select tests.clear_tenant_data();
 
 select tests.create_user('owner-a@test.local');
@@ -40,6 +40,11 @@ select results_eq(
   $$ select name, billing_interval::text, amount, currency from public.plans $$,
   $$ values ('Monthly', 'month', 3000, 'usd') $$,
   'visitors see only active plans with a Stripe price, of businesses that take payments'
+);
+select results_eq(
+  $$ select name from public.plans where active and has_stripe_price $$,
+  $$ values ('Monthly') $$,
+  'visitors can run the join page''s own filter (active, has a Stripe price)'
 );
 
 -- What it must not read

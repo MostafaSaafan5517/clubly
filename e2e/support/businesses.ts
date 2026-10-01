@@ -39,14 +39,30 @@ export async function enableCharges(businessId: string) {
   if (error) throw error;
 }
 
-/** Adds a plan straight to the database (no Stripe price), for tests that only need it listed. */
-export async function addPlan(businessId: string, name: string) {
-  const { error } = await adminClient().from("plans").insert({
-    business_id: businessId,
-    name,
-    billing_interval: "month",
-    amount: 2000,
-  });
+/**
+ * Adds a plan straight to the database, for tests that only need it listed. A fake Stripe price
+ * id makes it look ready to sell; without one it's an unfinished plan.
+ */
+export async function addPlan(
+  businessId: string,
+  name: string,
+  options: {
+    amount?: number;
+    billingInterval?: "month" | "year";
+    active?: boolean;
+    stripePriceId?: string;
+  } = {},
+) {
+  const { error } = await adminClient()
+    .from("plans")
+    .insert({
+      business_id: businessId,
+      name,
+      billing_interval: options.billingInterval ?? "month",
+      amount: options.amount ?? 2000,
+      active: options.active ?? true,
+      stripe_price_id: options.stripePriceId ?? null,
+    });
   if (error) throw error;
 }
 

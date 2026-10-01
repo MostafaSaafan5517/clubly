@@ -63,10 +63,18 @@ export default async function BusinessPage({
         </h2>
         <div className="grid gap-3 rounded-lg border p-4">
           {business.charges_enabled ? (
-            <p>
-              Ready to take payments. Members pay straight into your Stripe
-              account.
-            </p>
+            <>
+              <p>
+                Ready to take payments. Members pay straight into your Stripe
+                account.
+              </p>
+              <p className="text-sm">
+                Your join page:{" "}
+                <Link href={`/b/${business.slug}`} className="underline">
+                  /b/{business.slug}
+                </Link>
+              </p>
+            </>
           ) : business.has_stripe_account ? (
             <>
               <p>Stripe setup isn&apos;t finished yet.</p>
