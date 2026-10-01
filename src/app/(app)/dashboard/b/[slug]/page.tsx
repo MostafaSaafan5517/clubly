@@ -1,24 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import {
   setPlanActive,
   startStripeOnboarding,
 } from "@/app/(app)/dashboard/b/[slug]/actions";
+import { BusinessHeader } from "@/app/(app)/dashboard/b/[slug]/business-header";
 import { ActionButton } from "@/components/action-button";
 import { buttonVariants } from "@/components/ui/button";
 import { appConfig } from "@/config/app";
-import { requireUser } from "@/lib/auth";
-import { getStaffBusiness } from "@/lib/business";
+import { requireStaffBusiness } from "@/lib/business";
 import { formatAmount } from "@/lib/money";
 
 export const metadata: Metadata = { title: "Business" };
-
-const roleDescriptions = {
-  owner: "You own this business.",
-  admin: "You're an admin here.",
-  staff: "You're on the staff here.",
-} as const;
 
 export default async function BusinessPage({
   params,
@@ -26,12 +19,10 @@ export default async function BusinessPage({
 }: PageProps<"/dashboard/b/[slug]">) {
   const { slug } = await params;
   const { stripe: stripeReturn } = await searchParams;
-  const { supabase, userId } = await requireUser(`/dashboard/b/${slug}`);
-
-  // Staff only; a 404 (not a 403) also avoids confirming the business exists to outsiders.
-  const staff = await getStaffBusiness(supabase, userId, slug);
-  if (!staff) notFound();
-  const { business, role } = staff;
+  const { supabase, business, role } = await requireStaffBusiness(
+    slug,
+    `/dashboard/b/${slug}`,
+  );
 
   const { data: plans, error: plansError } = await supabase
     .from("plans")
@@ -50,12 +41,7 @@ export default async function BusinessPage({
 
   return (
     <>
-      <div className="grid gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {business.name}
-        </h1>
-        <p className="text-muted-foreground">{roleDescriptions[role]}</p>
-      </div>
+      <BusinessHeader business={business} role={role} current="overview" />
 
       <section className="grid gap-3" aria-labelledby="payments-heading">
         <h2 id="payments-heading" className="text-lg font-semibold">

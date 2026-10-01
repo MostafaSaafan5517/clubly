@@ -48,6 +48,8 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Pages check the user with `supabase.auth.getClaims()` (verifies the token) and redirect to `/login?next=<path>`. Any `next` value goes through `safeRedirectPath` before redirecting.
 - Email links go to `/auth/confirm?token_hash=...&type=email` (templates in `supabase/templates/`), not Supabase's code-exchange redirect: a token hash works on any device, the code flow only in the browser that started it. A hosted Supabase project needs the same templates.
 - Server Actions validate input with zod and return `{ error, fields }` to `useActionState` forms. Auth errors are mapped to our own messages. Neither sign-up nor the email-link form (`/magic-link`, existing accounts only) reveals whether an email is registered: both always answer "check your email".
+- Business pages (`/dashboard/b/[slug]/...`) start with `requireStaffBusiness(slug, path, roles?)`: sign-in redirect back to the page, then a 404 for anyone who isn't staff there or whose role isn't allowed (a 404, not a 403, so outsiders can't tell the business or page exists). They render `BusinessHeader`, whose tabs are filtered by role; hiding a tab is only a convenience, the page and RLS are the real checks.
+- Server Actions take their arguments from the browser even when bound on the server, so each one re-checks the user's role and relies on RLS for the write. Helpers shared between actions live outside `"use server"` files: every export of such a file becomes a callable endpoint.
 - Local email confirmation is on (like hosted Supabase), and every email lands in Mailpit (http://127.0.0.1:54324). E2E tests read links from Mailpit's API (`e2e/support/mailpit.ts`).
 
 ## Stripe conventions

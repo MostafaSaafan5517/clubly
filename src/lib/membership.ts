@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/dates";
 import type { Enums } from "@/lib/supabase/database.types";
 
 type SubscriptionStatus = Enums<"subscription_status">;
@@ -35,20 +36,13 @@ export function currentSubscription<
   );
 }
 
-const dateFormat = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "long",
-  // Server-rendered, so not the viewer's time zone. Billing dates are shown as calendar days.
-  timeZone: "UTC",
-});
-
 /** How a subscription reads to the member: a short status and, when useful, what happens next. */
 export function describeSubscription(subscription: {
   status: SubscriptionStatus;
   current_period_end: string | null;
   cancel_at: string | null;
 }): { label: string; detail: string | null } {
-  const format = (date: string | null) =>
-    date ? dateFormat.format(new Date(date)) : null;
+  const format = (date: string | null) => (date ? formatDate(date) : null);
   const periodEnd = format(subscription.current_period_end);
   const endsOn = format(subscription.cancel_at);
   // A scheduled end wins over the next renewal: that renewal won't happen.

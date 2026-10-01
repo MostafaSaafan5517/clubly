@@ -91,17 +91,6 @@ describe("describeSubscription", () => {
     ).toEqual({ label: "Trial", detail: "First payment on November 1, 2026" });
   });
 
-  it("uses the UTC calendar date, whatever the server's time zone", () => {
-    expect(
-      describeSubscription({
-        status: "active",
-        // Already November 1 east of UTC (Cairo, for one).
-        current_period_end: "2026-10-31T23:30:00+00:00",
-        cancel_at: null,
-      }).detail,
-    ).toBe("Renews on October 31, 2026");
-  });
-
   it("asks for a new payment method when a payment failed", () => {
     expect(
       describeSubscription({

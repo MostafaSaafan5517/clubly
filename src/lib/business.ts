@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { notFound } from "next/navigation";
+import { requireUser } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
 
 /**
@@ -22,4 +24,23 @@ export async function getStaffBusiness(
   if (error) throw new Error(`Could not load the business: ${error.message}`);
   if (!data) return null;
   return { role: data.role, business: data.businesses };
+}
+
+type StaffRole = Database["public"]["Enums"]["staff_role"];
+
+/**
+ * For pages under /dashboard/b/[slug]: the signed-in user's Supabase client, the business and
+ * their role there. Visitors are sent to sign in (and back to `currentPath`). Anyone who isn't
+ * staff, or whose role isn't in `roles`, gets a 404, which also avoids confirming the business
+ * (or the page) exists.
+ */
+export async function requireStaffBusiness(
+  slug: string,
+  currentPath: string,
+  roles: readonly StaffRole[] = ["owner", "admin", "staff"],
+) {
+  const { supabase, userId } = await requireUser(currentPath);
+  const staff = await getStaffBusiness(supabase, userId, slug);
+  if (!staff || !roles.includes(staff.role)) notFound();
+  return { supabase, userId, ...staff };
 }
