@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 
 const initialState: AuthFormState = { error: null, fields: {} };
 
-export function MagicLinkForm() {
+export function MagicLinkForm({ next }: { next: string | undefined }) {
   const [state, formAction, pending] = useActionState(
     sendSignInLink,
     initialState,
@@ -17,6 +17,7 @@ export function MagicLinkForm() {
   // The key re-mounts the input with what the user typed after an error (see SignUpForm).
   return (
     <form action={formAction} className="grid gap-4">
+      {next && <input type="hidden" name="next" value={next} />}
       <div className="grid gap-2">
         <Label htmlFor="email">Email</Label>
         <Input

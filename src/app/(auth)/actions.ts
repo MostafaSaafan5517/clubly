@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { safeRedirectPath } from "@/lib/safe-redirect";
@@ -39,6 +40,22 @@ function formText(formData: FormData, name: string): string {
   return typeof value === "string" ? value : "";
 }
 
+/**
+ * Where an email link should bring the user back to: the page that sent them to sign in (the
+ * form's "next" field), on this site. Supabase passes it into the email, and /auth/confirm
+ * checks it again before redirecting.
+ */
+async function emailRedirectTo(formData: FormData) {
+  const origin = (await headers()).get("origin");
+  if (!origin) {
+    throw new Error("Server Action request without an Origin header.");
+  }
+  return new URL(
+    safeRedirectPath(formText(formData, "next"), "/dashboard"),
+    origin,
+  ).toString();
+}
+
 export async function signUp(
   _previous: AuthFormState,
   formData: FormData,
@@ -59,8 +76,11 @@ export async function signUp(
   const { error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    // Read by the database trigger that creates the user's profile.
-    options: { data: { full_name: parsed.data.fullName } },
+    options: {
+      // Read by the database trigger that creates the user's profile.
+      data: { full_name: parsed.data.fullName },
+      emailRedirectTo: await emailRedirectTo(formData),
+    },
   });
 
   if (error) {
@@ -131,7 +151,10 @@ export async function sendSignInLink(
     email: parsed.data,
     // Links only sign in existing accounts; creating an account goes through sign-up, which
     // asks for a name and a password.
-    options: { shouldCreateUser: false },
+    options: {
+      shouldCreateUser: false,
+      emailRedirectTo: await emailRedirectTo(formData),
+    },
   });
 
   if (error) {

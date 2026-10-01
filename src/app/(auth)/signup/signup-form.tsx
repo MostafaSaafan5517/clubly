@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 
 const initialState: AuthFormState = { error: null, fields: {} };
 
-export function SignUpForm() {
+export function SignUpForm({ next }: { next: string | undefined }) {
   const [state, formAction, pending] = useActionState(signUp, initialState);
 
   // React resets the form after each submit. The inputs below get back what the user typed
@@ -16,6 +16,7 @@ export function SignUpForm() {
   // new defaultValue after their first render.
   return (
     <form action={formAction} className="grid gap-4">
+      {next && <input type="hidden" name="next" value={next} />}
       <div className="grid gap-2">
         <Label htmlFor="fullName">Full name</Label>
         <Input

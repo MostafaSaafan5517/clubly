@@ -112,3 +112,43 @@ test("asking for a link for an unknown email looks the same and sends nothing", 
   await expect(page.getByText("Check your email")).toBeVisible();
   expect(await countEmails(email)).toBe(0);
 });
+
+test("signing up from a page that needed sign-in comes back to that page after confirming", async ({
+  page,
+}) => {
+  const email = uniqueEmail("return");
+
+  await page.goto("/dashboard/new-business");
+  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard%2Fnew-business$/);
+  await page.getByRole("link", { name: "Create an account" }).click();
+  await expect(page).toHaveURL(/\/signup\?next=%2Fdashboard%2Fnew-business$/);
+
+  await page.getByLabel("Full name").fill("Rhea Return");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(TEST_PASSWORD);
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page.getByText("Check your email")).toBeVisible();
+
+  await page.goto(await getEmailLink(email, "/auth/confirm"));
+  await expect(page).toHaveURL(/\/dashboard\/new-business$/);
+});
+
+test("an email link sign-in also comes back to the page that needed it", async ({
+  page,
+}) => {
+  const user = await createConfirmedUser();
+
+  await page.goto("/dashboard/new-business");
+  await page
+    .getByRole("link", { name: "Email me a sign-in link instead" })
+    .click();
+  await expect(page).toHaveURL(
+    /\/magic-link\?next=%2Fdashboard%2Fnew-business$/,
+  );
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByRole("button", { name: "Email me a link" }).click();
+  await expect(page.getByText("Check your email")).toBeVisible();
+
+  await page.goto(await getEmailLink(user.email, "/auth/confirm"));
+  await expect(page).toHaveURL(/\/dashboard\/new-business$/);
+});
