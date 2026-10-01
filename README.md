@@ -31,7 +31,7 @@ The goal is production habits on a real multi-tenant billing product, not a demo
 - [x] **Phase 2:** Stripe Connect onboarding and membership plans
 - [x] **Phase 3:** member subscriptions and webhooks
 - [x] **Phase 4:** reconciliation job and audit log
-- [ ] **Phase 5:** business and member dashboards
+- [x] **Phase 5:** business and member dashboards
 - [ ] **Phase 6:** end-to-end test flows
 - [ ] **Phase 7:** documentation, demo data and live demo
 
