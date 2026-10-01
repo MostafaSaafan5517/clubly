@@ -1,12 +1,12 @@
 begin;
-select plan(24);
+select plan(26);
 select tests.clear_tenant_data();
 
 -- Structure
 select tables_are(
   'public',
-  array['profiles', 'businesses', 'business_staff', 'plans', 'members'],
-  'public contains exactly the tenant tables'
+  array['profiles', 'businesses', 'business_staff', 'plans', 'members', 'stripe_events'],
+  'public contains exactly the expected tables'
 );
 
 select is_empty(
@@ -32,6 +32,9 @@ select table_privs_are('public', 'businesses', 'authenticated', array[]::text[])
 select table_privs_are('public', 'business_staff', 'authenticated', array['SELECT', 'INSERT', 'DELETE']);
 select table_privs_are('public', 'plans', 'authenticated', array[]::text[]);
 select table_privs_are('public', 'members', 'authenticated', array[]::text[]);
+-- Processed Stripe events are for the webhook route (service role) only.
+select table_privs_are('public', 'stripe_events', 'anon', array[]::text[]);
+select table_privs_are('public', 'stripe_events', 'authenticated', array[]::text[]);
 
 -- Fixtures: two users (profiles come from the auth trigger) and one business.
 insert into auth.users (id, email) values

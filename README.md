@@ -37,16 +37,21 @@ The goal is production habits on a real multi-tenant billing product, not a demo
 
 ## Running locally
 
-You need Node.js 24, [pnpm](https://pnpm.io) 11 and [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for the local Supabase stack).
+You need Node.js 24, [pnpm](https://pnpm.io) 11, [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for the local Supabase stack), a [Stripe](https://stripe.com) account in test mode with Connect enabled, and the [Stripe CLI](https://docs.stripe.com/stripe-cli) (logged in with `stripe login`).
 
 ```bash
 pnpm install
 pnpm supabase start
 pnpm env:local
+pnpm env:stripe
 pnpm dev
 ```
 
-`pnpm env:local` writes the local Supabase URL and keys into `.env.local` (see `.env.example` for every variable). Then open http://localhost:3000.
+- `pnpm env:local` writes the local Supabase URL and keys into `.env.local`.
+- `pnpm env:stripe` writes the Stripe CLI's webhook signing secret there too.
+- Add your Stripe test secret key yourself as `STRIPE_SECRET_KEY` (see `.env.example` for every variable).
+
+In a second terminal, `pnpm stripe:listen` forwards Stripe's webhooks to the app. Then open http://localhost:3000.
 
 ## Tests
 

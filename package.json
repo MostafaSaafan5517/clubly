@@ -15,6 +15,8 @@
     "test:e2e": "playwright test",
     "test:db": "supabase test db",
     "env:local": "supabase status -o json | node scripts/write-local-env.mjs",
+    "env:stripe": "stripe listen --print-secret | node scripts/write-stripe-webhook-secret.mjs",
+    "stripe:listen": "stripe listen --forward-connect-to localhost:3000/api/stripe/webhook --events account.updated",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts && prettier --write src/lib/supabase/database.types.ts"
   },
   "dependencies": {

@@ -1,9 +1,8 @@
 // Writes the local Supabase URL and keys into .env.local.
 // Usage (via `pnpm env:local`): supabase status -o json | node scripts/write-local-env.mjs
 // Only the Supabase lines are replaced; anything else in .env.local (Stripe keys, ...) is kept.
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-
-const ENV_FILE = ".env.local";
+import { readFileSync } from "node:fs";
+import { ENV_FILE, setEnvValues } from "./env-file.mjs";
 
 const input = readFileSync(0, "utf8");
 const jsonStart = input.indexOf("{");
@@ -30,22 +29,7 @@ if (missing.length > 0) {
   );
 }
 
-const existingLines = existsSync(ENV_FILE)
-  ? readFileSync(ENV_FILE, "utf8").split(/\r?\n/)
-  : [];
-const keptLines = existingLines.filter((line) => {
-  const name = line.split("=")[0]?.trim();
-  return !(name && name in values);
-});
-while (keptLines.length > 0 && keptLines.at(-1) === "") {
-  keptLines.pop();
-}
-
-const supabaseLines = Object.entries(values).map(
-  ([name, value]) => `${name}=${value}`,
-);
-writeFileSync(ENV_FILE, [...keptLines, ...supabaseLines, ""].join("\n"));
-
+setEnvValues(values);
 process.stdout.write(
   `Wrote ${Object.keys(values).join(", ")} to ${ENV_FILE}\n`,
 );

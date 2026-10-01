@@ -207,11 +207,40 @@ export type Database = {
         };
         Relationships: [];
       };
+      stripe_events: {
+        Row: {
+          account_id: string | null;
+          event_id: string;
+          processed_at: string;
+          type: string;
+        };
+        Insert: {
+          account_id?: string | null;
+          event_id: string;
+          processed_at?: string;
+          type: string;
+        };
+        Update: {
+          account_id?: string | null;
+          event_id?: string;
+          processed_at?: string;
+          type?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      apply_account_updated: {
+        Args: {
+          account_id: string;
+          charges_enabled: boolean;
+          event_id: string;
+        };
+        Returns: boolean;
+      };
       create_business: {
         Args: { business_name: string; business_slug: string };
         Returns: string;

@@ -57,6 +57,10 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Account creation uses an idempotency key per business, and the id is stored only into an empty slot, so double-clicks and races can't create or overwrite a second account.
 - Only the owner can start onboarding (payouts go to their bank). Returning from Stripe never marks a business as ready: only Stripe's `account.updated` webhook sets `charges_enabled`.
 - Pages and actions find the business through `getStaffBusiness()` (`src/lib/business.ts`): the staff row, not just the business, because public businesses are readable by every signed-in user. Non-staff get a 404.
+- Webhooks (`/api/stripe/webhook`, a Connect endpoint): verify the signature on the raw body, then handle the event. Each event type has a SQL function (e.g. `apply_account_updated`) that records the event in `stripe_events` and applies its effect in one transaction; a duplicate delivery returns false and changes nothing. Answer 200 when handled or ignored, 400 for a bad signature (never retried), 500 when processing fails (Stripe retries, which is safe).
+- Treat events as nudges: re-read the object from Stripe (e.g. `stripe.accounts.retrieve`) instead of trusting a payload that may be stale or out of order.
+- Handler logic lives in `src/lib/stripe/webhooks.ts` with its dependencies injected, so unit tests use real signature checks with fake Stripe and database calls. The route only wires the real ones.
+- Locally: `pnpm env:stripe` once (writes the CLI's signing secret to `.env.local`), then `pnpm stripe:listen` next to `pnpm dev`. Add every event type the app handles to `--events` in that script.
 - E2E tests that create Stripe objects run against the sandbox and delete them afterwards (`e2e/support/stripe.ts`). CI reads the key from the `STRIPE_SECRET_KEY` repository secret.
 
 ## Database conventions
@@ -105,20 +109,22 @@ Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks insi
 
 ## Commands
 
-| Command                             | What it does                                         |
-| ----------------------------------- | ---------------------------------------------------- |
-| `pnpm dev`                          | Dev server at http://localhost:3000                  |
-| `pnpm build` / `pnpm start`         | Production build / serve that build                  |
-| `pnpm lint`                         | ESLint; fails on any warning                         |
-| `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`       |
-| `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check) |
-| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode           |
-| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running  |
-| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)      |
-| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)   |
-| `pnpm env:local`                    | Write local Supabase URL and keys into `.env.local`  |
-| `pnpm supabase db reset`            | Rebuild the local database from migrations           |
-| `pnpm db:types`                     | Regenerate TypeScript types from the local database  |
+| Command                             | What it does                                          |
+| ----------------------------------- | ----------------------------------------------------- |
+| `pnpm dev`                          | Dev server at http://localhost:3000                   |
+| `pnpm build` / `pnpm start`         | Production build / serve that build                   |
+| `pnpm lint`                         | ESLint; fails on any warning                          |
+| `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`        |
+| `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check)  |
+| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode            |
+| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running   |
+| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)       |
+| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)    |
+| `pnpm env:local`                    | Write local Supabase URL and keys into `.env.local`   |
+| `pnpm supabase db reset`            | Rebuild the local database from migrations            |
+| `pnpm db:types`                     | Regenerate TypeScript types from the local database   |
+| `pnpm env:stripe`                   | Write the Stripe CLI's webhook secret to `.env.local` |
+| `pnpm stripe:listen`                | Forward sandbox webhooks to the local app             |
 
 First Playwright run on a machine: `pnpm exec playwright install chromium`. E2E tests need the full local Supabase (`pnpm supabase start`, then `pnpm env:local`). With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.
 
