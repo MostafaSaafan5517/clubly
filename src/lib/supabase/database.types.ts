@@ -369,6 +369,25 @@ export type Database = {
         };
         Returns: boolean;
       };
+      apply_invoice_event: {
+        Args: {
+          account_id: string;
+          event_id: string;
+          event_type: string;
+          invoice: Json;
+          subscription: Json;
+        };
+        Returns: string;
+      };
+      apply_subscription_event: {
+        Args: {
+          account_id: string;
+          event_id: string;
+          event_type: string;
+          subscription: Json;
+        };
+        Returns: string;
+      };
       create_business: {
         Args: { business_name: string; business_slug: string };
         Returns: string;
