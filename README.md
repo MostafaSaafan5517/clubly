@@ -30,7 +30,7 @@ The goal is production habits on a real multi-tenant billing product, not a demo
 - [x] **Phase 1:** authentication, businesses and Row-Level Security
 - [x] **Phase 2:** Stripe Connect onboarding and membership plans
 - [x] **Phase 3:** member subscriptions and webhooks
-- [ ] **Phase 4:** reconciliation job and audit log
+- [x] **Phase 4:** reconciliation job and audit log
 - [ ] **Phase 5:** business and member dashboards
 - [ ] **Phase 6:** end-to-end test flows
 - [ ] **Phase 7:** documentation, demo data and live demo
@@ -47,11 +47,17 @@ pnpm env:stripe
 pnpm dev
 ```
 
-- `pnpm env:local` writes the local Supabase URL and keys into `.env.local`.
+- `pnpm env:local` writes the local Supabase URL and keys into `.env.local`, plus a `CRON_SECRET` the first time.
 - `pnpm env:stripe` writes the Stripe CLI's webhook signing secret there too.
 - Add your Stripe test secret key yourself as `STRIPE_SECRET_KEY` (see `.env.example` for every variable).
 
 In a second terminal, `pnpm stripe:listen` forwards Stripe's webhooks to the app. Then open http://localhost:3000.
+
+The daily reconciliation job runs on Vercel Cron in production. To run it locally, call it with the `CRON_SECRET` value from `.env.local`:
+
+```bash
+curl -H "Authorization: Bearer <CRON_SECRET>" http://localhost:3000/api/cron/reconcile
+```
 
 ## Tests
 

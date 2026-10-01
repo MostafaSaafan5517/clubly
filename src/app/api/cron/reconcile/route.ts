@@ -10,7 +10,7 @@ import { toSubscriptionSnapshot } from "@/lib/stripe/webhooks";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 // Vercel Cron calls this once a day (see vercel.json). Locally, call it with the secret:
-//   curl -H "Authorization: Bearer $CRON_SECRET" localhost:3000/api/cron/reconcile
+//   curl -H "Authorization: Bearer <CRON_SECRET from .env.local>" localhost:3000/api/cron/reconcile
 
 // The most objects of one kind a run reads from one account.
 const LIST_LIMIT = 10_000;
