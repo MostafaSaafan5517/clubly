@@ -4,6 +4,14 @@ import { defineConfig, devices } from "@playwright/test";
 // Test helpers call Supabase directly (for example to create a confirmed user), so they need
 // the same local settings as the app. `pnpm env:local` writes them.
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
+// `next build` and `next start` read .env.production.local before .env.local, so with that file
+// around the app under test would quietly talk to whatever it points at. Keep production
+// settings under another name (see `pnpm seed:demo --env`).
+if (existsSync(".env.production.local")) {
+  throw new Error(
+    "Found .env.production.local: Next.js would use it instead of .env.local. Rename it first.",
+  );
+}
 
 const isCI = Boolean(process.env.CI);
 // `pnpm test:smoke` points the read-only smoke test at a deployed app instead (E2E_BASE_URL).

@@ -3,7 +3,7 @@
 // what's missing.
 //
 //   pnpm seed:demo                                   # local (.env.local, app on localhost:3000)
-//   pnpm seed:demo --env .env.production.local --app-url https://<your-app>.vercel.app
+//   pnpm seed:demo --env .env.vercel-production --app-url https://<your-app>.vercel.app
 //
 // People act for themselves wherever the app would let them (the owner creates the business and
 // its plans, members join), so RLS applies and the business's history reads naturally. Paid

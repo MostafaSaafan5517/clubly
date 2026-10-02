@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { appConfig } from "@/config/app";
 import { SIGNED_IN_HOME } from "@/lib/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { createServerComponentClient } from "@/lib/supabase/server";
@@ -41,11 +42,16 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           </p>
         )}
         <LoginForm next={nextPath} />
-        <p className="text-center text-sm">
-          <Link href={withNext("/magic-link", nextPath)} className="underline">
-            Email me a sign-in link instead
-          </Link>
-        </p>
+        {appConfig.authEmails && (
+          <p className="text-center text-sm">
+            <Link
+              href={withNext("/magic-link", nextPath)}
+              className="underline"
+            >
+              Email me a sign-in link instead
+            </Link>
+          </p>
+        )}
         <p className="text-center text-sm text-muted-foreground">
           New here?{" "}
           <Link

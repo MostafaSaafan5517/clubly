@@ -429,3 +429,36 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+# The hosted production project. `supabase config push` applies the settings above to it, with
+# these taking the place of the local values.
+[remotes.production]
+project_id = "oojqfsevzwolpbvkvpie"
+
+[remotes.production.auth]
+site_url = "https://clubly-nine.vercel.app"
+additional_redirect_urls = ["https://clubly-nine.vercel.app/**"]
+
+# Production sends no email: on Supabase's free plan the built-in email service only reaches the
+# project's own team, and custom templates need a custom SMTP sender. So sign-ups are confirmed at
+# once there, the email-link sign-in is hidden (NEXT_PUBLIC_AUTH_EMAILS=off), and the email
+# templates above stay local. Locally confirmation stays on, and the tests cover it.
+[remotes.production.auth.email]
+enable_confirmations = false
+max_frequency = "1m0s"
+
+[remotes.production.auth.email.template.confirmation]
+subject = "Confirm your email address"
+content_path = ""
+
+[remotes.production.auth.email.template.magic_link]
+content_path = ""
+
+# Supabase sizes the hosted pooler and storage features for the project's plan: keep them.
+[remotes.production.db.pooler]
+default_pool_size = 15
+max_client_conn = 200
+
+[remotes.production.storage.analytics]
+enabled = true
+max_namespaces = 10

@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { appConfig } from "@/config/app";
 import { SIGNED_IN_HOME } from "@/lib/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { createServerActionClient } from "@/lib/supabase/server";
@@ -74,7 +75,7 @@ export async function signUp(
   }
 
   const supabase = await createServerActionClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
@@ -85,6 +86,14 @@ export async function signUp(
   });
 
   if (error) {
+    // Only where sign-ups are confirmed at once (no email): Supabase then says so outright, so
+    // there's nothing left to hide.
+    if (error.code === "user_already_exists") {
+      return {
+        error: "That email already has an account. Sign in instead.",
+        fields,
+      };
+    }
     if (error.code === "weak_password") {
       return {
         error:
@@ -99,8 +108,12 @@ export async function signUp(
     };
   }
 
-  // Supabase answers the same way for an address that already has an account, so this page
-  // never reveals whether someone is registered.
+  // Where sign-ups are confirmed at once, the new user is already signed in.
+  if (data.session) {
+    redirect(safeRedirectPath(formText(formData, "next"), SIGNED_IN_HOME));
+  }
+  // Otherwise Supabase answers the same way for an address that already has an account, so this
+  // page never reveals whether someone is registered.
   redirect("/check-email");
 }
 
@@ -142,6 +155,9 @@ export async function sendSignInLink(
   formData: FormData,
 ): Promise<AuthFormState> {
   const fields = { email: formText(formData, "email") };
+  if (!appConfig.authEmails) {
+    return { error: "Email sign-in links aren't available here.", fields };
+  }
   const parsed = emailField.safeParse(fields.email);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? null, fields };

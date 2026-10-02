@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { MagicLinkForm } from "@/app/(auth)/magic-link/magic-link-form";
 import { readNext, withNext } from "@/app/(auth)/next-param";
 import {
@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { appConfig } from "@/config/app";
 import { SIGNED_IN_HOME } from "@/lib/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { createServerComponentClient } from "@/lib/supabase/server";
@@ -19,6 +20,8 @@ export const metadata: Metadata = { title: "Sign in with an email link" };
 export default async function MagicLinkPage({
   searchParams,
 }: PageProps<"/magic-link">) {
+  // Where this deployment can't send email, there's no such page.
+  if (!appConfig.authEmails) notFound();
   const nextPath = readNext((await searchParams).next);
   const supabase = await createServerComponentClient();
   const { data } = await supabase.auth.getClaims();
