@@ -17,7 +17,8 @@
     "env:local": "supabase status -o json | node scripts/write-local-env.mjs",
     "env:stripe": "stripe listen --print-secret | node scripts/write-stripe-webhook-secret.mjs",
     "stripe:listen": "node scripts/stripe-listen.mjs",
-    "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts && prettier --write src/lib/supabase/database.types.ts"
+    "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts && prettier --write src/lib/supabase/database.types.ts",
+    "seed:demo": "node scripts/seed-demo.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

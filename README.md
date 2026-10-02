@@ -17,6 +17,18 @@ Production habits on a real multi-tenant billing product:
 - **An append-only audit log** written by database triggers: no role, not even the server's, can edit or delete it.
 - **Tests against the real Stripe sandbox:** a real Checkout payment, the billing portal, and a failed renewal on a Stripe test clock, with Stripe's own webhooks, locally and in CI.
 
+## Screenshots
+
+| Revenue (owner)                                    | Members (staff)                               |
+| -------------------------------------------------- | --------------------------------------------- |
+| ![Revenue dashboard](docs/screenshots/revenue.png) | ![Members list](docs/screenshots/members.png) |
+
+| History (owners and admins)                             | A member's account                                     |
+| ------------------------------------------------------- | ------------------------------------------------------ |
+| ![Audit log as sentences](docs/screenshots/history.png) | ![Member account](docs/screenshots/member-account.png) |
+
+![Public join page](docs/screenshots/join-page.png)
+
 ## How it works
 
 ```mermaid
@@ -119,6 +131,10 @@ pnpm dev
 - Add your Stripe test secret key yourself as `STRIPE_SECRET_KEY` (see `.env.example` for every variable).
 
 In a second terminal, `pnpm stripe:listen` forwards Stripe's webhooks to the app. Then open http://localhost:3000.
+
+### Demo data
+
+With the app and `pnpm stripe:listen` running, `pnpm seed:demo` fills it with a climbing gym: an owner, staff, plans, and members who have paid with Stripe's test card. Sign in as `olivia.owner@example.com` (or any demo member it lists) with the password `climb-demo-2026`. It's safe to run again.
 
 The daily reconciliation job runs on Vercel Cron in production. To run it locally, call it with the `CRON_SECRET` value from `.env.local`:
 
