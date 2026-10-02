@@ -452,3 +452,76 @@ test("a member pays on Stripe Checkout and turns active once Stripe's webhook ar
     await archiveStripeProduct(accountId, plan.productId);
   }
 });
+
+test("members cancel and renew in Stripe's billing portal, and their account page follows Stripe", async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  const owner = await createConfirmedUser();
+  const member = await createConfirmedUser("Mona Member");
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Portal Flow Gym"),
+  );
+  const accountId = await useChargeReadyAccount(business.id);
+  const plan = await createPricedPlan(business.id, accountId, {
+    name: "Monthly",
+    amount: 2500,
+  });
+  const customerId = await createStripeCustomer(accountId, member.email);
+  await addMember(business.id, member.email, { stripeCustomerId: customerId });
+
+  // The account page shows what Stripe's webhooks have recorded, so it's reloaded until the
+  // expected state arrives.
+  const membership = page
+    .getByRole("listitem")
+    .filter({ hasText: business.name });
+  async function expectOnAccountPage(text: string | RegExp) {
+    await expect(async () => {
+      await page.goto("/account");
+      await expect(membership).toContainText(text, { timeout: 1_000 });
+    }).toPass({ timeout: 30_000 });
+  }
+  async function openPortal() {
+    await membership.getByRole("button", { name: "Manage billing" }).click();
+    await page.waitForURL(/^https:\/\/billing\.stripe\.com\//);
+  }
+  async function backToTheApp() {
+    await page.getByTestId("return-to-business-link").click();
+    await page.waitForURL(/\/account$/);
+  }
+
+  try {
+    await createPaidSubscription(accountId, customerId, plan.priceId);
+    await signInAs(page, member);
+    await expectOnAccountPage(/Active\s*Renews on/);
+
+    // Cancel: Stripe keeps the membership until the end of the period it was paid for.
+    await openPortal();
+    await page.getByRole("link", { name: "Cancel subscription" }).click();
+    await page.getByTestId("confirm").click();
+    await expect(
+      page.getByRole("link", { name: "Don't cancel subscription" }),
+    ).toBeVisible();
+    await backToTheApp();
+    await expectOnAccountPage(/Canceling\s*Ends on/);
+
+    // Change of mind: renewing clears the end date again.
+    await openPortal();
+    await page.getByRole("link", { name: "Don't cancel subscription" }).click();
+    await page.getByTestId("confirm").click();
+    await expect(
+      page.getByRole("link", { name: "Cancel subscription" }),
+    ).toBeVisible();
+    await backToTheApp();
+    await expectOnAccountPage(/Active\s*Renews on/);
+  } finally {
+    const configurationId = await getPortalConfigurationId(business.id);
+    if (configurationId) {
+      await retirePortalConfiguration(accountId, configurationId);
+    }
+    // Deleting the customer cancels its subscription.
+    await deleteStripeCustomer(accountId, customerId);
+    await archiveStripeProduct(accountId, plan.productId);
+  }
+});
