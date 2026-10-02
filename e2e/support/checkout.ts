@@ -30,6 +30,14 @@ export async function payWithTestCard(page: Page, cardholder: string) {
     .getByRole("combobox", { name: "Country or region" })
     .selectOption("US");
   await page.getByRole("textbox", { name: /ZIP/ }).fill("10001");
+  // Stripe offers to save the details with Link, and ticks that box by default in some countries
+  // (it then asks for a phone number; GitHub's runners get it). Tests don't save anything.
+  const saveWithLink = page.getByRole("checkbox", {
+    name: "Save my information for faster checkout",
+  });
+  if ((await saveWithLink.count()) > 0 && (await saveWithLink.isChecked())) {
+    await saveWithLink.setChecked(false);
+  }
   await page.getByRole("button", { name: "Subscribe", exact: true }).click();
 }
 
