@@ -6,6 +6,22 @@ A membership platform for small businesses: gyms, studios, clubs and coaching pr
 
 Stripe runs in test mode only, so no real money moves. Pay with Stripe's test card `4242 4242 4242 4242`, any future date and any CVC.
 
+## Live demo
+
+**https://clubly-nine.vercel.app** (the demo gym's join page: [/b/harbor-climbing-gym](https://clubly-nine.vercel.app/b/harbor-climbing-gym))
+
+Sign in with any of these demo accounts. The password for all of them is `climb-demo-2026`:
+
+| Account                      | What you'll see                                                       |
+| ---------------------------- | --------------------------------------------------------------------- |
+| `olivia.owner@example.com`   | The owner: revenue, members (suspend, reactivate), payouts, history   |
+| `adam.admin@example.com`     | An admin: everything except payouts                                   |
+| `sara.staff@example.com`     | Front-desk staff: members only, no revenue                            |
+| `carl.canceling@example.com` | A member whose membership ends at the period end                      |
+| `mona.member@example.com`    | A paying member, with Stripe's billing portal behind "Manage billing" |
+
+You can also sign up and join with the test card. The live demo sends no email (Supabase's free plan), so sign-ups are signed in at once and the email-link sign-in is off there; locally both work and are tested.
+
 ## What this project demonstrates
 
 Production habits on a real multi-tenant billing product:
@@ -162,4 +178,4 @@ curl -H "Authorization: Bearer <CRON_SECRET>" http://localhost:3000/api/cron/rec
 - [x] **Phase 4:** reconciliation job and audit log
 - [x] **Phase 5:** business and member dashboards
 - [x] **Phase 6:** end-to-end test flows
-- [ ] **Phase 7:** documentation, demo data and live demo
+- [x] **Phase 7:** documentation, demo data and live demo

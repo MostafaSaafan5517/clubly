@@ -170,6 +170,14 @@ Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks insi
 
 First Playwright run on a machine: `pnpm exec playwright install chromium`. E2E tests need the full local Supabase (`pnpm supabase start`, then `pnpm env:local`). With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.
 
+## Deployment
+
+- Live at https://clubly-nine.vercel.app (Vercel project `mostafa-saafan-s-projects/clubly`, connected to the GitHub repo: every push to `main` deploys to production). Functions run in `fra1`, next to the Supabase project (`oojqfsevzwolpbvkvpie`, Frankfurt).
+- Schema: `pnpm supabase db push` applies new migrations to the linked hosted project. Auth settings: `pnpm supabase config diff`, then `pnpm supabase config push`, with production values in `[remotes.production...]` blocks of `supabase/config.toml`.
+- Production variables live in Vercel (secrets marked sensitive) and in `.env.vercel-production` (git-ignored), which `pnpm seed:demo --env .env.vercel-production --app-url https://clubly-nine.vercel.app` uses. Vercel applies a changed variable from the next deployment on, so redeploy after changing one.
+- Stripe sends connected-account events to a Connect webhook endpoint for `https://clubly-nine.vercel.app/api/stripe/webhook` (test mode, the 7 event types in `scripts/stripe-listen.mjs`); its signing secret is `STRIPE_WEBHOOK_SECRET`. Add new event types there too.
+- After a deploy: `E2E_BASE_URL=https://clubly-nine.vercel.app pnpm test:smoke`.
+
 ## CI
 
 GitHub Actions runs on every push to `main` and every pull request, as three parallel jobs:
