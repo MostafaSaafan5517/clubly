@@ -13,6 +13,7 @@ import {
   suspendMembership,
   uniqueBusinessName,
 } from "./support/businesses";
+import { expectMembershipToShow, membershipCard } from "./support/account";
 import {
   deliverSignedEvent,
   deliveryOutcome,
@@ -33,6 +34,12 @@ import {
   getPortalConfiguration,
   getPortalConfigurationId,
   getStripeBalanceAndPayouts,
+  advanceTestClock,
+  createTestClock,
+  deleteTestClock,
+  getStripeSubscription,
+  payInvoice,
+  switchPaymentMethod,
   countRecordedEvents,
   latestCheckoutSession,
   useChargeReadyAccount,
@@ -471,19 +478,12 @@ test("members cancel and renew in Stripe's billing portal, and their account pag
   const customerId = await createStripeCustomer(accountId, member.email);
   await addMember(business.id, member.email, { stripeCustomerId: customerId });
 
-  // The account page shows what Stripe's webhooks have recorded, so it's reloaded until the
-  // expected state arrives.
-  const membership = page
-    .getByRole("listitem")
-    .filter({ hasText: business.name });
-  async function expectOnAccountPage(text: string | RegExp) {
-    await expect(async () => {
-      await page.goto("/account");
-      await expect(membership).toContainText(text, { timeout: 1_000 });
-    }).toPass({ timeout: 30_000 });
-  }
+  const expectOnAccountPage = (text: string | RegExp) =>
+    expectMembershipToShow(page, business.name, text);
   async function openPortal() {
-    await membership.getByRole("button", { name: "Manage billing" }).click();
+    await membershipCard(page, business.name)
+      .getByRole("button", { name: "Manage billing" })
+      .click();
     await page.waitForURL(/^https:\/\/billing\.stripe\.com\//);
   }
   async function backToTheApp() {
@@ -522,6 +522,90 @@ test("members cancel and renew in Stripe's billing portal, and their account pag
     }
     // Deleting the customer cancels its subscription.
     await deleteStripeCustomer(accountId, customerId);
+    await archiveStripeProduct(accountId, plan.productId);
+  }
+});
+
+test("a renewal that fails shows as a failed payment until the member pays it (Stripe test clock)", async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(300_000);
+  const owner = await createConfirmedUser();
+  const member = await createConfirmedUser("Mona Member");
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Renewal Gym"),
+  );
+  const accountId = await useChargeReadyAccount(business.id);
+  const plan = await createPricedPlan(business.id, accountId, {
+    name: "Monthly",
+    amount: 2500,
+  });
+  // The member's customer lives on a test clock, so next month's renewal can happen now.
+  const clockId = await createTestClock(accountId);
+  const customerId = await createStripeCustomer(accountId, member.email, {
+    testClock: clockId,
+  });
+  await addMember(business.id, member.email, { stripeCustomerId: customerId });
+  const expectOnAccountPage = (text: string | RegExp) =>
+    expectMembershipToShow(page, business.name, text);
+
+  try {
+    const subscriptionId = await createPaidSubscription(
+      accountId,
+      customerId,
+      plan.priceId,
+    );
+    await signInAs(page, member);
+    await expectOnAccountPage(/Active\s*Renews on/);
+
+    // The card on file starts failing, and the month runs out (plus the hour Stripe waits
+    // before charging a renewal invoice).
+    await switchPaymentMethod(
+      accountId,
+      customerId,
+      subscriptionId,
+      "pm_card_chargeCustomerFail",
+    );
+    const firstPeriod = await getStripeSubscription(accountId, subscriptionId);
+    const periodEnd = firstPeriod.items.data[0]?.current_period_end ?? 0;
+    await advanceTestClock(accountId, clockId, periodEnd + 2 * 60 * 60);
+
+    await expectOnAccountPage(/Payment failed/);
+    const ownerPage = await (await browser.newContext()).newPage();
+    await signInAs(ownerPage, owner);
+    await ownerPage.goto(`/dashboard/b/${business.slug}/revenue`);
+    await expect(
+      ownerPage.getByText("1 failed payment in the last 30 days."),
+    ).toBeVisible();
+
+    // The member fixes their card and the open renewal invoice is paid.
+    const renewal = await getStripeSubscription(accountId, subscriptionId);
+    const visa = await switchPaymentMethod(
+      accountId,
+      customerId,
+      subscriptionId,
+      "pm_card_visa",
+    );
+    await payInvoice(accountId, renewal.latest_invoice, visa);
+
+    await expectOnAccountPage(/Active\s*Renews on/);
+    // The failed renewal's payment row turned into a paid one: two paid payments in all.
+    await expect
+      .poll(async () =>
+        (await paymentsOf(business.id)).map(({ status, amount }) => [
+          status,
+          amount,
+        ]),
+      )
+      .toEqual([
+        ["paid", 2500],
+        ["paid", 2500],
+      ]);
+  } finally {
+    // Deleting the clock deletes its customer and subscription.
+    await deleteTestClock(accountId, clockId);
     await archiveStripeProduct(accountId, plan.productId);
   }
 });

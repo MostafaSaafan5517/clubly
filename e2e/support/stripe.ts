@@ -273,11 +273,17 @@ export async function latestCheckoutSession(
 }
 
 /** A customer on the given account, like the one joining creates for a member. */
-export async function createStripeCustomer(accountId: string, email: string) {
+export async function createStripeCustomer(
+  accountId: string,
+  email: string,
+  options: { testClock?: string } = {},
+) {
+  const body = new URLSearchParams({ email });
+  if (options.testClock) body.set("test_clock", options.testClock);
   const customer = await stripeRequest<{ id: string }>(
     "POST",
     "/v1/customers",
-    { account: accountId, body: new URLSearchParams({ email }) },
+    { account: accountId, body },
   );
   return customer.id;
 }
@@ -418,4 +424,103 @@ export async function countRecordedEvents(accountId: string, type: string) {
     .eq("type", type);
   if (error) throw error;
   return count ?? 0;
+}
+
+/**
+ * A Stripe test clock on the account: customers attached to it live on its time, which tests
+ * move forward to make renewals happen now. Deleting it deletes its customers too.
+ */
+export async function createTestClock(accountId: string) {
+  const clock = await stripeRequest<{ id: string }>(
+    "POST",
+    "/v1/test_helpers/test_clocks",
+    {
+      account: accountId,
+      body: new URLSearchParams({
+        frozen_time: String(Math.floor(Date.now() / 1000)),
+        name: "e2e renewal",
+      }),
+    },
+  );
+  return clock.id;
+}
+
+/** Moves the clock forward and waits until Stripe has caught up with everything that's due. */
+export async function advanceTestClock(
+  accountId: string,
+  clockId: string,
+  frozenTime: number,
+) {
+  await stripeRequest(
+    "POST",
+    `/v1/test_helpers/test_clocks/${clockId}/advance`,
+    {
+      account: accountId,
+      body: new URLSearchParams({ frozen_time: String(frozenTime) }),
+    },
+  );
+  for (let attempt = 0; attempt < 90; attempt += 1) {
+    const clock = await stripeRequest<{ status: string }>(
+      "GET",
+      `/v1/test_helpers/test_clocks/${clockId}`,
+      { account: accountId },
+    );
+    if (clock.status === "ready") return;
+    if (clock.status === "internal_failure") {
+      throw new Error(`Test clock ${clockId} failed to advance`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
+  }
+  throw new Error(`Test clock ${clockId} never finished advancing`);
+}
+
+export async function deleteTestClock(accountId: string, clockId: string) {
+  await stripeRequest("DELETE", `/v1/test_helpers/test_clocks/${clockId}`, {
+    account: accountId,
+  });
+}
+
+export async function getStripeSubscription(
+  accountId: string,
+  subscriptionId: string,
+) {
+  return stripeRequest<{
+    status: string;
+    latest_invoice: string;
+    items: { data: { current_period_end: number }[] };
+  }>("GET", `/v1/subscriptions/${subscriptionId}`, { account: accountId });
+}
+
+/**
+ * Attaches one of Stripe's test payment methods to the customer and makes it the one the
+ * subscription charges. `pm_card_chargeCustomerFail` attaches fine but every charge fails.
+ */
+export async function switchPaymentMethod(
+  accountId: string,
+  customerId: string,
+  subscriptionId: string,
+  testPaymentMethod: string,
+) {
+  const paymentMethod = await stripeRequest<{ id: string }>(
+    "POST",
+    `/v1/payment_methods/${testPaymentMethod}/attach`,
+    { account: accountId, body: new URLSearchParams({ customer: customerId }) },
+  );
+  await stripeRequest("POST", `/v1/subscriptions/${subscriptionId}`, {
+    account: accountId,
+    body: new URLSearchParams({ default_payment_method: paymentMethod.id }),
+  });
+  return paymentMethod.id;
+}
+
+/** Pays an open invoice now, as a member does after fixing their card. */
+export async function payInvoice(
+  accountId: string,
+  invoiceId: string,
+  paymentMethodId: string,
+) {
+  await stripeRequest("POST", `/v1/invoices/${invoiceId}/pay`, {
+    account: accountId,
+    body: new URLSearchParams({ payment_method: paymentMethodId }),
+  });
 }
