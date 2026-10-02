@@ -9,9 +9,15 @@ import {
   enableCharges,
   findMembership,
   linkStripeCustomer,
+  paymentsOf,
   suspendMembership,
   uniqueBusinessName,
 } from "./support/businesses";
+import {
+  deliverSignedEvent,
+  deliveryOutcome,
+  payWithTestCard,
+} from "./support/checkout";
 import { formError, signInAs } from "./support/forms";
 import {
   reconciliationCorrections,
@@ -34,7 +40,7 @@ import {
 import { createConfirmedUser } from "./support/users";
 
 // Everything that needs the shared charge-ready Stripe account (Checkout, the billing portal,
-// payouts, reconciliation) lives in this file, so those tests run one at a time.
+// payouts, reconciliation, paying for real) lives in this file, so those tests run one at a time.
 test.describe.configure({ mode: "serial" });
 
 test("a signed-in member joins a plan and is sent to Stripe Checkout for it", async ({
@@ -342,4 +348,107 @@ test("the owner sees their Stripe balance and recent payouts, read live from Str
   await expect(formError(page)).toHaveText(
     "Stripe couldn't open your dashboard. Please try again.",
   );
+});
+
+test("a member pays on Stripe Checkout and turns active once Stripe's webhook arrives; replayed events change nothing", async ({
+  page,
+  browser,
+  request,
+}) => {
+  test.setTimeout(240_000);
+  const owner = await createConfirmedUser("Olive Owner");
+  const member = await createConfirmedUser("Mona Member");
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Paid Gym"),
+  );
+  const accountId = await useChargeReadyAccount(business.id);
+  const plan = await createPricedPlan(business.id, accountId, {
+    name: "Monthly",
+    amount: 2500,
+  });
+
+  try {
+    // The member pays on Stripe's own Checkout page, with Stripe's test card.
+    await signInAs(page, member);
+    await page.goto(`/b/${business.slug}`);
+    await page.getByRole("button", { name: "Join" }).click();
+    await payWithTestCard(page, "Mona Member");
+
+    // Back on the app, the membership turns active only once the webhook has been processed.
+    await page.waitForURL(new RegExp(`/account\\?joined=${business.slug}$`), {
+      timeout: 60_000,
+    });
+    await expect(page.getByRole("status")).toHaveText(
+      `Welcome to ${business.name}! Your membership is active.`,
+      { timeout: 30_000 },
+    );
+    const membership = page
+      .getByRole("listitem")
+      .filter({ hasText: business.name });
+    await expect(membership).toContainText("Monthly, $25.00 per month");
+    await expect(membership).toContainText("Active");
+
+    // The owner sees the payment and the platform's 5% fee, and who recorded them.
+    const ownerPage = await (await browser.newContext()).newPage();
+    await signInAs(ownerPage, owner);
+    await ownerPage.goto(`/dashboard/b/${business.slug}/revenue`);
+    const figures = ownerPage.getByRole("definition");
+    await expect(figures.nth(0)).toHaveText("$25.00");
+    await expect(figures.nth(1)).toHaveText("$25.00");
+    await expect(figures.nth(2)).toHaveText("$1.25");
+    await expect(
+      ownerPage
+        .getByRole("region", { name: "Recent payments" })
+        .getByRole("listitem")
+        .filter({ hasText: "Mona Member" }),
+    ).toContainText("Paid, $1.25 fee");
+    await ownerPage.goto(`/dashboard/b/${business.slug}/history`);
+    await expect(
+      ownerPage
+        .getByRole("region", { name: "History" })
+        .getByRole("listitem")
+        .filter({ hasText: "Mona Member subscribed" }),
+    ).toContainText("Stripe ·");
+
+    // Stripe may deliver an event more than once: the second delivery changes nothing.
+    const payments = await paymentsOf(business.id);
+    expect(payments).toEqual([
+      expect.objectContaining({
+        status: "paid",
+        amount: 2500,
+        application_fee: 125,
+      }),
+    ]);
+    const event = {
+      id: `evt_e2e_${crypto.randomUUID()}`,
+      object: "event",
+      type: "invoice.paid",
+      account: accountId,
+      data: {
+        object: { id: payments[0]?.stripe_invoice_id, object: "invoice" },
+      },
+    };
+    expect(
+      await deliveryOutcome(await deliverSignedEvent(request, event)),
+    ).toBe("applied");
+    expect(
+      await deliveryOutcome(await deliverSignedEvent(request, event)),
+    ).toBe("duplicate");
+    expect(await paymentsOf(business.id)).toHaveLength(1);
+
+    // And a delivery that isn't signed with the endpoint's secret is refused.
+    const forged = await deliverSignedEvent(
+      request,
+      { ...event, id: `evt_e2e_${crypto.randomUUID()}` },
+      "whsec_not_the_real_secret",
+    );
+    expect(forged.status()).toBe(400);
+  } finally {
+    const customerId = (await findMembership(business.id, member.email))
+      ?.stripe_customer_id;
+    // Deleting the customer cancels its subscription.
+    if (customerId) await deleteStripeCustomer(accountId, customerId);
+    await archiveStripeProduct(accountId, plan.productId);
+  }
 });

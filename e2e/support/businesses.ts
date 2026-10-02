@@ -222,3 +222,13 @@ export async function linkStripeCustomer(memberId: string, customerId: string) {
     .eq("id", memberId);
   if (error) throw error;
 }
+
+/** The business's recorded payments (service role), Stripe invoice ids included. */
+export async function paymentsOf(businessId: string) {
+  const { data, error } = await adminClient()
+    .from("payments")
+    .select("stripe_invoice_id, amount, application_fee, status")
+    .eq("business_id", businessId);
+  if (error) throw error;
+  return data;
+}
