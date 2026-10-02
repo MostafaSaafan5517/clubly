@@ -16,7 +16,7 @@
     "test:db": "supabase test db",
     "env:local": "supabase status -o json | node scripts/write-local-env.mjs",
     "env:stripe": "stripe listen --print-secret | node scripts/write-stripe-webhook-secret.mjs",
-    "stripe:listen": "stripe listen --forward-connect-to localhost:3000/api/stripe/webhook --events account.updated,checkout.session.completed,customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,invoice.paid,invoice.payment_failed",
+    "stripe:listen": "node scripts/stripe-listen.mjs",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts && prettier --write src/lib/supabase/database.types.ts"
   },
   "dependencies": {

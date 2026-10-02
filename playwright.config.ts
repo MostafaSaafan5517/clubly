@@ -24,10 +24,22 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  webServer: {
-    // CI tests the production build (`pnpm build` runs first); locally the dev server is enough.
-    command: isCI ? "pnpm start" : "pnpm dev",
-    url: baseURL,
-    reuseExistingServer: !isCI,
-  },
+  webServer: [
+    {
+      // CI tests the production build (`pnpm build` runs first); locally the dev server is
+      // enough.
+      command: isCI ? "pnpm start" : "pnpm dev",
+      url: baseURL,
+      reuseExistingServer: !isCI,
+    },
+    {
+      // Forwards the sandbox's events to the app, signed like Stripe signs them in production,
+      // so tests can follow a payment from Stripe Checkout to the database. Needs the Stripe CLI,
+      // logged in (`stripe login`) or given STRIPE_API_KEY, and `pnpm env:stripe` run once.
+      // A second listener (say, one you're already running) is harmless: the app records each
+      // event once.
+      command: "pnpm stripe:listen",
+      wait: { stderr: /Ready!/ },
+    },
+  ],
 });

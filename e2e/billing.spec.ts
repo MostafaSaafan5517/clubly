@@ -8,6 +8,7 @@ import {
   disableCharges,
   enableCharges,
   findMembership,
+  linkStripeCustomer,
   suspendMembership,
   uniqueBusinessName,
 } from "./support/businesses";
@@ -26,6 +27,7 @@ import {
   getPortalConfiguration,
   getPortalConfigurationId,
   getStripeBalanceAndPayouts,
+  countRecordedEvents,
   latestCheckoutSession,
   useChargeReadyAccount,
 } from "./support/stripe";
@@ -198,7 +200,7 @@ test("a suspended member can't start a new subscription", async ({ page }) => {
   await expect(page).toHaveURL(new RegExp(`/b/${business.slug}$`));
 });
 
-test("reconciliation records what the webhooks missed, and a second run changes nothing", async ({
+test("reconciliation fills in what the webhooks couldn't apply, and a second run changes nothing", async ({
   request,
 }) => {
   test.setTimeout(240_000);
@@ -214,17 +216,39 @@ test("reconciliation records what the webhooks missed, and a second run changes 
     amount: 2000,
   });
   const customerId = await createStripeCustomer(accountId, member.email);
-  await addMember(business.id, member.email, { stripeCustomerId: customerId });
+  // Joined, but the Stripe customer's id wasn't saved (as if the app had crashed right after
+  // creating it), so the app can't tell whose events these are.
+  const memberId = await addMember(business.id, member.email);
 
   try {
-    // In Stripe the business can take payments and the member has paid; this database has heard
-    // none of it (no webhooks reach it in tests).
     await disableCharges(business.id);
+    const eventsBefore = await Promise.all([
+      countRecordedEvents(accountId, "customer.subscription.created"),
+      countRecordedEvents(accountId, "invoice.paid"),
+    ]);
     const subscriptionId = await createPaidSubscription(
       accountId,
       customerId,
       plan.priceId,
     );
+    // The webhooks arrive and are recorded, but can't be applied: nothing links them to a member.
+    // (At least one more of each: a run elsewhere may share this sandbox account.)
+    await expect
+      .poll(
+        async () => {
+          const [subscriptions, invoices] = await Promise.all([
+            countRecordedEvents(accountId, "customer.subscription.created"),
+            countRecordedEvents(accountId, "invoice.paid"),
+          ]);
+          return subscriptions > eventsBefore[0] && invoices > eventsBefore[1];
+        },
+        { timeout: 30_000 },
+      )
+      .toBe(true);
+    expect(await findMembership(business.id, member.email)).toMatchObject({
+      stripe_customer_id: null,
+    });
+    await linkStripeCustomer(memberId, customerId);
 
     const first = await runReconciliation(request);
     const corrections = await reconciliationCorrections(

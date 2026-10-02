@@ -44,11 +44,13 @@ jobs:
   e2e:
     name: End-to-end tests (Playwright)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       # Stripe sandbox (test-mode) key, stored as an encrypted repository secret. The app
       # refuses to start with a live key.
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      # The same key for the Stripe CLI, which forwards the sandbox's webhooks to the app.
+      STRIPE_API_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
@@ -58,6 +60,20 @@ jobs:
       - run: pnpm supabase start -x studio,postgres-meta
       # Must come before the build: NEXT_PUBLIC_ values are baked into the bundle.
       - run: pnpm env:local
+      # Pinned, and checked against the release's published checksums before it runs.
+      - name: Install the Stripe CLI
+        env:
+          STRIPE_CLI_VERSION: 1.53.0
+        run: |
+          base="https://github.com/stripe/stripe-cli/releases/download/v${STRIPE_CLI_VERSION}"
+          archive="stripe_${STRIPE_CLI_VERSION}_linux_x86_64.tar.gz"
+          curl -fsSLO "$base/$archive"
+          curl -fsSL "$base/stripe-linux-checksums.txt" | grep " $archive\$" | sha256sum --check
+          sudo tar -xzf "$archive" -C /usr/local/bin stripe
+          stripe version
+      # The CLI's webhook signing secret, for the app to verify forwarded events with. Playwright
+      # starts the listener itself (playwright.config.ts).
+      - run: pnpm env:stripe
       # Playwright serves this production build when CI is set.
       - run: pnpm build
       - run: pnpm test:e2e

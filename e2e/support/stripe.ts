@@ -128,7 +128,7 @@ type StripeAccount = {
  * Stripe takes over a minute to verify a new account, so it's created once, with Stripe's
  * documented test values through the API, and found again by its metadata after that.
  */
-async function chargeReadyAccountId() {
+export async function chargeReadyAccountId() {
   const { data } = await stripeRequest<{ data: StripeAccount[] }>(
     "GET",
     "/v1/accounts?limit=100",
@@ -348,8 +348,7 @@ export async function retirePortalConfiguration(
 
 /**
  * A subscription created straight in Stripe and paid at once with Stripe's test card, on the
- * member's customer. No webhook reaches the test database, so to the app it's a subscription
- * whose events were missed.
+ * member's customer. Its events reach the app through the test run's Stripe CLI listener.
  */
 export async function createPaidSubscription(
   accountId: string,
@@ -401,4 +400,22 @@ export async function getStripeBalanceAndPayouts(accountId: string) {
     pending: balance.pending,
     payoutCount: payouts.data.length,
   };
+}
+
+/** Changes the account's metadata, which makes Stripe send an account.updated event. */
+export async function touchStripeAccount(accountId: string) {
+  await stripeRequest("POST", `/v1/accounts/${accountId}`, {
+    body: new URLSearchParams({ "metadata[e2e_touched]": crypto.randomUUID() }),
+  });
+}
+
+/** How many events of this type from this account the app has recorded (service role). */
+export async function countRecordedEvents(accountId: string, type: string) {
+  const { count, error } = await adminClient()
+    .from("stripe_events")
+    .select("event_id", { count: "exact", head: true })
+    .eq("account_id", accountId)
+    .eq("type", type);
+  if (error) throw error;
+  return count ?? 0;
 }

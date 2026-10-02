@@ -213,3 +213,12 @@ export async function addPayment(
     });
   if (error) throw error;
 }
+
+/** Saves a member's Stripe customer id, as joining does once the customer exists (service role). */
+export async function linkStripeCustomer(memberId: string, customerId: string) {
+  const { error } = await adminClient()
+    .from("members")
+    .update({ stripe_customer_id: customerId })
+    .eq("id", memberId);
+  if (error) throw error;
+}
