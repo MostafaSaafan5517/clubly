@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:smoke": "playwright test",
     "test:db": "supabase test db",
     "env:local": "supabase status -o json | node scripts/write-local-env.mjs",
     "env:stripe": "stripe listen --print-secret | node scripts/write-stripe-webhook-secret.mjs",

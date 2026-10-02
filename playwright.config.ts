@@ -6,10 +6,15 @@ import { defineConfig, devices } from "@playwright/test";
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 
 const isCI = Boolean(process.env.CI);
-const baseURL = "http://localhost:3000";
+// `pnpm test:smoke` points the read-only smoke test at a deployed app instead (E2E_BASE_URL).
+// It starts no servers and runs nothing else: the rest of the suite writes to the database.
+const smokeURL = process.env.E2E_BASE_URL;
+const baseURL = smokeURL ?? "http://localhost:3000";
 
 export default defineConfig({
   testDir: "./e2e",
+  testMatch: smokeURL ? "smoke.spec.ts" : "*.spec.ts",
+  testIgnore: smokeURL ? [] : ["smoke.spec.ts"],
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
@@ -24,22 +29,24 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  webServer: [
-    {
-      // CI tests the production build (`pnpm build` runs first); locally the dev server is
-      // enough.
-      command: isCI ? "pnpm start" : "pnpm dev",
-      url: baseURL,
-      reuseExistingServer: !isCI,
-    },
-    {
-      // Forwards the sandbox's events to the app, signed like Stripe signs them in production,
-      // so tests can follow a payment from Stripe Checkout to the database. Needs the Stripe CLI,
-      // logged in (`stripe login`) or given STRIPE_API_KEY, and `pnpm env:stripe` run once.
-      // A second listener (say, one you're already running) is harmless: the app records each
-      // event once.
-      command: "pnpm stripe:listen",
-      wait: { stderr: /Ready!/ },
-    },
-  ],
+  webServer: smokeURL
+    ? undefined
+    : [
+        {
+          // CI tests the production build (`pnpm build` runs first); locally the dev server
+          // is enough.
+          command: isCI ? "pnpm start" : "pnpm dev",
+          url: baseURL,
+          reuseExistingServer: !isCI,
+        },
+        {
+          // Forwards the sandbox's events to the app, signed like Stripe signs them in
+          // production, so tests can follow a payment from Stripe Checkout to the database.
+          // Needs the Stripe CLI, logged in (`stripe login`) or given STRIPE_API_KEY, and
+          // `pnpm env:stripe` run once. A second listener (say, one you're already running)
+          // is harmless: the app records each event once.
+          command: "pnpm stripe:listen",
+          wait: { stderr: /Ready!/ },
+        },
+      ],
 });

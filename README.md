@@ -144,11 +144,12 @@ curl -H "Authorization: Bearer <CRON_SECRET>" http://localhost:3000/api/cron/rec
 
 ## Tests
 
-| Suite          | Command         | Notes                                                                                                                                                                                             |
-| -------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit           | `pnpm test`     | Vitest                                                                                                                                                                                            |
-| Database / RLS | `pnpm test:db`  | pgTAP; needs `pnpm supabase start` first                                                                                                                                                          |
-| End-to-end     | `pnpm test:e2e` | Playwright, with real Stripe sandbox webhooks; needs local Supabase running, `pnpm env:local`, the Stripe CLI logged in and `pnpm env:stripe`; first run: `pnpm exec playwright install chromium` |
+| Suite          | Command           | Notes                                                                                                                                                                                             |
+| -------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit           | `pnpm test`       | Vitest                                                                                                                                                                                            |
+| Database / RLS | `pnpm test:db`    | pgTAP; needs `pnpm supabase start` first                                                                                                                                                          |
+| End-to-end     | `pnpm test:e2e`   | Playwright, with real Stripe sandbox webhooks; needs local Supabase running, `pnpm env:local`, the Stripe CLI logged in and `pnpm env:stripe`; first run: `pnpm exec playwright install chromium` |
+| Smoke          | `pnpm test:smoke` | Read-only checks of a deployed, demo-seeded app: `E2E_BASE_URL=https://... pnpm test:smoke`                                                                                                       |
 
 `pnpm lint`, `pnpm typecheck` and `pnpm format:check` run in CI alongside all three suites.
 

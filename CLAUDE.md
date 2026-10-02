@@ -79,6 +79,7 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Reconciliation (`/api/cron/reconcile`) runs daily at 03:00 UTC through Vercel Cron (`vercel.json`). It answers only requests carrying `Authorization: Bearer $CRON_SECRET` (compared in constant time). For each business with a connected account it re-reads the account, every subscription in any status, and membership invoices from the last 35 days, and hands them to the reconcile SQL functions. Fees sit on PaymentIntents, which a list call can't expand to (Stripe stops at four levels), so recent PaymentIntents are listed too and any missing one is fetched alone. Businesses go one at a time; one that fails is recorded in the run and skipped. A run with any failure answers 500, so it shows in Vercel's cron logs. The logic lives in `src/lib/stripe/reconcile.ts` with its dependencies injected; the route only wires the real ones.
 - Error messages that are logged or stored go through `errorMessage()` (`src/lib/redact.ts`): Stripe's errors quote the API key with its last characters visible.
 - Locally: `pnpm env:stripe` once (writes the CLI's signing secret to `.env.local`), then `pnpm stripe:listen` next to `pnpm dev`. Add every event type the app handles to `EVENTS` in `scripts/stripe-listen.mjs`.
+- `pnpm test:smoke` runs only `e2e/smoke.spec.ts`, against `E2E_BASE_URL` and without starting any server. It signs in as demo accounts and reads pages, never signs up (hosted Supabase would send real email) or changes data, so it can run against the live demo at any time. The normal suite never runs it.
 - `pnpm seed:demo` (`scripts/seed-demo.mjs`) fills an environment with the demo climbing gym: an owner, an admin and staff, three plans (one archived) and five members, four of them paying with Stripe's test card. People act for themselves through RLS wherever the app would let them, so the history reads naturally; paid subscriptions are created in Stripe and their rows arrive through the webhooks (or the reconciliation job, which the script calls if they're slow). It's idempotent, refuses anything but an `sk_test_` key, and takes `--env <file>` and `--app-url <url>` to seed production. Every demo account's password is public (it's in the README) and is reset on each run.
 - Tests that need a connected account able to take payments share one, and all live in `e2e/billing.spec.ts`: `useChargeReadyAccount()` finds it by its `metadata.purpose` (`clubly-e2e-charge-ready`) or creates it once through API onboarding with Stripe's test values (Stripe takes over a minute to verify a new one). Those tests run serially. It and the demo's account (`metadata.purpose` `clubly-demo`, see `pnpm seed:demo`) are the only connected accounts expected to stay in the sandbox.
 - E2E tests that create Stripe objects run against the sandbox and delete them afterwards (`e2e/support/stripe.ts`); `deleteStripeAccount` also detaches the account from its business, so reconciliation doesn't keep asking Stripe for it. CI reads the key from the `STRIPE_SECRET_KEY` repository secret.
@@ -147,23 +148,24 @@ Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks insi
 
 ## Commands
 
-| Command                             | What it does                                                                  |
-| ----------------------------------- | ----------------------------------------------------------------------------- |
-| `pnpm dev`                          | Dev server at http://localhost:3000                                           |
-| `pnpm build` / `pnpm start`         | Production build / serve that build                                           |
-| `pnpm lint`                         | ESLint; fails on any warning                                                  |
-| `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`                                |
-| `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check)                          |
-| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode                                    |
-| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running                           |
-| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)                               |
-| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)                            |
-| `pnpm env:local`                    | Write local Supabase URL and keys (and a cron secret, once) into `.env.local` |
-| `pnpm supabase db reset`            | Rebuild the local database from migrations                                    |
-| `pnpm db:types`                     | Regenerate TypeScript types from the local database                           |
-| `pnpm seed:demo`                    | Seed the demo climbing gym (people, plans, paid members); safe to rerun       |
-| `pnpm env:stripe`                   | Write the Stripe CLI's webhook secret to `.env.local`                         |
-| `pnpm stripe:listen`                | Forward sandbox webhooks to the local app                                     |
+| Command                             | What it does                                                                    |
+| ----------------------------------- | ------------------------------------------------------------------------------- |
+| `pnpm dev`                          | Dev server at http://localhost:3000                                             |
+| `pnpm build` / `pnpm start`         | Production build / serve that build                                             |
+| `pnpm lint`                         | ESLint; fails on any warning                                                    |
+| `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`                                  |
+| `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check)                            |
+| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode                                      |
+| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running                             |
+| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)                                 |
+| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)                              |
+| `pnpm env:local`                    | Write local Supabase URL and keys (and a cron secret, once) into `.env.local`   |
+| `pnpm supabase db reset`            | Rebuild the local database from migrations                                      |
+| `pnpm db:types`                     | Regenerate TypeScript types from the local database                             |
+| `pnpm seed:demo`                    | Seed the demo climbing gym (people, plans, paid members); safe to rerun         |
+| `pnpm test:smoke`                   | Read-only Playwright checks of a deployed, demo-seeded app (`E2E_BASE_URL=...`) |
+| `pnpm env:stripe`                   | Write the Stripe CLI's webhook secret to `.env.local`                           |
+| `pnpm stripe:listen`                | Forward sandbox webhooks to the local app                                       |
 
 First Playwright run on a machine: `pnpm exec playwright install chromium`. E2E tests need the full local Supabase (`pnpm supabase start`, then `pnpm env:local`). With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.
 
