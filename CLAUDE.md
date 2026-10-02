@@ -131,7 +131,7 @@ src/
   lib/stripe/        Server-only Stripe client; Connect, plan, Checkout, portal and webhook helpers
   proxy.ts           Runs before every request; refreshes the Supabase session
 scripts/             Dev tooling (writing .env.local)
-vercel.json          Vercel settings: the daily reconciliation cron
+vercel.json          Vercel settings: functions in Frankfurt (next to the database), the daily cron
 e2e/                 Playwright end-to-end specs (*.spec.ts)
   support/           E2E helpers (test users and businesses, Mailpit links, Stripe sandbox)
 supabase/
