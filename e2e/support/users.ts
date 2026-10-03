@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { adminClient } from "./supabase";
 
 export const TEST_PASSWORD = "correct-horse-1";
 
@@ -30,4 +31,19 @@ export async function createConfirmedUser(fullName = "Test User") {
   if (error) throw error;
 
   return { email, password: TEST_PASSWORD, fullName };
+}
+
+/** Marks a user as a read-only demo account, as `pnpm seed:demo` does. */
+export async function markAsDemoAccount(email: string) {
+  const admin = adminClient();
+  const { data: profile, error: profileError } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .single();
+  if (profileError) throw profileError;
+  const { error } = await admin.auth.admin.updateUserById(profile.id, {
+    app_metadata: { demo: true },
+  });
+  if (error) throw error;
 }

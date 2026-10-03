@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { DEMO_READ_ONLY_MESSAGE, isDemoAccount } from "@/lib/demo";
 import { MAX_SLUG_LENGTH, MIN_SLUG_LENGTH, SLUG_PATTERN } from "@/lib/slug";
 import { createServerActionClient } from "@/lib/supabase/server";
 
@@ -46,9 +47,14 @@ export async function createBusiness(
     return { error: parsed.error.issues[0]?.message ?? null };
   }
 
+  const supabase = await createServerActionClient();
+  const { data } = await supabase.auth.getClaims();
+  if (data && isDemoAccount(data.claims)) {
+    return { error: DEMO_READ_ONLY_MESSAGE };
+  }
+
   // The database function checks the signed-in user too, and makes them the owner in the same
   // transaction as the insert.
-  const supabase = await createServerActionClient();
   const { error } = await supabase.rpc("create_business", {
     business_name: parsed.data.name,
     business_slug: parsed.data.slug,

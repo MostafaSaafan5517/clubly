@@ -10,6 +10,10 @@
 // subscriptions are created in Stripe; their rows arrive the way real ones do, through Stripe's
 // webhooks (run `pnpm stripe:listen` locally), or through the reconciliation job, which this
 // script calls if they're slow.
+//
+// The demo accounts are read-only while marked as such (see the make_demo_accounts_read_only
+// migration), so the script takes the mark off while it works and puts it back at the end, even
+// if a step fails.
 import { parseArgs } from "node:util";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
@@ -98,7 +102,7 @@ async function ensureUser({ name, email }) {
     `Looking up ${email}`,
   );
   if (existing) {
-    // Keeps the published password working even if someone changed it.
+    // Keeps the published password working (only possible while the account is unmarked).
     check(
       await admin.auth.admin.updateUserById(existing.id, {
         password: DEMO_PASSWORD,
@@ -118,6 +122,29 @@ async function ensureUser({ name, email }) {
   );
   step(`created ${name} (${email})`);
   return created.user.id;
+}
+
+/** Marks (or unmarks) the people who exist so far as read-only demo accounts. */
+async function markDemoAccounts(people, demo) {
+  const rows = check(
+    await admin
+      .from("profiles")
+      .select("id")
+      .in(
+        "email",
+        people.map((person) => person.email),
+      ),
+    "Looking up the demo accounts",
+  );
+  for (const { id } of rows) {
+    check(
+      // null removes the key from the app metadata.
+      await admin.auth.admin.updateUserById(id, {
+        app_metadata: { demo: demo ? true : null },
+      }),
+      "Marking the demo accounts",
+    );
+  }
 }
 
 /** A Supabase client signed in as the demo user, so RLS applies as in the app. */
@@ -195,8 +222,7 @@ async function demoAccountId() {
   throw new Error(`Stripe never enabled charges on ${created.id}`);
 }
 
-async function main() {
-  process.stdout.write(`Seeding the demo with ${args.env}\n`);
+async function seed() {
   const ids = {};
   for (const [role, person] of Object.entries(PEOPLE))
     ids[role] = await ensureUser(person);
@@ -473,10 +499,22 @@ async function main() {
       );
     }
   }
+}
+
+async function main() {
+  process.stdout.write(`Seeding the demo with ${args.env}\n`);
+  const everyone = [...Object.values(PEOPLE), ...MEMBERS];
+  await markDemoAccounts(everyone, false);
+  try {
+    await seed();
+  } finally {
+    await markDemoAccounts(everyone, true);
+    step("marked the demo accounts read-only");
+  }
 
   process.stdout.write(
     `\nDone. Sign in at ${args["app-url"]}/login with any of these (password "${DEMO_PASSWORD}"):\n` +
-      [...Object.values(PEOPLE), ...MEMBERS]
+      everyone
         .map((person) => `  ${person.email}  (${person.name})`)
         .join("\n") +
       `\nThe public join page is ${args["app-url"]}/b/${BUSINESS.slug}\n`,

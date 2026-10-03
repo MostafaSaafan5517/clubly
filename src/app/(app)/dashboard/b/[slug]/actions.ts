@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/action-button";
 import { getStaffBusiness } from "@/lib/business";
+import { DEMO_READ_ONLY_MESSAGE, isDemoAccount } from "@/lib/demo";
 import { errorMessage } from "@/lib/redact";
 import {
   createOnboardingUrl,
@@ -25,13 +26,14 @@ async function requireStaff(slug: string) {
     redirect(`/login?next=${encodeURIComponent(`/dashboard/b/${slug}`)}`);
   }
   const staff = await getStaffBusiness(supabase, data.claims.sub, slug);
-  return { supabase, staff };
+  return { supabase, staff, demo: isDemoAccount(data.claims) };
 }
 
 export async function startStripeOnboarding(
   slug: string,
 ): Promise<ActionState> {
-  const { staff } = await requireStaff(slug);
+  const { staff, demo } = await requireStaff(slug);
+  if (demo) return { error: DEMO_READ_ONLY_MESSAGE };
   // Payouts go to the owner's bank account, so only the owner may connect one.
   if (staff?.role !== "owner") {
     return { error: "Only the owner can set up payouts." };
@@ -64,7 +66,8 @@ export async function setPlanActive(
   planId: string,
   active: boolean,
 ): Promise<ActionState> {
-  const { supabase, staff } = await requireStaff(slug);
+  const { supabase, staff, demo } = await requireStaff(slug);
+  if (demo) return { error: DEMO_READ_ONLY_MESSAGE };
   if (!staff || staff.role === "staff") {
     return { error: "Only owners and admins can change plans." };
   }

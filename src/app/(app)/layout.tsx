@@ -3,11 +3,17 @@ import { signOut } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
 import { appConfig } from "@/config/app";
 import { SIGNED_IN_HOME } from "@/lib/auth";
+import { DEMO_READ_ONLY_MESSAGE, isDemoAccount } from "@/lib/demo";
+import { createServerComponentClient } from "@/lib/supabase/server";
 
 // The signed-in part of the app: businesses people run (/dashboard) and memberships they hold
 // (/account). Each page checks the user itself (requireUser); a layout is not re-run on every
 // navigation, so it must never be the only guard.
-export default function SignedInLayout({ children }: LayoutProps<"/">) {
+export default async function SignedInLayout({ children }: LayoutProps<"/">) {
+  const supabase = await createServerComponentClient();
+  const { data } = await supabase.auth.getClaims();
+  const demo = data !== null && isDemoAccount(data.claims);
+
   return (
     <div className="flex flex-1 flex-col">
       <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:gap-x-6 sm:px-6">
@@ -36,6 +42,11 @@ export default function SignedInLayout({ children }: LayoutProps<"/">) {
           </Button>
         </form>
       </header>
+      {demo && (
+        <p className="border-b bg-muted px-4 py-2 text-center text-sm sm:px-6">
+          {DEMO_READ_ONLY_MESSAGE}
+        </p>
+      )}
       <main className="mx-auto grid w-full max-w-3xl gap-8 p-4 sm:p-6">
         {children}
       </main>

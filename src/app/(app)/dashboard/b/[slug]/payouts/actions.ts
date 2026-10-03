@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/action-button";
 import { getStaffBusiness } from "@/lib/business";
+import { DEMO_READ_ONLY_MESSAGE, isDemoAccount } from "@/lib/demo";
 import { errorMessage } from "@/lib/redact";
 import { storedAccountId } from "@/lib/stripe/connect";
 import { createDashboardLoginUrl } from "@/lib/stripe/payouts";
@@ -17,6 +18,9 @@ export async function openStripeDashboard(slug: string): Promise<ActionState> {
       `/login?next=${encodeURIComponent(`/dashboard/b/${slug}/payouts`)}`,
     );
   }
+
+  // The dashboard can change the bank account the demo's payouts go to.
+  if (isDemoAccount(data.claims)) return { error: DEMO_READ_ONLY_MESSAGE };
 
   // The dashboard shows the bank account and moves money, so it's for the owner only.
   const staff = await getStaffBusiness(supabase, data.claims.sub, slug);

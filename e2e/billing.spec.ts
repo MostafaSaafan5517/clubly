@@ -43,8 +43,9 @@ import {
   countRecordedEvents,
   latestCheckoutSession,
   useChargeReadyAccount,
+  viewOnlyPortalConfigurations,
 } from "./support/stripe";
-import { createConfirmedUser } from "./support/users";
+import { createConfirmedUser, markAsDemoAccount } from "./support/users";
 
 // Everything that needs the shared charge-ready Stripe account (Checkout, the billing portal,
 // payouts, reconciliation, paying for real) lives in this file, so those tests run one at a time.
@@ -168,6 +169,64 @@ test("Manage billing opens Stripe's Customer Portal, configured once per busines
       await retirePortalConfiguration(accountId, configurationId);
     }
     await deleteStripeCustomer(accountId, customerId);
+  }
+});
+
+test("demo members see their billing in Stripe's portal but can't change it", async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  const owner = await createConfirmedUser();
+  const member = await createConfirmedUser("Dee Demo");
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Demo Portal Gym"),
+  );
+  const accountId = await useChargeReadyAccount(business.id);
+  const plan = await createPricedPlan(business.id, accountId, {
+    name: "Monthly",
+    amount: 2500,
+  });
+  const customerId = await createStripeCustomer(accountId, member.email);
+  await addMember(business.id, member.email, { stripeCustomerId: customerId });
+  await markAsDemoAccount(member.email);
+
+  try {
+    await createPaidSubscription(accountId, customerId, plan.priceId);
+    await signInAs(page, member);
+    await expectMembershipToShow(page, business.name, /Active\s*Renews on/);
+
+    await membershipCard(page, business.name)
+      .getByRole("button", { name: "Manage billing" })
+      .click();
+    await page.waitForURL(/^https:\/\/billing\.stripe\.com\//);
+    await expect(page.getByTestId("return-to-business-link")).toBeVisible();
+    await expect(page.getByText("Invoice history")).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Cancel subscription" }),
+    ).toHaveCount(0);
+
+    // Usually one; a run sharing the sandbox at the same moment may have made its own.
+    const viewOnly = await viewOnlyPortalConfigurations(accountId);
+    expect(viewOnly.length).toBeGreaterThan(0);
+    for (const configuration of viewOnly) {
+      expect(configuration).toMatchObject({
+        features: {
+          customer_update: { enabled: false },
+          invoice_history: { enabled: true },
+          payment_method_update: { enabled: false },
+          subscription_cancel: { enabled: false },
+        },
+      });
+    }
+    // The business's own portal, where members can cancel, wasn't used.
+    expect(await getPortalConfigurationId(business.id)).toBeNull();
+  } finally {
+    for (const configuration of await viewOnlyPortalConfigurations(accountId)) {
+      await retirePortalConfiguration(accountId, configuration.id);
+    }
+    await deleteStripeCustomer(accountId, customerId);
+    await archiveStripeProduct(accountId, plan.productId);
   }
 });
 

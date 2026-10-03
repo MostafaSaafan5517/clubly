@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getStaffBusiness } from "@/lib/business";
+import { DEMO_READ_ONLY_MESSAGE, isDemoAccount } from "@/lib/demo";
 import {
   MAX_PLAN_AMOUNT,
   MIN_PLAN_AMOUNT,
@@ -68,6 +69,9 @@ export async function createPlan(
     );
   }
 
+  if (isDemoAccount(data.claims)) {
+    return { error: DEMO_READ_ONLY_MESSAGE, fields };
+  }
   const staff = await getStaffBusiness(supabase, data.claims.sub, slug);
   if (!staff || staff.role === "staff") {
     return { error: "Only owners and admins can create plans.", fields };

@@ -3,12 +3,14 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/action-button";
+import { isDemoAccount } from "@/lib/demo";
 import { errorMessage } from "@/lib/redact";
 import { storedCustomerId } from "@/lib/stripe/checkout";
 import { storedAccountId } from "@/lib/stripe/connect";
 import {
   createPortalUrl,
   getOrCreatePortalConfiguration,
+  getOrCreateViewOnlyPortalConfiguration,
 } from "@/lib/stripe/portal";
 import { createServerActionClient } from "@/lib/supabase/server";
 
@@ -48,10 +50,10 @@ export async function openBillingPortal(
     }
     portalUrl = await createPortalUrl({
       accountId,
-      configurationId: await getOrCreatePortalConfiguration(
-        member.business_id,
-        accountId,
-      ),
+      // Demo members share one account, so their portal shows billing without changing it.
+      configurationId: isDemoAccount(data.claims)
+        ? await getOrCreateViewOnlyPortalConfiguration(accountId)
+        : await getOrCreatePortalConfiguration(member.business_id, accountId),
       customerId,
       returnUrl: `${origin}/account`,
     });

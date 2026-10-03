@@ -59,6 +59,39 @@ export async function getOrCreatePortalConfiguration(
   return stored;
 }
 
+const VIEW_ONLY_PURPOSE = "view-only";
+
+/**
+ * A portal configuration where members can see their plan and invoices but change nothing, for
+ * the live demo's shared member accounts. Found by its metadata (only the demo business needs
+ * one, so it isn't stored); two racing first visits may create two, which is harmless.
+ */
+export async function getOrCreateViewOnlyPortalConfiguration(
+  accountId: string,
+) {
+  for await (const configuration of stripe.billingPortal.configurations.list(
+    { active: true, limit: 100 },
+    { stripeAccount: accountId },
+  )) {
+    if (configuration.metadata?.purpose === VIEW_ONLY_PURPOSE) {
+      return configuration.id;
+    }
+  }
+  const configuration = await stripe.billingPortal.configurations.create(
+    {
+      features: {
+        invoice_history: { enabled: true },
+        payment_method_update: { enabled: false },
+        subscription_cancel: { enabled: false },
+        customer_update: { enabled: false },
+      },
+      metadata: { purpose: VIEW_ONLY_PURPOSE },
+    },
+    { stripeAccount: accountId },
+  );
+  return configuration.id;
+}
+
 /** A short-lived link to the Customer Portal, for a member's customer on the business's account. */
 export async function createPortalUrl(options: {
   accountId: string;

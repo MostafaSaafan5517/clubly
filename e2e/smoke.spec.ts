@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { DEMO_READ_ONLY_MESSAGE } from "@/lib/demo";
 import { signIn } from "./support/forms";
 
 // Read-only checks for a deployed app seeded with `pnpm seed:demo`, run with
@@ -23,10 +24,14 @@ test("the home page and the demo's public join page load", async ({ page }) => {
   await expect(page.getByText("Summer pass")).toHaveCount(0);
 });
 
-test("the demo owner sees revenue, members and history", async ({ page }) => {
+test("the demo owner sees revenue, members and history, read-only", async ({
+  page,
+}) => {
   await page.goto("/login");
   await signIn(page, "olivia.owner@example.com", DEMO_PASSWORD);
   await expect(page).toHaveURL(/\/dashboard$/);
+  // The demo accounts are marked read-only (pnpm seed:demo).
+  await expect(page.getByText(DEMO_READ_ONLY_MESSAGE)).toBeVisible();
 
   await page.goto(`/dashboard/b/${DEMO_SLUG}/revenue`);
   await expect(page.getByRole("definition").first()).toHaveText(/^\$\d/);

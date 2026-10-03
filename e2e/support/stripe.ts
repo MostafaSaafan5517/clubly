@@ -309,6 +309,7 @@ export async function getPortalConfigurationId(businessId: string) {
 }
 
 export type PortalConfiguration = {
+  id: string;
   active: boolean;
   is_default: boolean;
   metadata: Record<string, string>;
@@ -328,6 +329,18 @@ export async function getPortalConfiguration(
     "GET",
     `/v1/billing_portal/configurations/${configurationId}`,
     { account: accountId },
+  );
+}
+
+/** The account's active view-only portal configurations (the ones demo members get). */
+export async function viewOnlyPortalConfigurations(accountId: string) {
+  const { data } = await stripeRequest<{ data: PortalConfiguration[] }>(
+    "GET",
+    "/v1/billing_portal/configurations?active=true&limit=100",
+    { account: accountId },
+  );
+  return data.filter(
+    (configuration) => configuration.metadata.purpose === "view-only",
   );
 }
 

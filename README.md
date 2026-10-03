@@ -12,15 +12,15 @@ Stripe runs in test mode only, so no real money moves. Pay with Stripe's test ca
 
 Sign in with any of these demo accounts. The password for all of them is `climb-demo-2026`:
 
-| Account                      | What you'll see                                                       |
-| ---------------------------- | --------------------------------------------------------------------- |
-| `olivia.owner@example.com`   | The owner: revenue, members (suspend, reactivate), payouts, history   |
-| `adam.admin@example.com`     | An admin: everything except payouts                                   |
-| `sara.staff@example.com`     | Front-desk staff: members only, no revenue                            |
-| `carl.canceling@example.com` | A member whose membership ends at the period end                      |
-| `mona.member@example.com`    | A paying member, with Stripe's billing portal behind "Manage billing" |
+| Account                      | What you'll see                                         |
+| ---------------------------- | ------------------------------------------------------- |
+| `olivia.owner@example.com`   | The owner: revenue, members, payouts, history           |
+| `adam.admin@example.com`     | An admin: everything except payouts                     |
+| `sara.staff@example.com`     | Front-desk staff: members only, no revenue              |
+| `carl.canceling@example.com` | A member whose membership ends at the period end        |
+| `mona.member@example.com`    | A paying member, with a view-only Stripe billing portal |
 
-You can also sign up and join with the test card. The live demo sends no email (Supabase's free plan), so sign-ups are signed in at once and the email-link sign-in is off there; locally both work and are tested.
+The demo accounts are read-only, because everyone shares them: they can look at everything but change nothing, and the database itself refuses their writes. To try it all (create a business, add plans, join with the test card), sign up for your own account. The live demo sends no email (Supabase's free plan), so sign-ups are signed in at once and the email-link sign-in is off there; locally both work and are tested.
 
 ## What this project demonstrates
 
@@ -104,6 +104,7 @@ sequenceDiagram
 - **The audit log is written by triggers, not application code,** so no code path can forget it. Stripe ids are named in it but never stored, because owners can read it.
 - **Money is integer cents** everywhere, from parsing what an owner types to the revenue figures, which are added up in SQL that runs under the caller's RLS.
 - **A 404, not a 403,** for anyone who isn't allowed to see a business page, so outsiders can't even tell it exists.
+- **Read-only demo accounts, enforced in the database.** The demo's password is public, so its accounts are marked in their server-only app metadata, and triggers refuse their writes and any change to their email or password, even through the API directly.
 - **Test mode is enforced in code:** the Stripe client refuses any key that isn't `sk_test_`.
 
 Each of these is written down, with the reasoning, in [CLAUDE.md](CLAUDE.md), the project's working guide.

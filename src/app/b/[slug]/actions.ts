@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/action-button";
+import { DEMO_READ_ONLY_MESSAGE, isDemoAccount } from "@/lib/demo";
 import { LIVE_SUBSCRIPTION_STATUSES } from "@/lib/membership";
 import { errorMessage } from "@/lib/redact";
 import {
@@ -24,6 +25,8 @@ export async function joinPlan(
   const { data } = await supabase.auth.getClaims();
   if (!data) redirect(`/login?next=${encodeURIComponent(`/b/${slug}`)}`);
   const userId = data.claims.sub;
+  // Paying would give a shared demo account a new membership.
+  if (isDemoAccount(data.claims)) return { error: DEMO_READ_ONLY_MESSAGE };
 
   // The business and plan exactly as the public page shows them; both may have changed since
   // the page was loaded, and the ids came from the browser.

@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/action-button";
 import { getStaffBusiness } from "@/lib/business";
+import { DEMO_READ_ONLY_MESSAGE, isDemoAccount } from "@/lib/demo";
 import type { Enums } from "@/lib/supabase/database.types";
 import { createServerActionClient } from "@/lib/supabase/server";
 
@@ -23,6 +24,8 @@ export async function setMemberStatus(
       `/login?next=${encodeURIComponent(`/dashboard/b/${slug}/members`)}`,
     );
   }
+
+  if (isDemoAccount(data.claims)) return { error: DEMO_READ_ONLY_MESSAGE };
 
   // The arguments come from the browser, so check the role again; RLS checks once more.
   const staff = await getStaffBusiness(supabase, data.claims.sub, slug);
