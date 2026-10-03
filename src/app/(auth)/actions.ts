@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { appConfig } from "@/config/app";
 import { SIGNED_IN_HOME } from "@/lib/auth";
+import { newPasswordSchema } from "@/lib/password";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { createServerActionClient } from "@/lib/supabase/server";
 
@@ -23,13 +24,7 @@ const signUpSchema = z.object({
     .min(1, "Enter your name.")
     .max(100, "Keep your name under 100 characters."),
   email: emailField,
-  // Mirrors the password rules in supabase/config.toml, so users see the reason right away.
-  password: z
-    .string()
-    .regex(
-      /^(?=.*[A-Za-z])(?=.*\d).{8,}$/,
-      "Use at least 8 characters, with letters and numbers.",
-    ),
+  password: newPasswordSchema,
 });
 
 const signInSchema = z.object({
@@ -193,6 +188,57 @@ export async function sendSignInLink(
   }
 
   redirect("/check-email");
+}
+
+export type PasswordResetState = AuthFormState & { sent: boolean };
+
+export async function sendPasswordReset(
+  _previous: PasswordResetState,
+  formData: FormData,
+): Promise<PasswordResetState> {
+  const fields = { email: formText(formData, "email") };
+  if (!appConfig.authEmails) {
+    return {
+      error: "Password reset emails aren't available here.",
+      fields,
+      sent: false,
+    };
+  }
+  const parsed = emailField.safeParse(fields.email);
+  if (!parsed.success) {
+    return {
+      error: parsed.error.issues[0]?.message ?? null,
+      fields,
+      sent: false,
+    };
+  }
+
+  // The email's link goes to /auth/confirm, which signs the user in and sends them on to choose
+  // a new password (supabase/templates/recovery.html).
+  const supabase = await createServerActionClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data);
+  if (error) {
+    if (error.code === "over_email_send_rate_limit") {
+      return {
+        error: "We just sent you a link. Wait a minute before asking again.",
+        fields,
+        sent: false,
+      };
+    }
+    console.error("Password reset email failed", {
+      code: error.code,
+      status: error.status,
+    });
+    return {
+      error: "We couldn't send the link. Please try again.",
+      fields,
+      sent: false,
+    };
+  }
+
+  // Supabase answers the same way for an address with no account, so this never reveals
+  // whether someone is registered.
+  return { error: null, fields, sent: true };
 }
 
 export async function signOut() {

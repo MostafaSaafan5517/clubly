@@ -6,9 +6,9 @@ import { SIGNED_IN_HOME } from "@/lib/auth";
 import { DEMO_READ_ONLY_MESSAGE, isDemoAccount } from "@/lib/demo";
 import { createServerComponentClient } from "@/lib/supabase/server";
 
-// The signed-in part of the app: businesses people run (/dashboard) and memberships they hold
-// (/account). Each page checks the user itself (requireUser); a layout is not re-run on every
-// navigation, so it must never be the only guard.
+// The signed-in part of the app: businesses people run (/dashboard), memberships they hold
+// (/account) and their own settings (/settings). Each page checks the user itself
+// (requireUser); a layout is not re-run on every navigation, so it must never be the only guard.
 export default async function SignedInLayout({ children }: LayoutProps<"/">) {
   const supabase = await createServerComponentClient();
   const { data } = await supabase.auth.getClaims();
@@ -33,6 +33,12 @@ export default async function SignedInLayout({ children }: LayoutProps<"/">) {
               className="text-muted-foreground hover:text-foreground"
             >
               Memberships
+            </Link>
+            <Link
+              href="/settings"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Settings
             </Link>
           </nav>
         </div>

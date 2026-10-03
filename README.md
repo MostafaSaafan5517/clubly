@@ -20,7 +20,7 @@ Sign in with any of these demo accounts. The password for all of them is `climb-
 | `carl.canceling@example.com` | A member whose membership ends at the period end        |
 | `mona.member@example.com`    | A paying member, with a view-only Stripe billing portal |
 
-The demo accounts are read-only, because everyone shares them: they can look at everything but change nothing, and the database itself refuses their writes. To try it all (create a business, add plans, join with the test card), sign up for your own account. The live demo sends no email (Supabase's free plan), so sign-ups are signed in at once and the email-link sign-in is off there; locally both work and are tested.
+The demo accounts are read-only, because everyone shares them: they can look at everything but change nothing, and the database itself refuses their writes. To try it all (create a business, add plans, join with the test card), sign up for your own account. The live demo sends no email (Supabase's free plan), so sign-ups are signed in at once, and the email-link sign-in and password reset emails are off there; locally they all work and are tested.
 
 ## What this project demonstrates
 

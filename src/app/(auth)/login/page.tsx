@@ -19,7 +19,7 @@ export const metadata: Metadata = { title: "Sign in" };
 
 // Only messages we chose are shown; the query string can't inject text into the page.
 const linkErrorMessage =
-  "That link is invalid or has expired. Sign in below, or sign up again for a new link.";
+  "That link is invalid or has expired. Sign in below, or ask for a new one.";
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const { next, error } = await searchParams;
@@ -43,14 +43,17 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         )}
         <LoginForm next={nextPath} />
         {appConfig.authEmails && (
-          <p className="text-center text-sm">
+          <div className="grid gap-1 text-center text-sm">
+            <Link href="/forgot-password" className="underline">
+              Forgot your password?
+            </Link>
             <Link
               href={withNext("/magic-link", nextPath)}
               className="underline"
             >
               Email me a sign-in link instead
             </Link>
-          </p>
+          </div>
         )}
         <p className="text-center text-sm text-muted-foreground">
           New here?{" "}

@@ -62,6 +62,20 @@ test("a demo member sees their membership", async ({ page }) => {
   ).toContainText("Active");
 });
 
+// The live demo sends no auth email (NEXT_PUBLIC_AUTH_EMAILS=off, see CLAUDE.md).
+test("the live demo has no pages that need email", async ({
+  page,
+  request,
+}) => {
+  expect((await request.get("/forgot-password")).status()).toBe(404);
+  expect((await request.get("/magic-link")).status()).toBe(404);
+  await page.goto("/login");
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Forgot your password?" }),
+  ).toHaveCount(0);
+});
+
 test("the webhook and cron routes refuse unsigned callers", async ({
   request,
 }) => {
