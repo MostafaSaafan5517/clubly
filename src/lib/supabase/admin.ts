@@ -13,7 +13,8 @@ if (!secretKey) {
 /**
  * Bypasses RLS. Only for server code that has already checked who is asking (or that answers
  * to Stripe, like webhooks), and only for what API roles are never allowed to touch: the Stripe
- * identifiers on businesses, plans and members.
+ * identifiers on businesses, plans and members, and deleting an account (Supabase Auth doesn't
+ * let users delete themselves).
  */
 export const supabaseAdmin = createClient<Database>(
   supabaseConfig.url,

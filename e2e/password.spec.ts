@@ -89,7 +89,9 @@ test("changing a password needs the current one, and ends the account's other se
 
   await signInAs(page, user);
   await page.getByRole("link", { name: "Settings" }).click();
-  await expect(page.getByText(user.email)).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Your account", exact: true }),
+  ).toContainText(user.email);
   await page.getByRole("link", { name: "Change password" }).click();
   await expect(
     page.getByText("Change your password", { exact: true }),

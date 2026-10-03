@@ -104,6 +104,7 @@ sequenceDiagram
 - **Reconciliation is the safety net, not the main path.** It applies Stripe's view through the same SQL upserts the webhooks use, compares each row before and after, and logs the differences in the same transaction as the fixes.
 - **The audit log is written by triggers, not application code,** so no code path can forget it. Stripe ids are named in it but never stored, because owners can read it.
 - **Money is integer cents** everywhere, from parsing what an owner types to the revenue figures, which are added up in SQL that runs under the caller's RLS.
+- **Accounts can be deleted, history can't.** People delete their own account from Settings, except while they own a business (it would be left without an owner) or hold a membership (businesses keep their members' billing records); the database enforces both.
 - **A 404, not a 403,** for anyone who isn't allowed to see a business page, so outsiders can't even tell it exists.
 - **Read-only demo accounts, enforced in the database.** The demo's password is public, so its accounts are marked in their server-only app metadata, and triggers refuse their writes and any change to their email or password, even through the API directly.
 - **Test mode is enforced in code:** the Stripe client refuses any key that isn't `sk_test_`.
