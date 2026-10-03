@@ -12,7 +12,7 @@ import {
   getOrCreateConnectedAccount,
   storedAccountId,
 } from "@/lib/stripe/connect";
-import { setPlanProductActive } from "@/lib/stripe/plans";
+import { updatePlanProduct } from "@/lib/stripe/plans";
 import { createServerActionClient } from "@/lib/supabase/server";
 
 // These actions are bound to their arguments on the server; useActionState's previous-state
@@ -88,7 +88,7 @@ export async function setPlanActive(
 
   try {
     const accountId = await storedAccountId(staff.business.id);
-    if (accountId) await setPlanProductActive(planId, accountId, active);
+    if (accountId) await updatePlanProduct(planId, accountId, { active });
   } catch (stripeError) {
     console.error("Updating the plan in Stripe failed", {
       planId,
@@ -110,4 +110,118 @@ export async function setPlanActive(
 
   refresh();
   return { error: null };
+}
+
+/** What a rename form shows after saving: an error, or that the new name was saved. */
+export type RenameState = { error: string | null; saved: boolean };
+
+function formName(formData: FormData) {
+  const value = formData.get("name");
+  return typeof value === "string" ? value.trim() : "";
+}
+
+/** Renames the business. Its web address (the slug) stays: it's in links people have shared. */
+export async function renameBusiness(
+  slug: string,
+  _previous: RenameState,
+  formData: FormData,
+): Promise<RenameState> {
+  const { supabase, staff, demo } = await requireStaff(slug);
+  if (demo) return { error: DEMO_READ_ONLY_MESSAGE, saved: false };
+  if (!staff || staff.role === "staff") {
+    return {
+      error: "Only owners and admins can rename the business.",
+      saved: false,
+    };
+  }
+  const name = formName(formData);
+  if (name.length < 1 || name.length > 100) {
+    return { error: "Use 1 to 100 characters for the name.", saved: false };
+  }
+
+  // Through RLS as the user: owners and admins may change the name, and only the name.
+  const { data: updated, error } = await supabase
+    .from("businesses")
+    .update({ name })
+    .eq("id", staff.business.id)
+    .select("id")
+    .maybeSingle();
+  if (error || !updated) {
+    console.error("Renaming a business failed", { code: error?.code });
+    return {
+      error: "We couldn't rename the business. Please try again.",
+      saved: false,
+    };
+  }
+
+  refresh();
+  return { error: null, saved: true };
+}
+
+/** Renames a plan, in the database and on its Stripe product (what Checkout shows). */
+export async function renamePlan(
+  slug: string,
+  planId: string,
+  _previous: RenameState,
+  formData: FormData,
+): Promise<RenameState> {
+  const { supabase, staff, demo } = await requireStaff(slug);
+  if (demo) return { error: DEMO_READ_ONLY_MESSAGE, saved: false };
+  if (!staff || staff.role === "staff") {
+    return { error: "Only owners and admins can rename plans.", saved: false };
+  }
+  const name = formName(formData);
+  if (name.length < 1 || name.length > 60) {
+    return { error: "Use 1 to 60 characters for the name.", saved: false };
+  }
+
+  const { data: plan, error: readError } = await supabase
+    .from("plans")
+    .select("name")
+    .eq("id", planId)
+    .eq("business_id", staff.business.id)
+    .maybeSingle();
+  if (readError) throw new Error(readError.message);
+  if (!plan) return { error: "That plan no longer exists.", saved: false };
+
+  const { error } = await supabase
+    .from("plans")
+    .update({ name })
+    .eq("id", planId)
+    .eq("business_id", staff.business.id);
+  if (error) {
+    console.error("Renaming a plan failed", { planId, code: error.code });
+    return {
+      error: "We couldn't rename the plan. Please try again.",
+      saved: false,
+    };
+  }
+
+  try {
+    const accountId = await storedAccountId(staff.business.id);
+    if (accountId) await updatePlanProduct(planId, accountId, { name });
+  } catch (stripeError) {
+    console.error("Renaming the plan in Stripe failed", {
+      planId,
+      message: errorMessage(stripeError),
+    });
+    // Put the old name back, so members never see one name here and another at Checkout.
+    const { error: revertError } = await supabase
+      .from("plans")
+      .update({ name: plan.name })
+      .eq("id", planId);
+    if (revertError) {
+      console.error("Reverting the plan's name failed", {
+        planId,
+        code: revertError.code,
+      });
+    }
+    return {
+      error: "Stripe couldn't rename this plan. Please try again.",
+      saved: false,
+    };
+  }
+
+  refresh();
+  return { error: null, saved: true };
 }

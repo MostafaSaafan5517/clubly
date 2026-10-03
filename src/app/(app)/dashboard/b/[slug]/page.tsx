@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
+  renameBusiness,
+  renamePlan,
   setPlanActive,
   startStripeOnboarding,
 } from "@/app/(app)/dashboard/b/[slug]/actions";
 import { BusinessHeader } from "@/app/(app)/dashboard/b/[slug]/business-header";
+import { RenameForm } from "@/app/(app)/dashboard/b/[slug]/rename-form";
 import { ActionButton } from "@/components/action-button";
 import { buttonVariants } from "@/components/ui/button";
 import { appConfig } from "@/config/app";
@@ -124,52 +127,93 @@ export default async function BusinessPage({
         ) : (
           <ul className="grid gap-3">
             {plans.map((plan) => (
-              <li
-                key={plan.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-4"
-              >
-                <div className="grid gap-0.5">
-                  <span className="font-medium">{plan.name}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {formatAmount(plan.amount, plan.currency)} per{" "}
-                    {plan.billing_interval}
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {!plan.active ? (
-                    <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                      Archived
+              <li key={plan.id} className="grid gap-3 rounded-lg border p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="grid gap-0.5">
+                    <span className="font-medium">{plan.name}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {formatAmount(plan.amount, plan.currency)} per{" "}
+                      {plan.billing_interval}
                     </span>
-                  ) : (
-                    !plan.has_stripe_price && (
-                      // Only seen if creating the Stripe price was interrupted.
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {!plan.active ? (
                       <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                        Not ready
+                        Archived
                       </span>
-                    )
-                  )}
-                  {canManagePlans && (
-                    // Archiving stops new sign-ups; members already on the plan keep it.
-                    <ActionButton
-                      action={setPlanActive.bind(
-                        null,
-                        business.slug,
-                        plan.id,
-                        !plan.active,
-                      )}
-                      label={plan.active ? "Archive" : "Restore"}
-                      pendingLabel={
-                        plan.active ? "Archiving..." : "Restoring..."
-                      }
-                      variant="outline"
-                    />
-                  )}
+                    ) : (
+                      !plan.has_stripe_price && (
+                        // Only seen if creating the Stripe price was interrupted.
+                        <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                          Not ready
+                        </span>
+                      )
+                    )}
+                    {canManagePlans && (
+                      // Archiving stops new sign-ups; members already on the plan keep it.
+                      <ActionButton
+                        action={setPlanActive.bind(
+                          null,
+                          business.slug,
+                          plan.id,
+                          !plan.active,
+                        )}
+                        label={plan.active ? "Archive" : "Restore"}
+                        pendingLabel={
+                          plan.active ? "Archiving..." : "Restoring..."
+                        }
+                        variant="outline"
+                      />
+                    )}
+                  </div>
                 </div>
+                {canManagePlans && (
+                  <details className="text-sm">
+                    <summary className="w-fit cursor-pointer text-muted-foreground hover:text-foreground">
+                      Rename
+                    </summary>
+                    <div className="pt-3">
+                      <RenameForm
+                        action={renamePlan.bind(null, business.slug, plan.id)}
+                        label="Plan name"
+                        currentName={plan.name}
+                        maxLength={60}
+                      />
+                    </div>
+                  </details>
+                )}
               </li>
             ))}
           </ul>
         )}
+        {canManagePlans && plans.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            A new name shows everywhere at once, Stripe Checkout and the billing
+            portal included. The price and the plan&apos;s members stay as they
+            are.
+          </p>
+        )}
       </section>
+
+      {canManagePlans && (
+        <section className="grid gap-3" aria-labelledby="details-heading">
+          <h2 id="details-heading" className="text-lg font-semibold">
+            Details
+          </h2>
+          <div className="grid gap-2 rounded-lg border p-4">
+            <RenameForm
+              action={renameBusiness.bind(null, business.slug)}
+              label="Business name"
+              currentName={business.name}
+              maxLength={100}
+            />
+            <p className="text-sm text-muted-foreground">
+              Your join page stays at /b/{business.slug}, so links you&apos;ve
+              shared keep working.
+            </p>
+          </div>
+        </section>
+      )}
     </>
   );
 }

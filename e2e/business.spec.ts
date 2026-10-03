@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { slugify } from "@/lib/slug";
 import {
+  addStaff,
   createBusinessFor,
   enableCharges,
   uniqueBusinessName,
@@ -109,4 +110,35 @@ test("another business's page is a 404, even once that business is public", asyn
   const response = await page.goto(`/dashboard/b/${business.slug}`);
   expect(response?.status()).toBe(404);
   await expect(page.getByText(business.name)).toHaveCount(0);
+});
+
+test("owners and admins rename the business; its web address stays", async ({
+  page,
+  browser,
+}) => {
+  const owner = await createConfirmedUser();
+  const staff = await createConfirmedUser();
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Old Name Gym"),
+  );
+  await addStaff(business.id, staff.email, "staff");
+
+  await signInAs(page, owner);
+  await page.goto(`/dashboard/b/${business.slug}`);
+  await page.getByLabel("Business name").fill("New Name Gym");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByRole("status")).toHaveText("Saved.");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "New Name Gym" }),
+  ).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`/dashboard/b/${business.slug}$`));
+
+  const staffPage = await (await browser.newContext()).newPage();
+  await signInAs(staffPage, staff);
+  await staffPage.goto(`/dashboard/b/${business.slug}`);
+  await expect(
+    staffPage.getByRole("heading", { level: 1, name: "New Name Gym" }),
+  ).toBeVisible();
+  await expect(staffPage.getByLabel("Business name")).toHaveCount(0);
 });

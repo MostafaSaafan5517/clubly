@@ -39,6 +39,11 @@ test("a demo owner sees everything but can't change it", async ({ page }) => {
   await page.reload();
   await expect(plan).not.toContainText("Archived");
 
+  const details = page.getByRole("region", { name: "Details" });
+  await details.getByLabel("Business name").fill("Taken Over Gym");
+  await details.getByRole("button", { name: "Save" }).click();
+  await expect(details.getByRole("alert")).toHaveText(DEMO_READ_ONLY_MESSAGE);
+
   await page.goto(`/dashboard/b/${business.slug}/members`);
   const mona = page.getByRole("listitem").filter({ hasText: "Mona Member" });
   await mona.getByRole("button", { name: "Suspend" }).click();

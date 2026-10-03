@@ -187,3 +187,50 @@ test("archiving a plan stops it being sold in the app and in Stripe, and restori
     await deleteStripeAccount(accountId);
   }
 });
+
+test("renaming a plan renames its Stripe product too, and the history says so", async ({
+  page,
+}) => {
+  const owner = await createConfirmedUser("Rita Renamer");
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Harbor Rowing"),
+  );
+  const accountId = await connectStripeAccount(business.id);
+
+  try {
+    await signInAs(page, owner);
+    await page.goto(`/dashboard/b/${business.slug}/plans/new`);
+    await page.getByLabel("Plan name").fill("Monthly rower");
+    await page.getByLabel("Price (USD)").fill("40");
+    await page.getByRole("button", { name: "Create plan" }).click();
+    await expect(page).toHaveURL(new RegExp(`/dashboard/b/${business.slug}$`));
+    const planId = await getPlanId(business.id, "Monthly rower");
+
+    const plan = page
+      .getByRole("listitem")
+      .filter({ hasText: "Monthly rower" });
+    await plan.getByText("Rename").click();
+    await plan.getByLabel("Plan name").fill("Monthly crew");
+    await plan.getByRole("button", { name: "Save" }).click();
+    // The row now goes by its new name.
+    const renamed = page
+      .getByRole("listitem")
+      .filter({ hasText: "Monthly crew" });
+    await expect(renamed.getByRole("status")).toHaveText("Saved.");
+    // Checkout and the billing portal show the product's name.
+    expect(await getPlanStripePrice(planId, accountId)).toMatchObject({
+      product: { name: "Monthly crew", active: true },
+    });
+
+    await page.goto(`/dashboard/b/${business.slug}/history`);
+    await expect(
+      page
+        .getByRole("region", { name: "History" })
+        .getByRole("listitem")
+        .first(),
+    ).toContainText('Renamed plan "Monthly rower" to "Monthly crew"');
+  } finally {
+    await deleteStripeAccount(accountId);
+  }
+});
