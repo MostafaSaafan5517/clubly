@@ -575,10 +575,14 @@ test("a renewal that fails shows as a failed payment until the member pays it (S
     await expectOnAccountPage(/Payment failed/);
     const ownerPage = await (await browser.newContext()).newPage();
     await signInAs(ownerPage, owner);
-    await ownerPage.goto(`/dashboard/b/${business.slug}/revenue`);
-    await expect(
-      ownerPage.getByText("1 failed payment in the last 30 days."),
-    ).toBeVisible();
+    // The failed payment comes with its own webhook (invoice.payment_failed), which can land
+    // after the subscription's.
+    await expect(async () => {
+      await ownerPage.goto(`/dashboard/b/${business.slug}/revenue`);
+      await expect(
+        ownerPage.getByText("1 failed payment in the last 30 days."),
+      ).toBeVisible({ timeout: 1_000 });
+    }).toPass({ timeout: 30_000 });
 
     // The member fixes their card and the open renewal invoice is paid.
     const renewal = await getStripeSubscription(accountId, subscriptionId);
