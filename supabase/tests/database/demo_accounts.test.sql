@@ -1,5 +1,5 @@
 begin;
-select plan(16);
+select plan(17);
 select tests.clear_tenant_data();
 
 select tests.create_user('demo-owner@test.local');
@@ -60,6 +60,12 @@ select throws_ok(
      values (tests.business_id('demo-gym'), tests.get_user_id('real-owner@test.local'), 'admin') $$,
   '42501', 'Demo accounts are read-only',
   'a demo owner cannot add staff'
+);
+select throws_ok(
+  $$ insert into public.staff_invites (business_id, role, token_hash)
+     values (tests.business_id('demo-gym'), 'staff', repeat('a', 64)) $$,
+  '42501', 'Demo accounts are read-only',
+  'a demo owner cannot create invite links'
 );
 select throws_ok(
   $$ select public.create_business('Another Gym', 'another-gym') $$,

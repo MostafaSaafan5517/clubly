@@ -113,11 +113,30 @@ export function describeChange(entry: AuditEntry, names: Names): string {
 
     case "business_staff": {
       const person = names.user(text(row.user_id));
-      if (inserted) return `Added ${person} as ${text(row.role)}`;
-      if (deleted) return `Removed ${person} (${text(row.role)})`;
+      // Joining with an invite link, or leaving, is something people do to themselves. (So is
+      // the owner's own row, which create_business adds along with the business.)
+      const themselves = entry.actor_user_id === text(row.user_id);
+      if (inserted) {
+        return themselves && row.role !== "owner"
+          ? `Joined as ${text(row.role)} with an invite link`
+          : `Added ${person} as ${text(row.role)}`;
+      }
+      if (deleted) {
+        return themselves
+          ? `Left the business (${text(row.role)})`
+          : `Removed ${person} (${text(row.role)})`;
+      }
       if (changed.has("role")) {
         return `Changed ${person}'s role to ${text(after.role)}`;
       }
+      break;
+    }
+
+    case "staff_invites": {
+      const role = text(row.role);
+      if (inserted) return `Created an invite link for a new ${role}`;
+      if (deleted) return `Revoked an invite link for a new ${role}`;
+      if (changed.has("accepted_by")) return `Used an invite link (${role})`;
       break;
     }
 

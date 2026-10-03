@@ -390,6 +390,64 @@ export type Database = {
         };
         Relationships: [];
       };
+      staff_invites: {
+        Row: {
+          accepted_at: string | null;
+          accepted_by: string | null;
+          business_id: string;
+          created_at: string;
+          created_by: string | null;
+          expires_at: string;
+          id: string;
+          role: Database["public"]["Enums"]["staff_role"];
+          token_hash: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          business_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          expires_at?: string;
+          id?: string;
+          role: Database["public"]["Enums"]["staff_role"];
+          token_hash: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          business_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          expires_at?: string;
+          id?: string;
+          role?: Database["public"]["Enums"]["staff_role"];
+          token_hash?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_invites_accepted_by_fkey";
+            columns: ["accepted_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_invites_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_invites_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       stripe_events: {
         Row: {
           account_id: string | null;
@@ -477,6 +535,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_staff_invite: { Args: { invite_token: string }; Returns: string };
       apply_account_updated: {
         Args: {
           account_id: string;
@@ -529,6 +588,14 @@ export type Database = {
       reconcile_subscriptions: {
         Args: { account_id: string; run_id: string; snapshots: Json };
         Returns: number;
+      };
+      staff_invite_details: {
+        Args: { invite_token: string };
+        Returns: {
+          business_name: string;
+          expires_at: string;
+          role: Database["public"]["Enums"]["staff_role"];
+        }[];
       };
     };
     Enums: {

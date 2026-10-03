@@ -14,7 +14,7 @@ Sign in with any of these demo accounts. The password for all of them is `climb-
 
 | Account                      | What you'll see                                         |
 | ---------------------------- | ------------------------------------------------------- |
-| `olivia.owner@example.com`   | The owner: revenue, members, payouts, history           |
+| `olivia.owner@example.com`   | The owner: revenue, members, payouts, history, team     |
 | `adam.admin@example.com`     | An admin: everything except payouts                     |
 | `sara.staff@example.com`     | Front-desk staff: members only, no revenue              |
 | `carl.canceling@example.com` | A member whose membership ends at the period end        |
@@ -26,11 +26,12 @@ The demo accounts are read-only, because everyone shares them: they can look at 
 
 Production habits on a real multi-tenant billing product:
 
-- **Tenant isolation in the database.** Postgres Row-Level Security keeps each business's data apart, with 250+ database tests (including ones that try to cross tenants) and a check of every business page against every kind of visitor.
+- **Tenant isolation in the database.** Postgres Row-Level Security keeps each business's data apart, with 300 database tests (including ones that try to cross tenants) and a check of every business page against every kind of visitor.
 - **Stripe as the source of truth.** Nothing activates because a browser came back from Checkout: memberships, cancellations and payments change only when Stripe's signed webhooks say so.
 - **Webhooks that can't apply twice.** Each event is recorded and applied in one database transaction, so duplicates and out-of-order deliveries change nothing.
 - **A daily reconciliation job** that re-reads Stripe and logs every correction it makes.
 - **An append-only audit log** written by database triggers: no role, not even the server's, can edit or delete it.
+- **Team invites without email or enumeration.** Owners and admins invite staff with single-use links that expire in a week; only a hash of each link is stored, and nothing in the app reveals whether an email address has an account.
 - **Tests against the real Stripe sandbox:** a real Checkout payment, the billing portal, and a failed renewal on a Stripe test clock, with Stripe's own webhooks, locally and in CI.
 
 ## Screenshots

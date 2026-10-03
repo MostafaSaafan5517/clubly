@@ -123,6 +123,79 @@ describe("describeChange", () => {
     ).toBe("Changed Mona Member's role to admin");
   });
 
+  it("describes people joining with an invite link and leaving by themselves", () => {
+    const staff = { user_id: "u_mona", role: "staff" };
+    expect(
+      describeChange(
+        entry({
+          table_name: "business_staff",
+          action: "insert",
+          actor_user_id: "u_mona",
+          new_data: staff,
+        }),
+        names,
+      ),
+    ).toBe("Joined as staff with an invite link");
+    expect(
+      describeChange(
+        entry({
+          table_name: "business_staff",
+          action: "delete",
+          actor_user_id: "u_mona",
+          old_data: staff,
+        }),
+        names,
+      ),
+    ).toBe("Left the business (staff)");
+    // The owner's own row comes with the business they created.
+    expect(
+      describeChange(
+        entry({
+          table_name: "business_staff",
+          action: "insert",
+          new_data: { user_id: "u_owner", role: "owner" },
+        }),
+        names,
+      ),
+    ).toBe("Added Olive Owner as owner");
+  });
+
+  it("describes invite links being created, used and revoked", () => {
+    const invite = { role: "admin", accepted_by: null };
+    expect(
+      describeChange(
+        entry({
+          table_name: "staff_invites",
+          action: "insert",
+          new_data: invite,
+        }),
+        names,
+      ),
+    ).toBe("Created an invite link for a new admin");
+    expect(
+      describeChange(
+        entry({
+          table_name: "staff_invites",
+          changed_columns: ["accepted_at", "accepted_by"],
+          actor_user_id: "u_mona",
+          old_data: invite,
+          new_data: { ...invite, accepted_by: "u_mona" },
+        }),
+        names,
+      ),
+    ).toBe("Used an invite link (admin)");
+    expect(
+      describeChange(
+        entry({
+          table_name: "staff_invites",
+          action: "delete",
+          old_data: invite,
+        }),
+        names,
+      ),
+    ).toBe("Revoked an invite link for a new admin");
+  });
+
   it("describes plans being created, archived, restored and priced", () => {
     const plan = { name: "Gold", active: true };
     expect(

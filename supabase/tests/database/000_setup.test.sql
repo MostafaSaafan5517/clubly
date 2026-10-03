@@ -51,7 +51,7 @@ returns void
 language sql
 as $$
   truncate public.payments, public.subscriptions, public.members, public.plans,
-    public.business_staff, public.businesses;
+    public.staff_invites, public.business_staff, public.businesses;
 $$;
 
 -- Makes the rest of the transaction run as that user, exactly as the API would: the
