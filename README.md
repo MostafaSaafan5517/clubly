@@ -32,6 +32,7 @@ Production habits on a real multi-tenant billing product:
 - **A daily reconciliation job** that re-reads Stripe and logs every correction it makes.
 - **An append-only audit log** written by database triggers: no role, not even the server's, can edit or delete it.
 - **Team invites without email or enumeration.** Owners and admins invite staff with single-use links that expire in a week; only a hash of each link is stored, and nothing in the app reveals whether an email address has an account.
+- **Accessible and fast.** Every page passes axe's automated WCAG 2.1 AA checks in the test suite, for visitors, owners and members. Lighthouse on the live demo (mobile): 94 to 98 for performance and 100 for accessibility, best practices and SEO.
 - **Tests against the real Stripe sandbox:** a real Checkout payment, the billing portal, and a failed renewal on a Stripe test clock, with Stripe's own webhooks, locally and in CI.
 
 ## Screenshots
