@@ -24,7 +24,7 @@ test("the home page and the demo's public join page load", async ({ page }) => {
   await expect(page.getByText("Summer pass")).toHaveCount(0);
 });
 
-test("the demo owner sees revenue, members and history, read-only", async ({
+test("the demo owner sees revenue, members, team and history, read-only", async ({
   page,
 }) => {
   await page.goto("/login");
@@ -46,6 +46,13 @@ test("the demo owner sees revenue, members and history, read-only", async ({
   await expect(
     page.getByRole("listitem").filter({ hasText: "Sid Suspended" }),
   ).toContainText("Suspended");
+
+  await page.goto(`/dashboard/b/${DEMO_SLUG}/team`);
+  const team = page.getByRole("region", { name: "Team" });
+  await expect(team.getByRole("listitem")).toHaveCount(3);
+  await expect(
+    team.getByRole("listitem").filter({ hasText: "Adam Admin" }),
+  ).toContainText("Admin");
 
   await page.goto(`/dashboard/b/${DEMO_SLUG}/history`);
   await expect(
