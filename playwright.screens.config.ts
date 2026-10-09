@@ -6,7 +6,7 @@ import base from "./playwright.config";
 // build (the dev server adds its own badge to every page) against the local database with the
 // demo gym seeded (`pnpm seed:demo`). Not a test suite: it records what it sees, and axe's
 // findings, without judging them. It never opens Stripe Checkout or onboarding, so it needs no
-// webhook listener.
+// webhook listener. SCREENS_COLOR_SCHEME=dark captures the device's dark setting instead.
 export default defineConfig({
   ...base,
   testDir: "./scripts/screens",
@@ -19,7 +19,12 @@ export default defineConfig({
   timeout: 360_000,
   expect: { timeout: 15_000 },
   // A wrong selector fails in seconds instead of using up the whole test.
-  use: { ...base.use, trace: "off", actionTimeout: 30_000 },
+  use: {
+    ...base.use,
+    trace: "off",
+    actionTimeout: 30_000,
+    colorScheme: process.env.SCREENS_COLOR_SCHEME === "dark" ? "dark" : "light",
+  },
   projects: [
     {
       name: "desktop",

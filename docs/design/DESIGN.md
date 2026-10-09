@@ -1,6 +1,6 @@
 # Clubly design system
 
-**Status:** approved (step 2 of the redesign, after the [audit](audit.md)). Step 3 makes it the app's tokens, steps 4 to 6 apply it to the public pages, the sign-in pages and the dashboards, and step 7 adds the icons and the 404 page and measures the result.
+**Status:** approved (step 2 of the redesign, after the [audit](audit.md)). Step 3 made it the app's tokens: [TOKENS.md](TOKENS.md) explains the files, the names used in code, and how another project uses them. Steps 4 to 6 apply it to the public pages, the sign-in pages and the dashboards, and step 7 adds the icons and the 404 page and measures the result.
 
 **See it:** `pnpm dev`, then http://localhost:3000/design-preview (development only: a production build answers 404). Screenshots of each section at desktop and phone width are in [`preview/`](preview/).
 

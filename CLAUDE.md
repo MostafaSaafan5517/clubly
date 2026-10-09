@@ -33,9 +33,10 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 
 - Prettier formats everything (Tailwind classes are sorted automatically). ESLint must pass with zero warnings.
 - Import app code through the `@/` alias, which maps to `src/`.
-- UI primitives come from shadcn/ui (Base UI flavor, `base-nova` style). Add one with `pnpm dlx shadcn@latest add <name>`; it is copied into `src/components/ui/` and becomes our code to edit. Merge class names with `cn` from the `cn` package.
+- UI primitives come from shadcn/ui (Base UI flavor, `base-nova` style). Add one with `pnpm dlx shadcn@latest add <name>`; it is copied into `src/components/ui/` and becomes our code to edit. Merge class names with `cn` from `@/lib/utils`, never the `cn` package directly: ours uses merge tables built from the theme (`src/lib/cn-tables.ts`, written by `pnpm tokens`), without which `text-body` counts as a color and drops the text color beside it.
 - Anything that navigates is a `<Link>`, even when it looks like a button: style it with `buttonVariants()`. Never `<Button render={<Link />}>`, which gives the link `role="button"` and makes screen readers announce it wrongly.
-- Use theme tokens (`bg-background`, `text-muted-foreground`, `border-border`, ...) instead of raw colors, so the palette can change in one place (`src/app/globals.css`).
+- Use theme tokens (`bg-background`, `text-muted-foreground`, `border-border`, ...) instead of raw colors. The design system is docs/design/DESIGN.md; its tokens live in `src/styles/tokens.css` (`--ds-*`, light and dark, named for the design system rather than the product), and `src/app/globals.css` maps shadcn's names and the system's own onto them (the table is in docs/design/TOKENS.md). `primary` is volt: a fill under `text-primary-foreground`, never a text color on a light surface. Text sizes are `text-display` ... `text-caption`, plus `text-figure-xl` and `text-figure` for money; radii `rounded-badge`, `rounded-control`, `rounded-surface`; the `band` utility is the ink signage behind headers and heroes (focus turns volt on it). Colors follow the device's light or dark setting; `.ds-light` and `.ds-dark` force one. After changing a token or a theme name, run `pnpm tokens`; `src/styles/tokens.test.ts` checks the export, the two dark copies, the sRGB gamut and WCAG AA, and `src/lib/utils.test.ts` checks the merge tables.
+- Icons are Tabler (`@tabler/icons-react`), stroke 1.75, `aria-hidden`, always beside a word. Focus is a global 2px outline in `--ds-focus` (`globals.css`); components don't draw their own ring. Motion goes behind `motion-safe:`, and a `prefers-reduced-motion` rule in `globals.css` stops whatever forgets.
 - No `console.log` in app code, no commented-out code, no unused code. Unexpected server-side failures are logged with `console.error("What failed", { code, status })` (Vercel collects them); users get a plain message, never raw provider errors.
 - Handle errors explicitly; no empty `catch` blocks.
 - `src/proxy.ts` (Next.js 16's name for middleware) only refreshes the Supabase session. It never makes authorization decisions: every page and Server Action checks the user itself, and RLS checks again in the database.
@@ -132,8 +133,9 @@ src/
     (app)/           Signed-in pages (/dashboard for staff, /account for members, /settings), one shared header
     b/[slug]/        A business's public join page
   components/ui/     shadcn/ui components (owned code, edited freely)
+  styles/            The design tokens (tokens.css)
   config/            App-wide constants (the product name lives here)
-  lib/               Helpers (money, memberships, slugs, safe redirects, ...)
+  lib/               Helpers (money, memberships, slugs, safe redirects, cn, ...)
   lib/supabase/      Supabase settings, clients (incl. server-only admin) and generated types
   lib/stripe/        Server-only Stripe client; Connect, plan, Checkout, portal and webhook helpers
   proxy.ts           Runs before every request; refreshes the Supabase session
@@ -174,6 +176,7 @@ Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks insi
 | `pnpm test:smoke`                   | Read-only Playwright checks of a deployed, demo-seeded app (`E2E_BASE_URL=...`)                                                                     |
 | `pnpm env:stripe`                   | Write the Stripe CLI's webhook secret to `.env.local`                                                                                               |
 | `pnpm stripe:listen`                | Forward sandbox webhooks to the local app                                                                                                           |
+| `pnpm tokens`                       | Export the design tokens to `docs/design/tokens.json` and rebuild `cn`'s merge tables from the theme                                                |
 | `SCREENS_DIR=<dir> pnpm screens`    | Screenshots of every screen and state at desktop and phone size, with axe (`pnpm build` and `pnpm seed:demo` first; `LIGHTHOUSE=1` adds Lighthouse) |
 
 First Playwright run on a machine: `pnpm exec playwright install chromium`. E2E tests need the full local Supabase (`pnpm supabase start`, then `pnpm env:local`). With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.

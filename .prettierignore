@@ -4,3 +4,5 @@ AGENTS.md
 # Written by `pnpm screens`.
 docs/design/before/
 docs/design/after/
+# Written by `pnpm tokens` (`cn build`).
+src/lib/cn-tables.ts

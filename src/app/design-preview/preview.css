@@ -1,89 +1,25 @@
-/* Clubly's design system (docs/design/DESIGN.md) as scoped tokens and component styles, for the
-   development-only preview page. Everything is under .cp, so the app itself is unchanged until
-   step 3 turns these into the app's tokens. .cp-dark shows the dark values next to the light. */
+/* Component sketches for the development-only design preview, built on the app's design tokens
+   (src/styles/tokens.css). Steps 4 to 6 turn them into the app's own components; until then
+   they live here, under .cp, so nothing else picks them up. */
 
 .cp {
-  --c-bg: oklch(0.972 0.005 255);
-  --c-surface: oklch(0.995 0.002 255);
-  --c-surface-2: oklch(0.948 0.006 255);
-  --c-surface-3: oklch(0.915 0.008 255);
-  --c-line: oklch(0.905 0.008 255);
-  --c-line-input: oklch(0.6 0.014 258);
-  --c-ink: oklch(0.21 0.02 262);
-  --c-ink-2: oklch(0.4 0.018 262);
-  --c-ink-3: oklch(0.5 0.016 262);
-  --c-volt: oklch(0.9 0.185 123);
-  --c-volt-strong: oklch(0.85 0.19 123);
-  --c-volt-soft: oklch(0.955 0.07 120);
-  --c-on-volt: oklch(0.21 0.02 262);
-  --c-band: oklch(0.215 0.022 262);
-  --c-band-2: oklch(0.28 0.022 262);
-  --c-on-band: oklch(0.97 0.004 255);
-  --c-on-band-2: oklch(0.78 0.012 255);
-  --c-success: oklch(0.47 0.11 152);
-  --c-success-soft: oklch(0.95 0.045 152);
-  --c-warning: oklch(0.48 0.1 65);
-  --c-warning-soft: oklch(0.955 0.045 85);
-  --c-danger: oklch(0.52 0.18 25);
-  --c-danger-soft: oklch(0.955 0.02 22);
-  --c-on-danger: oklch(0.99 0.004 25);
-  --c-info: oklch(0.48 0.12 250);
-  --c-info-soft: oklch(0.945 0.022 250);
-  --c-focus: var(--c-ink);
-  --c-shadow:
-    0 1px 2px oklch(0.21 0.02 262 / 0.06), 0 0 0 1px oklch(0.21 0.02 262 / 0.06);
-  --c-shadow-2:
-    0 14px 32px -14px oklch(0.21 0.02 262 / 0.28),
-    0 0 0 1px oklch(0.21 0.02 262 / 0.06);
-  --c-ease: cubic-bezier(0.2, 0, 0, 1);
-
   font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
-  background: var(--c-bg);
-  color: var(--c-ink);
+  background: var(--ds-bg);
+  color: var(--ds-ink);
   font-size: 15px;
   line-height: 1.55;
 }
 
-.cp.cp-dark {
-  --c-bg: oklch(0.165 0.012 262);
-  --c-surface: oklch(0.205 0.014 262);
-  --c-surface-2: oklch(0.245 0.015 262);
-  --c-surface-3: oklch(0.29 0.016 262);
-  --c-line: oklch(0.31 0.015 262);
-  --c-line-input: oklch(0.56 0.016 258);
-  --c-ink: oklch(0.96 0.005 255);
-  --c-ink-2: oklch(0.8 0.01 255);
-  --c-ink-3: oklch(0.69 0.012 255);
-  --c-volt-strong: oklch(0.94 0.16 123);
-  --c-volt-soft: oklch(0.32 0.07 123);
-  --c-band: oklch(0.13 0.012 262);
-  --c-band-2: oklch(0.2 0.014 262);
-  --c-success: oklch(0.76 0.14 152);
-  --c-success-soft: oklch(0.3 0.06 152);
-  --c-warning: oklch(0.84 0.12 82);
-  --c-warning-soft: oklch(0.31 0.055 75);
-  --c-danger: oklch(0.72 0.16 25);
-  --c-danger-soft: oklch(0.31 0.07 25);
-  --c-on-danger: oklch(0.17 0.02 25);
-  --c-info: oklch(0.77 0.1 250);
-  --c-info-soft: oklch(0.3 0.06 250);
-  --c-focus: var(--c-volt);
-  --c-shadow: 0 0 0 1px oklch(1 0 0 / 0.06);
-  --c-shadow-2:
-    0 18px 40px -16px oklch(0 0 0 / 0.6), 0 0 0 1px oklch(1 0 0 / 0.08);
-  color-scheme: dark;
-}
-
 /* The ink band: the app's header and the public page's hero. Focus turns volt on it. */
 .cp .cp-band {
-  --c-focus: var(--c-volt);
-  background: var(--c-band);
-  color: var(--c-on-band);
+  --ds-focus: var(--ds-volt);
+  background: var(--ds-band);
+  color: var(--ds-on-band);
 }
 
 .cp :focus-visible,
 .cp .is-focus {
-  outline: 2px solid var(--c-focus);
+  outline: 2px solid var(--ds-focus);
   outline-offset: 2px;
 }
 
@@ -142,12 +78,12 @@
 
 /* Surfaces: tone and a hairline ring, not boxes around everything. */
 .cp .cp-surface {
-  background: var(--c-surface);
+  background: var(--ds-surface);
   border-radius: 10px;
-  box-shadow: var(--c-shadow);
+  box-shadow: var(--ds-shadow-1);
 }
 .cp .cp-rows > * + * {
-  border-top: 1px solid var(--c-line);
+  border-top: 1px solid var(--ds-line);
 }
 
 /* Buttons. 40px tall (44px for the main action on phones), 6px corners. */
@@ -163,9 +99,9 @@
   font-weight: 650;
   white-space: nowrap;
   transition:
-    background-color 120ms var(--c-ease),
-    color 120ms var(--c-ease),
-    transform 120ms var(--c-ease);
+    background-color 120ms var(--ds-ease),
+    color 120ms var(--ds-ease),
+    transform 120ms var(--ds-ease);
 }
 .cp .cp-btn:active {
   transform: translateY(1px);
@@ -176,51 +112,51 @@
   font-size: 0.9375rem;
 }
 .cp .cp-btn-primary {
-  background: var(--c-volt);
-  color: var(--c-on-volt);
+  background: var(--ds-volt);
+  color: var(--ds-on-volt);
   box-shadow: inset 0 -2px 0 oklch(0.21 0.02 262 / 0.14);
 }
 .cp .cp-btn-primary:hover {
-  background: var(--c-volt-strong);
+  background: var(--ds-volt-strong);
 }
 .cp .cp-btn-secondary {
-  background: var(--c-surface);
-  color: var(--c-ink);
-  box-shadow: inset 0 0 0 1px var(--c-line-input);
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+  box-shadow: inset 0 0 0 1px var(--ds-line-input);
 }
 .cp .cp-btn-secondary:hover {
-  background: var(--c-surface-2);
+  background: var(--ds-surface-2);
 }
 .cp .cp-btn-ghost {
-  color: var(--c-ink-2);
+  color: var(--ds-ink-2);
 }
 .cp .cp-btn-ghost:hover {
-  background: var(--c-surface-2);
-  color: var(--c-ink);
+  background: var(--ds-surface-2);
+  color: var(--ds-ink);
 }
 .cp .cp-btn-quiet-danger {
-  background: var(--c-surface);
-  color: var(--c-danger);
-  box-shadow: inset 0 0 0 1px var(--c-line-input);
+  background: var(--ds-surface);
+  color: var(--ds-danger);
+  box-shadow: inset 0 0 0 1px var(--ds-line-input);
 }
 .cp .cp-btn-quiet-danger:hover {
-  background: var(--c-danger-soft);
+  background: var(--ds-danger-soft);
 }
 .cp .cp-btn-danger {
-  background: var(--c-danger);
-  color: var(--c-on-danger);
+  background: var(--ds-danger);
+  color: var(--ds-on-danger);
 }
 .cp .cp-band .cp-btn-secondary {
-  background: var(--c-band-2);
-  color: var(--c-on-band);
+  background: var(--ds-band-2);
+  color: var(--ds-on-band);
   box-shadow: none;
 }
 .cp .cp-band .cp-btn-ghost {
-  color: var(--c-on-band-2);
+  color: var(--ds-on-band-2);
 }
 .cp .cp-band .cp-btn-ghost:hover {
-  background: var(--c-band-2);
-  color: var(--c-on-band);
+  background: var(--ds-band-2);
+  color: var(--ds-on-band);
 }
 
 /* Fields: label above, helper or error below. */
@@ -233,9 +169,9 @@
   width: 100%;
   padding: 0 0.75rem;
   border-radius: 6px;
-  background: var(--c-surface);
-  color: var(--c-ink);
-  box-shadow: inset 0 0 0 1px var(--c-line-input);
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+  box-shadow: inset 0 0 0 1px var(--ds-line-input);
   font-size: 1rem;
 }
 @media (min-width: 768px) {
@@ -244,10 +180,10 @@
   }
 }
 .cp .cp-input::placeholder {
-  color: var(--c-ink-3);
+  color: var(--ds-ink-3);
 }
 .cp .cp-input[aria-invalid="true"] {
-  box-shadow: inset 0 0 0 2px var(--c-danger);
+  box-shadow: inset 0 0 0 2px var(--ds-danger);
 }
 
 /* Badges: a tone, an icon and a word; 4px corners, because they're labels, not buttons. */
@@ -263,28 +199,28 @@
   white-space: nowrap;
 }
 .cp .tone-success {
-  background: var(--c-success-soft);
-  color: var(--c-success);
+  background: var(--ds-success-soft);
+  color: var(--ds-success);
 }
 .cp .tone-warning {
-  background: var(--c-warning-soft);
-  color: var(--c-warning);
+  background: var(--ds-warning-soft);
+  color: var(--ds-warning);
 }
 .cp .tone-danger {
-  background: var(--c-danger-soft);
-  color: var(--c-danger);
+  background: var(--ds-danger-soft);
+  color: var(--ds-danger);
 }
 .cp .tone-info {
-  background: var(--c-info-soft);
-  color: var(--c-info);
+  background: var(--ds-info-soft);
+  color: var(--ds-info);
 }
 .cp .tone-neutral {
-  background: var(--c-surface-2);
-  color: var(--c-ink-2);
+  background: var(--ds-surface-2);
+  color: var(--ds-ink-2);
 }
 .cp .tone-volt {
-  background: var(--c-volt-soft);
-  color: var(--c-ink);
+  background: var(--ds-volt-soft);
+  color: var(--ds-ink);
 }
 
 /* Notices (role="status" or "alert"): the message's tone, an icon, the sentence. */
@@ -305,19 +241,19 @@
 .cp .cp-notice.tone-danger,
 .cp .cp-notice.tone-info,
 .cp .cp-notice.tone-volt {
-  color: var(--c-ink);
+  color: var(--ds-ink);
 }
 .cp .cp-notice.tone-success > svg {
-  color: var(--c-success);
+  color: var(--ds-success);
 }
 .cp .cp-notice.tone-warning > svg {
-  color: var(--c-warning);
+  color: var(--ds-warning);
 }
 .cp .cp-notice.tone-danger > svg {
-  color: var(--c-danger);
+  color: var(--ds-danger);
 }
 .cp .cp-notice.tone-info > svg {
-  color: var(--c-info);
+  color: var(--ds-info);
 }
 
 /* Revenue's "paid - fees = net" row: the signs sit in the gaps between the figures. */
@@ -331,7 +267,7 @@
     position: absolute;
     left: -1.75rem;
     bottom: 0.2rem;
-    color: var(--c-ink-3);
+    color: var(--ds-ink-3);
     font-size: 1.25rem;
     line-height: 1.75rem;
   }
@@ -361,16 +297,16 @@
   height: 2.75rem;
   padding: 0 0.75rem;
   border-bottom: 3px solid transparent;
-  color: var(--c-on-band-2);
+  color: var(--ds-on-band-2);
   font-size: 0.875rem;
   font-weight: 600;
 }
 .cp .cp-tab:hover {
-  color: var(--c-on-band);
+  color: var(--ds-on-band);
 }
 .cp .cp-tab[aria-current="page"] {
-  color: var(--c-on-band);
-  border-bottom-color: var(--c-volt);
+  color: var(--ds-on-band);
+  border-bottom-color: var(--ds-volt);
 }
 
 /* The mark: a volt square with the initial, beside the wordmark. */
@@ -380,8 +316,8 @@
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 6px;
-  background: var(--c-volt);
-  color: var(--c-on-volt);
+  background: var(--ds-volt);
+  color: var(--ds-on-volt);
   font-weight: 800;
   font-size: 1.05rem;
   line-height: 1;
@@ -390,7 +326,7 @@
 /* Loading: a placeholder in the shape of what's coming, shimmering only when motion is welcome. */
 .cp .cp-skeleton {
   border-radius: 10px;
-  background: var(--c-surface-2);
+  background: var(--ds-surface-2);
 }
 @media (prefers-reduced-motion: no-preference) {
   .cp .cp-skeleton {
@@ -400,11 +336,11 @@
         oklch(1 0 0 / 0.5) 50%,
         transparent 70%
       )
-      var(--c-surface-2);
+      var(--ds-surface-2);
     background-size: 200% 100%;
     animation: cp-shimmer 1.4s linear infinite;
   }
-  .cp.cp-dark .cp-skeleton {
+  .cp.ds-dark .cp-skeleton {
     background-image: linear-gradient(
       100deg,
       transparent 30%,
