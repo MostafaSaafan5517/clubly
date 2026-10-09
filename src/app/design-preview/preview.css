@@ -1,0 +1,433 @@
+/* Clubly's design system (docs/design/DESIGN.md) as scoped tokens and component styles, for the
+   development-only preview page. Everything is under .cp, so the app itself is unchanged until
+   step 3 turns these into the app's tokens. .cp-dark shows the dark values next to the light. */
+
+.cp {
+  --c-bg: oklch(0.972 0.005 255);
+  --c-surface: oklch(0.995 0.002 255);
+  --c-surface-2: oklch(0.948 0.006 255);
+  --c-surface-3: oklch(0.915 0.008 255);
+  --c-line: oklch(0.905 0.008 255);
+  --c-line-input: oklch(0.6 0.014 258);
+  --c-ink: oklch(0.21 0.02 262);
+  --c-ink-2: oklch(0.4 0.018 262);
+  --c-ink-3: oklch(0.5 0.016 262);
+  --c-volt: oklch(0.9 0.185 123);
+  --c-volt-strong: oklch(0.85 0.19 123);
+  --c-volt-soft: oklch(0.955 0.07 120);
+  --c-on-volt: oklch(0.21 0.02 262);
+  --c-band: oklch(0.215 0.022 262);
+  --c-band-2: oklch(0.28 0.022 262);
+  --c-on-band: oklch(0.97 0.004 255);
+  --c-on-band-2: oklch(0.78 0.012 255);
+  --c-success: oklch(0.47 0.11 152);
+  --c-success-soft: oklch(0.95 0.045 152);
+  --c-warning: oklch(0.48 0.1 65);
+  --c-warning-soft: oklch(0.955 0.045 85);
+  --c-danger: oklch(0.52 0.18 25);
+  --c-danger-soft: oklch(0.955 0.02 22);
+  --c-on-danger: oklch(0.99 0.004 25);
+  --c-info: oklch(0.48 0.12 250);
+  --c-info-soft: oklch(0.945 0.022 250);
+  --c-focus: var(--c-ink);
+  --c-shadow:
+    0 1px 2px oklch(0.21 0.02 262 / 0.06), 0 0 0 1px oklch(0.21 0.02 262 / 0.06);
+  --c-shadow-2:
+    0 14px 32px -14px oklch(0.21 0.02 262 / 0.28),
+    0 0 0 1px oklch(0.21 0.02 262 / 0.06);
+  --c-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.cp.cp-dark {
+  --c-bg: oklch(0.165 0.012 262);
+  --c-surface: oklch(0.205 0.014 262);
+  --c-surface-2: oklch(0.245 0.015 262);
+  --c-surface-3: oklch(0.29 0.016 262);
+  --c-line: oklch(0.31 0.015 262);
+  --c-line-input: oklch(0.56 0.016 258);
+  --c-ink: oklch(0.96 0.005 255);
+  --c-ink-2: oklch(0.8 0.01 255);
+  --c-ink-3: oklch(0.69 0.012 255);
+  --c-volt-strong: oklch(0.94 0.16 123);
+  --c-volt-soft: oklch(0.32 0.07 123);
+  --c-band: oklch(0.13 0.012 262);
+  --c-band-2: oklch(0.2 0.014 262);
+  --c-success: oklch(0.76 0.14 152);
+  --c-success-soft: oklch(0.3 0.06 152);
+  --c-warning: oklch(0.84 0.12 82);
+  --c-warning-soft: oklch(0.31 0.055 75);
+  --c-danger: oklch(0.72 0.16 25);
+  --c-danger-soft: oklch(0.31 0.07 25);
+  --c-on-danger: oklch(0.17 0.02 25);
+  --c-info: oklch(0.77 0.1 250);
+  --c-info-soft: oklch(0.3 0.06 250);
+  --c-focus: var(--c-volt);
+  --c-shadow: 0 0 0 1px oklch(1 0 0 / 0.06);
+  --c-shadow-2:
+    0 18px 40px -16px oklch(0 0 0 / 0.6), 0 0 0 1px oklch(1 0 0 / 0.08);
+  color-scheme: dark;
+}
+
+/* The ink band: the app's header and the public page's hero. Focus turns volt on it. */
+.cp .cp-band {
+  --c-focus: var(--c-volt);
+  background: var(--c-band);
+  color: var(--c-on-band);
+}
+
+.cp :focus-visible,
+.cp .is-focus {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+/* Type. One family (Archivo, weights 400 to 800); figures are tabular by default. */
+.cp .t-display {
+  font-size: clamp(2.5rem, 1.6rem + 3.2vw, 3.75rem);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.cp .t-title {
+  font-size: 1.875rem;
+  line-height: 1.15;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+}
+.cp .t-heading {
+  font-size: 1.125rem;
+  line-height: 1.35;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+}
+.cp .t-body {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+.cp .t-lead {
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+.cp .t-small {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.cp .t-caption {
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+.cp .t-label {
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  font-weight: 600;
+}
+.cp .t-figure-xl {
+  font-size: clamp(2.75rem, 2rem + 2.4vw, 3.75rem);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+.cp .t-figure {
+  font-size: 1.75rem;
+  line-height: 1.1;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+/* Surfaces: tone and a hairline ring, not boxes around everything. */
+.cp .cp-surface {
+  background: var(--c-surface);
+  border-radius: 10px;
+  box-shadow: var(--c-shadow);
+}
+.cp .cp-rows > * + * {
+  border-top: 1px solid var(--c-line);
+}
+
+/* Buttons. 40px tall (44px for the main action on phones), 6px corners. */
+.cp .cp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 650;
+  white-space: nowrap;
+  transition:
+    background-color 120ms var(--c-ease),
+    color 120ms var(--c-ease),
+    transform 120ms var(--c-ease);
+}
+.cp .cp-btn:active {
+  transform: translateY(1px);
+}
+.cp .cp-btn-lg {
+  height: 2.75rem;
+  padding: 0 1.25rem;
+  font-size: 0.9375rem;
+}
+.cp .cp-btn-primary {
+  background: var(--c-volt);
+  color: var(--c-on-volt);
+  box-shadow: inset 0 -2px 0 oklch(0.21 0.02 262 / 0.14);
+}
+.cp .cp-btn-primary:hover {
+  background: var(--c-volt-strong);
+}
+.cp .cp-btn-secondary {
+  background: var(--c-surface);
+  color: var(--c-ink);
+  box-shadow: inset 0 0 0 1px var(--c-line-input);
+}
+.cp .cp-btn-secondary:hover {
+  background: var(--c-surface-2);
+}
+.cp .cp-btn-ghost {
+  color: var(--c-ink-2);
+}
+.cp .cp-btn-ghost:hover {
+  background: var(--c-surface-2);
+  color: var(--c-ink);
+}
+.cp .cp-btn-quiet-danger {
+  background: var(--c-surface);
+  color: var(--c-danger);
+  box-shadow: inset 0 0 0 1px var(--c-line-input);
+}
+.cp .cp-btn-quiet-danger:hover {
+  background: var(--c-danger-soft);
+}
+.cp .cp-btn-danger {
+  background: var(--c-danger);
+  color: var(--c-on-danger);
+}
+.cp .cp-band .cp-btn-secondary {
+  background: var(--c-band-2);
+  color: var(--c-on-band);
+  box-shadow: none;
+}
+.cp .cp-band .cp-btn-ghost {
+  color: var(--c-on-band-2);
+}
+.cp .cp-band .cp-btn-ghost:hover {
+  background: var(--c-band-2);
+  color: var(--c-on-band);
+}
+
+/* Fields: label above, helper or error below. */
+.cp .cp-field {
+  display: grid;
+  gap: 0.375rem;
+}
+.cp .cp-input {
+  height: 2.5rem;
+  width: 100%;
+  padding: 0 0.75rem;
+  border-radius: 6px;
+  background: var(--c-surface);
+  color: var(--c-ink);
+  box-shadow: inset 0 0 0 1px var(--c-line-input);
+  font-size: 1rem;
+}
+@media (min-width: 768px) {
+  .cp .cp-input {
+    font-size: 0.9375rem;
+  }
+}
+.cp .cp-input::placeholder {
+  color: var(--c-ink-3);
+}
+.cp .cp-input[aria-invalid="true"] {
+  box-shadow: inset 0 0 0 2px var(--c-danger);
+}
+
+/* Badges: a tone, an icon and a word; 4px corners, because they're labels, not buttons. */
+.cp .cp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.cp .tone-success {
+  background: var(--c-success-soft);
+  color: var(--c-success);
+}
+.cp .tone-warning {
+  background: var(--c-warning-soft);
+  color: var(--c-warning);
+}
+.cp .tone-danger {
+  background: var(--c-danger-soft);
+  color: var(--c-danger);
+}
+.cp .tone-info {
+  background: var(--c-info-soft);
+  color: var(--c-info);
+}
+.cp .tone-neutral {
+  background: var(--c-surface-2);
+  color: var(--c-ink-2);
+}
+.cp .tone-volt {
+  background: var(--c-volt-soft);
+  color: var(--c-ink);
+}
+
+/* Notices (role="status" or "alert"): the message's tone, an icon, the sentence. */
+.cp .cp-notice {
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+}
+.cp .cp-notice > svg {
+  flex: none;
+  margin-top: 0.15rem;
+}
+.cp .cp-notice.tone-success,
+.cp .cp-notice.tone-warning,
+.cp .cp-notice.tone-danger,
+.cp .cp-notice.tone-info,
+.cp .cp-notice.tone-volt {
+  color: var(--c-ink);
+}
+.cp .cp-notice.tone-success > svg {
+  color: var(--c-success);
+}
+.cp .cp-notice.tone-warning > svg {
+  color: var(--c-warning);
+}
+.cp .cp-notice.tone-danger > svg {
+  color: var(--c-danger);
+}
+.cp .cp-notice.tone-info > svg {
+  color: var(--c-info);
+}
+
+/* Revenue's "paid - fees = net" row: the signs sit in the gaps between the figures. */
+@media (min-width: 640px) {
+  .cp .cp-equation > .op-minus,
+  .cp .cp-equation > .op-equals {
+    position: relative;
+  }
+  .cp .cp-equation > .op-minus::before,
+  .cp .cp-equation > .op-equals::before {
+    position: absolute;
+    left: -1.75rem;
+    bottom: 0.2rem;
+    color: var(--c-ink-3);
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+  .cp .cp-equation > .op-minus::before {
+    content: "−" / "";
+  }
+  .cp .cp-equation > .op-equals::before {
+    content: "=" / "";
+    left: -1.25rem;
+    bottom: 0.7rem;
+  }
+}
+
+/* Business tabs on the band: the current one is bright with a volt bar under it. */
+.cp .cp-tabs {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent);
+}
+.cp .cp-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: none;
+  height: 2.75rem;
+  padding: 0 0.75rem;
+  border-bottom: 3px solid transparent;
+  color: var(--c-on-band-2);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.cp .cp-tab:hover {
+  color: var(--c-on-band);
+}
+.cp .cp-tab[aria-current="page"] {
+  color: var(--c-on-band);
+  border-bottom-color: var(--c-volt);
+}
+
+/* The mark: a volt square with the initial, beside the wordmark. */
+.cp .cp-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 6px;
+  background: var(--c-volt);
+  color: var(--c-on-volt);
+  font-weight: 800;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+/* Loading: a placeholder in the shape of what's coming, shimmering only when motion is welcome. */
+.cp .cp-skeleton {
+  border-radius: 10px;
+  background: var(--c-surface-2);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cp .cp-skeleton {
+    background: linear-gradient(
+        100deg,
+        transparent 30%,
+        oklch(1 0 0 / 0.5) 50%,
+        transparent 70%
+      )
+      var(--c-surface-2);
+    background-size: 200% 100%;
+    animation: cp-shimmer 1.4s linear infinite;
+  }
+  .cp.cp-dark .cp-skeleton {
+    background-image: linear-gradient(
+      100deg,
+      transparent 30%,
+      oklch(1 0 0 / 0.06) 50%,
+      transparent 70%
+    );
+  }
+}
+@keyframes cp-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp *,
+  .cp *::before,
+  .cp *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
