@@ -1,3 +1,6 @@
 pnpm-lock.yaml
 # Rewritten by `next dev`; formatting it would cause churn.
 AGENTS.md
+# Written by `pnpm screens`.
+docs/design/before/
+docs/design/after/

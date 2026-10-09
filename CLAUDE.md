@@ -138,6 +138,7 @@ src/
   lib/stripe/        Server-only Stripe client; Connect, plan, Checkout, portal and webhook helpers
   proxy.ts           Runs before every request; refreshes the Supabase session
 scripts/             Dev tooling (writing .env.local)
+  screens/           `pnpm screens`: screenshots, axe and Lighthouse for the design docs (docs/design/)
 vercel.json          Vercel settings: functions in Frankfurt (next to the database), the daily cron
 e2e/                 Playwright end-to-end specs (*.spec.ts)
   support/           E2E helpers (test users and businesses, Mailpit links, Stripe sandbox)
@@ -155,24 +156,25 @@ Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks insi
 
 ## Commands
 
-| Command                             | What it does                                                                    |
-| ----------------------------------- | ------------------------------------------------------------------------------- |
-| `pnpm dev`                          | Dev server at http://localhost:3000                                             |
-| `pnpm build` / `pnpm start`         | Production build / serve that build                                             |
-| `pnpm lint`                         | ESLint; fails on any warning                                                    |
-| `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`                                  |
-| `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check)                            |
-| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode                                      |
-| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running                             |
-| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)                                 |
-| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)                              |
-| `pnpm env:local`                    | Write local Supabase URL and keys (and a cron secret, once) into `.env.local`   |
-| `pnpm supabase db reset`            | Rebuild the local database from migrations                                      |
-| `pnpm db:types`                     | Regenerate TypeScript types from the local database                             |
-| `pnpm seed:demo`                    | Seed the demo climbing gym (people, plans, paid members); safe to rerun         |
-| `pnpm test:smoke`                   | Read-only Playwright checks of a deployed, demo-seeded app (`E2E_BASE_URL=...`) |
-| `pnpm env:stripe`                   | Write the Stripe CLI's webhook secret to `.env.local`                           |
-| `pnpm stripe:listen`                | Forward sandbox webhooks to the local app                                       |
+| Command                             | What it does                                                                                                                                        |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                          | Dev server at http://localhost:3000                                                                                                                 |
+| `pnpm build` / `pnpm start`         | Production build / serve that build                                                                                                                 |
+| `pnpm lint`                         | ESLint; fails on any warning                                                                                                                        |
+| `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`                                                                                                      |
+| `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check)                                                                                                |
+| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode                                                                                                          |
+| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running                                                                                                 |
+| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)                                                                                                     |
+| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)                                                                                                  |
+| `pnpm env:local`                    | Write local Supabase URL and keys (and a cron secret, once) into `.env.local`                                                                       |
+| `pnpm supabase db reset`            | Rebuild the local database from migrations                                                                                                          |
+| `pnpm db:types`                     | Regenerate TypeScript types from the local database                                                                                                 |
+| `pnpm seed:demo`                    | Seed the demo climbing gym (people, plans, paid members); safe to rerun                                                                             |
+| `pnpm test:smoke`                   | Read-only Playwright checks of a deployed, demo-seeded app (`E2E_BASE_URL=...`)                                                                     |
+| `pnpm env:stripe`                   | Write the Stripe CLI's webhook secret to `.env.local`                                                                                               |
+| `pnpm stripe:listen`                | Forward sandbox webhooks to the local app                                                                                                           |
+| `SCREENS_DIR=<dir> pnpm screens`    | Screenshots of every screen and state at desktop and phone size, with axe (`pnpm build` and `pnpm seed:demo` first; `LIGHTHOUSE=1` adds Lighthouse) |
 
 First Playwright run on a machine: `pnpm exec playwright install chromium`. E2E tests need the full local Supabase (`pnpm supabase start`, then `pnpm env:local`). With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.
 
