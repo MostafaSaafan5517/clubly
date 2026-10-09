@@ -1,0 +1,62 @@
+{
+  "home-mobile": {
+    "performance": 96,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaintMs": 999,
+    "largestContentfulPaintMs": 1647,
+    "totalBlockingTimeMs": 220,
+    "cumulativeLayoutShift": 0
+  },
+  "home-desktop": {
+    "performance": 100,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaintMs": 351,
+    "largestContentfulPaintMs": 462,
+    "totalBlockingTimeMs": 49,
+    "cumulativeLayoutShift": 0
+  },
+  "join-mobile": {
+    "performance": 94,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaintMs": 1131,
+    "largestContentfulPaintMs": 1810,
+    "totalBlockingTimeMs": 232,
+    "cumulativeLayoutShift": 0
+  },
+  "join-desktop": {
+    "performance": 100,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaintMs": 380,
+    "largestContentfulPaintMs": 564,
+    "totalBlockingTimeMs": 25,
+    "cumulativeLayoutShift": 0
+  },
+  "login-mobile": {
+    "performance": 95,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaintMs": 1140,
+    "largestContentfulPaintMs": 1668,
+    "totalBlockingTimeMs": 229,
+    "cumulativeLayoutShift": 0
+  },
+  "login-desktop": {
+    "performance": 100,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaintMs": 448,
+    "largestContentfulPaintMs": 527,
+    "totalBlockingTimeMs": 35,
+    "cumulativeLayoutShift": 0
+  }
+}
