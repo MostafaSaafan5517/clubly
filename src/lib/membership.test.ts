@@ -3,6 +3,7 @@ import {
   currentSubscription,
   describeSubscription,
   isLive,
+  subscriptionTone,
 } from "@/lib/membership";
 
 describe("isLive", () => {
@@ -122,5 +123,30 @@ describe("describeSubscription", () => {
         cancel_at: null,
       }),
     ).toEqual({ label: "Ended", detail: null });
+  });
+});
+
+describe("subscriptionTone", () => {
+  const tone = (
+    status: Parameters<typeof subscriptionTone>[0]["status"],
+    cancelAt: string | null = null,
+  ) => subscriptionTone({ status, cancel_at: cancelAt });
+
+  it("is success while a subscription runs, and warning once it's set to end", () => {
+    expect(tone("active")).toBe("success");
+    expect(tone("active", "2026-11-01T00:00:00Z")).toBe("warning");
+  });
+
+  it("is danger when a payment failed, info in a trial, warning while unpaid for", () => {
+    expect(tone("past_due")).toBe("danger");
+    expect(tone("unpaid")).toBe("danger");
+    expect(tone("trialing")).toBe("info");
+    expect(tone("incomplete")).toBe("warning");
+  });
+
+  it("is neutral once it's over or paused", () => {
+    expect(tone("canceled")).toBe("neutral");
+    expect(tone("incomplete_expired")).toBe("neutral");
+    expect(tone("paused")).toBe("neutral");
   });
 });

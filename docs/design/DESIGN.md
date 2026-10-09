@@ -170,14 +170,14 @@ Quick and mechanical, CSS only (no animation library).
 ## Focus and touch
 
 - **Focus:** a 2px outline with a 2px gap on every interactive element: `ink` on chalk and surfaces, `volt` on the band and in dark mode (11:1 or more everywhere). It replaces today's half-strength gray ring (1.5:1).
-- **Touch:** controls are 40px tall; on phones the main actions (Join, Sign in, the forms' submit buttons) and fields are 44px, and so are the tabs.
+- **Touch:** controls and fields are 40px tall; a page's main action (Join, Sign in, the forms' submit buttons) is 44px, and so are the tabs.
 - **Skip link:** "Skip to content" first on every signed-in page.
 
 ## Components
 
 **Buttons.** Primary (`volt` under `on-volt`, with a darker 2px bottom edge; one per view), secondary (`surface` with a `line-input` edge), ghost (`ink-2` text, fills on hover), quiet danger (danger text on `surface`, `danger-soft` on hover: Suspend, Remove, Revoke), danger (solid, only for what can't be undone: Delete my account). On the band, secondary becomes a `band-2` fill. Labels stay exactly as they are (the tests use them).
 
-**Fields.** Label above (Label step), helper below (Caption), error below with an icon and a 2px danger edge. 40px tall, 44px on phones, `surface` fill with a `line-input` edge, 16px text on phones for every field including the selects (they zoom on iOS today). A placeholder never stands in for a label.
+**Fields.** Label above (Label step), helper below (Caption), error below with an icon and a danger edge. 40px tall like the buttons beside them, `surface` fill with a `line-input` edge, 16px text on phones for every field including the selects (they zoom on iOS today). A placeholder never stands in for a label.
 
 **Notices** (`role="status"` or `role="alert"`). One component for every message a page shows about itself: its tone's soft fill, its icon, the sentence, `ink` text. "Checkout was canceled" (info), "Welcome to ... Your membership is active." (success), "Stripe is confirming your payment" (info), "Stripe setup isn't finished yet" (warning), "We couldn't reach Stripe" (danger). Errors that belong to a field or a button stay beside it, as danger text with an icon.
 
@@ -196,6 +196,8 @@ Quick and mechanical, CSS only (no animation library).
 **The frame (step 6).** The band holds the mark and wordmark, the main navigation (Businesses, Memberships, Settings; on phones a second row instead of wrapping "Sign out" under it) and Sign out as a ghost button. On business pages the band continues with the business's name (Title), the user's role, and the tabs. The demo note is a `volt-soft` strip with an icon just under the band. Content sits on chalk, up to 1120px wide.
 
 **The join page (step 4).** The business leads: its name in Display on the band, "Choose a membership." under it, and Clubly only as the small mark (still the link home). Plans read like the price board at the front desk: one surface, a row per plan with its name, its price as a Figure with "per month" or "per year", and a 44px volt "Join". Messages (checkout canceled, a refused join) are notices; no plans on sale is an empty state. After Checkout, the account page's waiting message is an info notice, the welcome a success notice, and "Stripe hasn't confirmed" a warning.
+
+**As built (step 4).** The join page is as described, with one detail the screens caught: a refused join (a suspended member, someone already paying) puts its message on a line of its own under the plan, so the prices stay in line. The account page shows each membership on a surface: the business, the plan and its price, then the status badge with what happens next ("Active, Renews on ..."), the suspension message when there is one, and Manage billing or See plans. Its "not a member anywhere yet" is an empty state, and the messages after Checkout are notices. The shared pieces made here (`Notice`, `Badge`, `SubscriptionBadge`, `EmptyState`, `AppMark`, and the restyled `Button` and `ActionButton`) are the ones the next steps build with.
 
 **The home page (step 4).** The same band: "Clubly" in Display, its one sentence, Get started (primary) and Sign in (secondary on the band), or Continue when signed in. Only the content it has today: a fuller home page is audit proposal 1.
 
