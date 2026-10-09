@@ -21,7 +21,7 @@ export default async function PasswordPage() {
   return (
     <Card className="mx-auto w-full max-w-md">
       <CardHeader>
-        <CardTitle>
+        <CardTitle as="h1">
           {fromEmailLink ? "Choose a new password" : "Change your password"}
         </CardTitle>
         <CardDescription>

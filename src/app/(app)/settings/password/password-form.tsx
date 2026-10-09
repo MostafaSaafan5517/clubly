@@ -6,6 +6,8 @@ import {
   changePassword,
   type PasswordFormState,
 } from "@/app/(app)/settings/password/actions";
+import { FormError } from "@/components/form-error";
+import { Notice } from "@/components/notice";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,10 +29,10 @@ export function PasswordForm({
   if (state.changed) {
     return (
       <div className="grid justify-items-start gap-4">
-        <p role="status" className="text-sm">
+        <Notice tone="success" role="status">
           Your password is changed. Any other device signed in to your account
           is signed out within the hour.
-        </p>
+        </Notice>
         <Link href={continueHref} className={buttonVariants()}>
           Continue
         </Link>
@@ -62,15 +64,11 @@ export function PasswordForm({
           aria-describedby="password-rules"
           required
         />
-        <p id="password-rules" className="text-sm text-muted-foreground">
+        <p id="password-rules" className="text-caption text-ink-3">
           At least 8 characters, with letters and numbers.
         </p>
       </div>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      {state.error && <FormError>{state.error}</FormError>}
       <Button type="submit" size="lg" disabled={pending}>
         {pending ? "Saving..." : "Save password"}
       </Button>

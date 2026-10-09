@@ -37,7 +37,7 @@ export default async function InvitePage({
     return (
       <Card className="mx-auto w-full max-w-md">
         <CardHeader>
-          <CardTitle>This invite link doesn&apos;t work</CardTitle>
+          <CardTitle as="h1">This invite link doesn&apos;t work</CardTitle>
           <CardDescription>
             It may have been used already, revoked, or expired. Ask whoever sent
             it for a new one.
@@ -50,7 +50,7 @@ export default async function InvitePage({
   return (
     <Card className="mx-auto w-full max-w-md">
       <CardHeader>
-        <CardTitle>Join {invite.business_name}</CardTitle>
+        <CardTitle as="h1">Join {invite.business_name}</CardTitle>
         <CardDescription>
           You&apos;ve been invited to join the team as {invite.role}.{" "}
           {roleDescriptions[invite.role]}
@@ -61,8 +61,9 @@ export default async function InvitePage({
           action={acceptInvite.bind(null, token)}
           label="Accept invite"
           pendingLabel="Joining..."
+          size="lg"
         />
-        <p className="text-sm text-muted-foreground">
+        <p className="text-small text-ink-2">
           The link works once, until {formatDate(invite.expires_at)}.
         </p>
       </CardContent>

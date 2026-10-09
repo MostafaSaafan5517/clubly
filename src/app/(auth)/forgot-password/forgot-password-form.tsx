@@ -5,6 +5,8 @@ import {
   sendPasswordReset,
   type PasswordResetState,
 } from "@/app/(auth)/actions";
+import { FormError } from "@/components/form-error";
+import { Notice } from "@/components/notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,10 +25,10 @@ export function ForgotPasswordForm() {
 
   if (state.sent) {
     return (
-      <p role="status" className="text-sm">
+      <Notice tone="success" role="status">
         If {state.fields.email} has an account, we&apos;ve sent it a link to
         choose a new password. It works once, for an hour, on any device.
-      </p>
+      </Notice>
     );
   }
 
@@ -45,11 +47,7 @@ export function ForgotPasswordForm() {
           required
         />
       </div>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      {state.error && <FormError>{state.error}</FormError>}
       <Button type="submit" size="lg" disabled={pending}>
         {pending ? "Sending..." : "Email me a link"}
       </Button>

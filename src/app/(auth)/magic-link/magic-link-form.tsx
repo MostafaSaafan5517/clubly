@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { sendSignInLink, type AuthFormState } from "@/app/(auth)/actions";
+import { FormError } from "@/components/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,11 +31,7 @@ export function MagicLinkForm({ next }: { next: string | undefined }) {
           required
         />
       </div>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      {state.error && <FormError>{state.error}</FormError>}
       <Button type="submit" size="lg" disabled={pending}>
         {pending ? "Sending..." : "Email me a link"}
       </Button>

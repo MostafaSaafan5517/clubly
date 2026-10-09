@@ -1,7 +1,7 @@
 "use client";
 
-import { IconAlertTriangle } from "@tabler/icons-react";
 import { useActionState } from "react";
+import { FormError } from "@/components/form-error";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -37,20 +37,7 @@ export function ActionButton({
       <Button type="submit" variant={variant} size={size} disabled={pending}>
         {pending ? pendingLabel : label}
       </Button>
-      {state.error && (
-        <p
-          role="alert"
-          className="flex items-start gap-1.5 text-small text-destructive"
-        >
-          <IconAlertTriangle
-            size={16}
-            stroke={1.75}
-            aria-hidden
-            className="mt-px shrink-0"
-          />
-          {state.error}
-        </p>
-      )}
+      {state.error && <FormError>{state.error}</FormError>}
     </form>
   );
 }

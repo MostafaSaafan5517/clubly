@@ -34,7 +34,11 @@ test("a user who forgot their password resets it from an email link on another d
   await phonePage.goto(resetLink);
   await expect(phonePage).toHaveURL(/\/settings\/password$/);
   await expect(
-    phonePage.getByText("Choose a new password", { exact: true }),
+    phonePage.getByRole("heading", {
+      level: 1,
+      name: "Choose a new password",
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(phonePage.getByLabel("Current password")).toHaveCount(0);
   await phonePage.getByLabel("New password").fill(NEW_PASSWORD);
@@ -94,7 +98,11 @@ test("changing a password needs the current one, and ends the account's other se
   ).toContainText(user.email);
   await page.getByRole("link", { name: "Change password" }).click();
   await expect(
-    page.getByText("Change your password", { exact: true }),
+    page.getByRole("heading", {
+      level: 1,
+      name: "Change your password",
+      exact: true,
+    }),
   ).toBeVisible();
 
   await page.getByLabel("Current password").fill("not-my-password-1");

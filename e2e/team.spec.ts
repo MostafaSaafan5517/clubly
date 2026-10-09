@@ -53,7 +53,9 @@ test("an owner invites an admin with a link, which works once", async ({
   await adamPage.goto(link);
   await expect(adamPage).toHaveURL(/\/login\?next=%2Finvite%2F/);
   await signIn(adamPage, adam.email, adam.password);
-  await expect(adamPage.getByText(`Join ${business.name}`)).toBeVisible();
+  await expect(
+    adamPage.getByRole("heading", { level: 1, name: `Join ${business.name}` }),
+  ).toBeVisible();
   await expect(
     adamPage.getByText("invited to join the team as admin"),
   ).toBeVisible();
@@ -68,7 +70,10 @@ test("an owner invites an admin with a link, which works once", async ({
   await signInAs(latePage, latecomer);
   await latePage.goto(new URL(link).pathname);
   await expect(
-    latePage.getByText("This invite link doesn't work"),
+    latePage.getByRole("heading", {
+      level: 1,
+      name: "This invite link doesn't work",
+    }),
   ).toBeVisible();
 
   await page.reload();
@@ -125,7 +130,10 @@ test("admins invite only staff, and an owner can revoke a link before it's used"
   await signInAs(newcomerPage, newcomer);
   await newcomerPage.goto(new URL(link).pathname);
   await expect(
-    newcomerPage.getByText("This invite link doesn't work"),
+    newcomerPage.getByRole("heading", {
+      level: 1,
+      name: "This invite link doesn't work",
+    }),
   ).toBeVisible();
 });
 

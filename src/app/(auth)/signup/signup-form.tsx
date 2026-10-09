@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { signUp, type AuthFormState } from "@/app/(auth)/actions";
+import { FormError } from "@/components/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,15 +53,11 @@ export function SignUpForm({ next }: { next: string | undefined }) {
           minLength={8}
           required
         />
-        <p id="password-hint" className="text-xs text-muted-foreground">
+        <p id="password-hint" className="text-caption text-ink-3">
           At least 8 characters, with letters and numbers.
         </p>
       </div>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      {state.error && <FormError>{state.error}</FormError>}
       <Button type="submit" size="lg" disabled={pending}>
         {pending ? "Creating account..." : "Create account"}
       </Button>

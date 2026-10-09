@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { MagicLinkForm } from "@/app/(auth)/magic-link/magic-link-form";
 import { readNext, withNext } from "@/app/(auth)/next-param";
+import { textLinkClass } from "@/components/text-link";
 import {
   Card,
   CardContent,
@@ -30,18 +31,15 @@ export default async function MagicLinkPage({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sign in with an email link</CardTitle>
+        <CardTitle as="h1">Sign in with an email link</CardTitle>
         <CardDescription>
           No password needed. We&apos;ll email you a link that signs you in.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         <MagicLinkForm next={nextPath} />
-        <p className="text-center text-sm text-muted-foreground">
-          <Link
-            href={withNext("/login", nextPath)}
-            className="text-foreground underline"
-          >
+        <p className="text-center text-small text-ink-2">
+          <Link href={withNext("/login", nextPath)} className={textLinkClass}>
             Sign in with your password instead
           </Link>
         </p>
