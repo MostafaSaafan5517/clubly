@@ -1,44 +1,77 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "../styles/tokens.css";
 
-@custom-variant dark (&:is(.dark *));
+/* dark: utilities follow the tokens' rule: the device's setting, unless the element sits inside
+   .ds-light, or always inside .ds-dark. */
+@custom-variant dark {
+  @media (prefers-color-scheme: dark) {
+    &:where(:not(.ds-light, .ds-light *)) {
+      @slot;
+    }
+  }
+  &:where(.ds-dark, .ds-dark *) {
+    @slot;
+  }
+}
 
+/* The components keep shadcn/ui's names, each pointing at a design token, plus the design
+   system's own names (docs/design/TOKENS.md has the full table). */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--ds-bg);
+  --color-foreground: var(--ds-ink);
+  --color-card: var(--ds-surface);
+  --color-card-foreground: var(--ds-ink);
+  --color-popover: var(--ds-surface);
+  --color-popover-foreground: var(--ds-ink);
+  --color-primary: var(--ds-volt);
+  --color-primary-foreground: var(--ds-on-volt);
+  --color-primary-strong: var(--ds-volt-strong);
+  --color-secondary: var(--ds-surface-2);
+  --color-secondary-foreground: var(--ds-ink);
+  --color-secondary-strong: var(--ds-surface-3);
+  --color-muted: var(--ds-surface-2);
+  --color-muted-foreground: var(--ds-ink-3);
+  --color-accent: var(--ds-volt-soft);
+  --color-accent-foreground: var(--ds-ink);
+  --color-destructive: var(--ds-danger);
+  --color-destructive-foreground: var(--ds-on-danger);
+  --color-destructive-soft: var(--ds-danger-soft);
+  --color-border: var(--ds-line);
+  --color-input: var(--ds-line-input);
+  --color-ring: var(--ds-focus);
+  --color-chart-1: var(--ds-ink-2);
+
+  --color-surface: var(--ds-surface);
+  --color-surface-2: var(--ds-surface-2);
+  --color-surface-3: var(--ds-surface-3);
+  --color-ink: var(--ds-ink);
+  --color-ink-2: var(--ds-ink-2);
+  --color-ink-3: var(--ds-ink-3);
+  --color-band: var(--ds-band);
+  --color-band-2: var(--ds-band-2);
+  --color-on-band: var(--ds-on-band);
+  --color-on-band-2: var(--ds-on-band-2);
+  --color-volt: var(--ds-volt);
+  --color-volt-strong: var(--ds-volt-strong);
+  --color-volt-soft: var(--ds-volt-soft);
+  --color-on-volt: var(--ds-on-volt);
+  --color-success: var(--ds-success);
+  --color-success-soft: var(--ds-success-soft);
+  --color-warning: var(--ds-warning);
+  --color-warning-soft: var(--ds-warning-soft);
+  --color-danger: var(--ds-danger);
+  --color-danger-soft: var(--ds-danger-soft);
+  --color-info: var(--ds-info);
+  --color-info-soft: var(--ds-info-soft);
+
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  /* The system's monospace: nothing to download for the few strings set in it. */
+  --font-mono:
+    ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
   --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -46,89 +79,101 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-badge: var(--ds-radius-badge);
+  --radius-control: var(--ds-radius-control);
+  --radius-surface: var(--ds-radius-surface);
+
+  --shadow-level-1: var(--ds-shadow-1);
+  --shadow-level-2: var(--ds-shadow-2);
+
+  --ease-ds: var(--ds-ease);
+  /* Hover and press take the short duration and the system's easing (DESIGN.md, Motion). */
+  --default-transition-duration: var(--ds-duration-fast);
+  --default-transition-timing-function: var(--ds-ease);
+}
+
+/* The type scale as text-display ... text-caption, text-figure-xl and text-figure. */
+@theme {
+  --text-display: var(--ds-text-display);
+  --text-display--line-height: var(--ds-text-display-line-height);
+  --text-display--font-weight: var(--ds-text-display-weight);
+  --text-display--letter-spacing: var(--ds-text-display-tracking);
+  --text-title: var(--ds-text-title);
+  --text-title--line-height: var(--ds-text-title-line-height);
+  --text-title--font-weight: var(--ds-text-title-weight);
+  --text-title--letter-spacing: var(--ds-text-title-tracking);
+  --text-heading: var(--ds-text-heading);
+  --text-heading--line-height: var(--ds-text-heading-line-height);
+  --text-heading--font-weight: var(--ds-text-heading-weight);
+  --text-heading--letter-spacing: var(--ds-text-heading-tracking);
+  --text-lead: var(--ds-text-lead);
+  --text-lead--line-height: var(--ds-text-lead-line-height);
+  --text-body: var(--ds-text-body);
+  --text-body--line-height: var(--ds-text-body-line-height);
+  --text-small: var(--ds-text-small);
+  --text-small--line-height: var(--ds-text-small-line-height);
+  --text-label: var(--ds-text-label);
+  --text-label--line-height: var(--ds-text-label-line-height);
+  --text-label--font-weight: var(--ds-text-label-weight);
+  --text-caption: var(--ds-text-caption);
+  --text-caption--line-height: var(--ds-text-caption-line-height);
+  --text-figure-xl: var(--ds-text-figure-xl);
+  --text-figure-xl--line-height: var(--ds-text-figure-xl-line-height);
+  --text-figure-xl--font-weight: var(--ds-text-figure-xl-weight);
+  --text-figure-xl--letter-spacing: var(--ds-text-figure-xl-tracking);
+  --text-figure: var(--ds-text-figure);
+  --text-figure--line-height: var(--ds-text-figure-line-height);
+  --text-figure--font-weight: var(--ds-text-figure-weight);
+  --text-figure--letter-spacing: var(--ds-text-figure-tracking);
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: var(--ds-radius-control);
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+/* The ink band: the signed-in header and the public pages' hero. What sits on it takes the band's
+   text color, and focus turns volt (ink would vanish on it). */
+@utility band {
+  background-color: var(--ds-band);
+  color: var(--ds-on-band);
+  --ds-focus: var(--ds-volt);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
+  /* A visible focus for everything (DESIGN.md, Focus and touch): ink on chalk, volt on the band
+     and in dark mode. Components that draw their own ring turn the outline off. */
+  :focus-visible {
+    outline: 2px solid var(--ds-focus);
+    outline-offset: 2px;
+  }
+  /* Body is the size of everything that doesn't set its own (DESIGN.md, Type). */
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-body text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
-  html {
-    @apply font-sans;
+  /* Reduced motion: nothing moves (DESIGN.md, Motion). Components ask with motion-safe: where
+     they animate; this catches whatever doesn't, transitions and delays included. Durations are
+     near zero rather than none, so transitionend and animationend still fire. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after,
+    ::backdrop {
+      animation-delay: 0s !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-delay: 0s !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

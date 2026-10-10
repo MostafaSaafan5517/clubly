@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PasswordForm } from "@/app/(app)/settings/password/password-form";
+import { PageBody } from "@/components/page-body";
 import {
   Card,
   CardContent,
@@ -19,23 +20,25 @@ export default async function PasswordPage() {
   const fromEmailLink = cameFromEmailLink(claims);
 
   return (
-    <Card className="mx-auto w-full max-w-md">
-      <CardHeader>
-        <CardTitle>
-          {fromEmailLink ? "Choose a new password" : "Change your password"}
-        </CardTitle>
-        <CardDescription>
-          {fromEmailLink
-            ? "You came from a link in your email, so your current password isn't needed."
-            : "Enter your current password, then the new one."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <PasswordForm
-          askForCurrent={!fromEmailLink}
-          continueHref={SIGNED_IN_HOME}
-        />
-      </CardContent>
-    </Card>
+    <PageBody width="narrow">
+      <Card className="mx-auto w-full max-w-md">
+        <CardHeader>
+          <CardTitle as="h1">
+            {fromEmailLink ? "Choose a new password" : "Change your password"}
+          </CardTitle>
+          <CardDescription>
+            {fromEmailLink
+              ? "You came from a link in your email, so your current password isn't needed."
+              : "Enter your current password, then the new one."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PasswordForm
+            askForCurrent={!fromEmailLink}
+            continueHref={SIGNED_IN_HOME}
+          />
+        </CardContent>
+      </Card>
+    </PageBody>
   );
 }

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/app/(auth)/login/login-form";
 import { readNext, withNext } from "@/app/(auth)/next-param";
+import { Notice } from "@/components/notice";
+import { textLinkClass } from "@/components/text-link";
 import {
   Card,
   CardContent,
@@ -32,35 +34,32 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sign in</CardTitle>
+        <CardTitle as="h1">Sign in</CardTitle>
         <CardDescription>Welcome back.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         {error === "link" && (
-          <p role="alert" className="text-sm text-destructive">
+          <Notice tone="danger" role="alert">
             {linkErrorMessage}
-          </p>
+          </Notice>
         )}
         <LoginForm next={nextPath} />
         {appConfig.authEmails && (
-          <div className="grid gap-1 text-center text-sm">
-            <Link href="/forgot-password" className="underline">
+          <div className="grid justify-items-center gap-2 text-small">
+            <Link href="/forgot-password" className={textLinkClass}>
               Forgot your password?
             </Link>
             <Link
               href={withNext("/magic-link", nextPath)}
-              className="underline"
+              className={textLinkClass}
             >
               Email me a sign-in link instead
             </Link>
           </div>
         )}
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-small text-ink-2">
           New here?{" "}
-          <Link
-            href={withNext("/signup", nextPath)}
-            className="text-foreground underline"
-          >
+          <Link href={withNext("/signup", nextPath)} className={textLinkClass}>
             Create an account
           </Link>
         </p>

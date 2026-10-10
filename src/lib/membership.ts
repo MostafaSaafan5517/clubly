@@ -79,3 +79,29 @@ export function describeSubscription(subscription: {
       return { label: "Ended", detail: null };
   }
 }
+
+/**
+ * The badge tone for a subscription (DESIGN.md, Money and membership states): success while it
+ * runs, warning while it's ending or not yet paid, info in a trial, danger when a payment failed,
+ * and neutral once it's over or paused.
+ */
+export function subscriptionTone(subscription: {
+  status: SubscriptionStatus;
+  cancel_at: string | null;
+}): "success" | "warning" | "info" | "danger" | "neutral" {
+  switch (subscription.status) {
+    case "active":
+      return subscription.cancel_at ? "warning" : "success";
+    case "trialing":
+      return "info";
+    case "past_due":
+    case "unpaid":
+      return "danger";
+    case "incomplete":
+      return "warning";
+    case "incomplete_expired":
+    case "paused":
+    case "canceled":
+      return "neutral";
+  }
+}

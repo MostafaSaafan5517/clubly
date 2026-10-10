@@ -1,7 +1,9 @@
 "use client";
 
+import { IconHourglass } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Notice } from "@/components/notice";
 
 const REFRESH_EVERY_MS = 2_000;
 const GIVE_UP_AFTER_MS = 30_000;
@@ -28,11 +30,17 @@ export function ConfirmingPayment({ businessName }: { businessName: string }) {
     return () => clearInterval(timer);
   }, [router]);
 
-  return (
-    <p role="status" className="rounded-lg border p-4">
-      {gaveUp
-        ? `Stripe hasn't confirmed your payment to ${businessName} yet. If you were charged, your membership will appear here shortly; refresh the page in a minute.`
-        : `Thanks! Stripe is confirming your payment to ${businessName}. This page updates on its own.`}
-    </p>
+  // Waiting is info; giving up is a warning (the payment may still arrive).
+  return gaveUp ? (
+    <Notice tone="warning" role="status">
+      Stripe hasn&apos;t confirmed your payment to {businessName} yet. If you
+      were charged, your membership will appear here shortly; refresh the page
+      in a minute.
+    </Notice>
+  ) : (
+    <Notice tone="info" icon={IconHourglass} role="status">
+      Thanks! Stripe is confirming your payment to {businessName}. This page
+      updates on its own.
+    </Notice>
   );
 }

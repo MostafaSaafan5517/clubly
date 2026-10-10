@@ -1,9 +1,13 @@
+import { IconTicket } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { joinPlan } from "@/app/b/[slug]/actions";
 import { ActionButton } from "@/components/action-button";
+import { AppMark } from "@/components/app-mark";
+import { EmptyState } from "@/components/empty-state";
+import { Notice } from "@/components/notice";
 import { appConfig } from "@/config/app";
 import { formatAmount } from "@/lib/money";
 import { createServerComponentClient } from "@/lib/supabase/server";
@@ -39,7 +43,7 @@ export async function generateMetadata({
   params,
 }: PageProps<"/b/[slug]">): Promise<Metadata> {
   const page = await getJoinPage((await params).slug);
-  if (!page) return { title: "Not found" };
+  if (!page) return { title: "Page not found" };
   return {
     title: `Join ${page.business.name}`,
     description: `Memberships at ${page.business.name}, billed through ${appConfig.name}.`,
@@ -55,55 +59,69 @@ export default async function JoinPage({
   if (!page) notFound();
   const { business, plans } = page;
 
+  // The business leads (DESIGN.md, The join page): its name is the sign on the band, and the app
+  // is only the small mark that leads home. Plans read like the price board at the front desk.
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b px-4 py-3 sm:px-6">
-        <Link href="/" className="font-semibold tracking-tight">
-          {appConfig.name}
-        </Link>
+      <header className="band">
+        <div className="mx-auto max-w-[960px] px-4 pt-4 sm:px-8">
+          <Link href="/" className="inline-flex rounded-control">
+            <AppMark />
+          </Link>
+        </div>
       </header>
-      <main className="mx-auto grid w-full max-w-3xl gap-8 p-4 sm:p-6">
-        <div className="grid gap-1">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {business.name}
-          </h1>
-          <p className="text-muted-foreground">Choose a membership.</p>
+      <main className="flex flex-1 flex-col">
+        <div className="band">
+          <div className="mx-auto grid max-w-[960px] gap-3 px-4 pt-10 pb-10 sm:px-8 sm:pt-16">
+            <h1 className="text-display text-balance">{business.name}</h1>
+            <p className="text-lead text-on-band-2">Choose a membership.</p>
+          </div>
         </div>
 
-        {/* Where Stripe Checkout sends people who back out. (A completed checkout goes to the
-            account page instead.) */}
-        {checkout === "canceled" && (
-          <p role="status" className="rounded-lg border p-4">
-            Checkout was canceled, and you haven&apos;t been charged.
-          </p>
-        )}
+        <div className="mx-auto grid w-full max-w-[960px] gap-4 px-4 py-8 sm:px-8">
+          {/* Where Stripe Checkout sends people who back out. (A completed checkout goes to the
+              account page instead.) */}
+          {checkout === "canceled" && (
+            <Notice tone="info" role="status">
+              Checkout was canceled, and you haven&apos;t been charged.
+            </Notice>
+          )}
 
-        {plans.length === 0 ? (
-          <p className="rounded-lg border p-4 text-sm text-muted-foreground">
-            No memberships are available right now.
-          </p>
-        ) : (
-          <ul className="grid gap-4 sm:grid-cols-2">
-            {plans.map((plan) => (
-              <li key={plan.id} className="grid gap-3 rounded-lg border p-5">
-                <h2 className="font-medium">{plan.name}</h2>
-                <p>
-                  <span className="text-2xl font-semibold">
-                    {formatAmount(plan.amount, plan.currency)}
-                  </span>{" "}
-                  <span className="text-muted-foreground">
-                    per {plan.billing_interval}
-                  </span>
-                </p>
-                <ActionButton
-                  action={joinPlan.bind(null, business.slug, plan.id)}
-                  label="Join"
-                  pendingLabel="Opening checkout..."
-                />
-              </li>
-            ))}
-          </ul>
-        )}
+          {plans.length === 0 ? (
+            <EmptyState
+              icon={IconTicket}
+              title="No memberships are available right now."
+            />
+          ) : (
+            <ul className="divide-y rounded-surface bg-card shadow-level-1">
+              {plans.map((plan) => (
+                <li
+                  key={plan.id}
+                  className="grid items-center gap-x-8 gap-y-3 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:px-6 [&_[role=alert]]:col-span-full"
+                >
+                  <h2 className="text-heading">{plan.name}</h2>
+                  <p className="flex flex-wrap items-baseline gap-x-2">
+                    <span className="text-figure">
+                      {formatAmount(plan.amount, plan.currency)}
+                    </span>{" "}
+                    <span className="text-small text-ink-3">
+                      per {plan.billing_interval}
+                    </span>
+                  </p>
+                  <ActionButton
+                    action={joinPlan.bind(null, business.slug, plan.id)}
+                    label="Join"
+                    pendingLabel="Opening checkout..."
+                    size="lg"
+                    // The row's grid places the button in its own column, and a refusal on a
+                    // line of its own below, so the prices stay in line.
+                    className="contents"
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </main>
     </div>
   );

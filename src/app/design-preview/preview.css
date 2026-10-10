@@ -1,0 +1,369 @@
+/* Component sketches for the development-only design preview, built on the app's design tokens
+   (src/styles/tokens.css). Steps 4 to 6 turn them into the app's own components; until then
+   they live here, under .cp, so nothing else picks them up. */
+
+.cp {
+  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  background: var(--ds-bg);
+  color: var(--ds-ink);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* The ink band: the app's header and the public page's hero. Focus turns volt on it. */
+.cp .cp-band {
+  --ds-focus: var(--ds-volt);
+  background: var(--ds-band);
+  color: var(--ds-on-band);
+}
+
+.cp :focus-visible,
+.cp .is-focus {
+  outline: 2px solid var(--ds-focus);
+  outline-offset: 2px;
+}
+
+/* Type. One family (Archivo, weights 400 to 800); figures are tabular by default. */
+.cp .t-display {
+  font-size: clamp(2.5rem, 1.6rem + 3.2vw, 3.75rem);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.cp .t-title {
+  font-size: 1.875rem;
+  line-height: 1.15;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+}
+.cp .t-heading {
+  font-size: 1.125rem;
+  line-height: 1.35;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+}
+.cp .t-body {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+.cp .t-lead {
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+.cp .t-small {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.cp .t-caption {
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+.cp .t-label {
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  font-weight: 600;
+}
+.cp .t-figure-xl {
+  font-size: clamp(2.75rem, 2rem + 2.4vw, 3.75rem);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+.cp .t-figure {
+  font-size: 1.75rem;
+  line-height: 1.1;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+/* Surfaces: tone and a hairline ring, not boxes around everything. */
+.cp .cp-surface {
+  background: var(--ds-surface);
+  border-radius: 10px;
+  box-shadow: var(--ds-shadow-1);
+}
+.cp .cp-rows > * + * {
+  border-top: 1px solid var(--ds-line);
+}
+
+/* Buttons. 40px tall (44px for the main action on phones), 6px corners. */
+.cp .cp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 650;
+  white-space: nowrap;
+  transition:
+    background-color 120ms var(--ds-ease),
+    color 120ms var(--ds-ease),
+    transform 120ms var(--ds-ease);
+}
+.cp .cp-btn:active {
+  transform: translateY(1px);
+}
+.cp .cp-btn-lg {
+  height: 2.75rem;
+  padding: 0 1.25rem;
+  font-size: 0.9375rem;
+}
+.cp .cp-btn-primary {
+  background: var(--ds-volt);
+  color: var(--ds-on-volt);
+  box-shadow: inset 0 -2px 0 oklch(0.21 0.02 262 / 0.14);
+}
+.cp .cp-btn-primary:hover {
+  background: var(--ds-volt-strong);
+}
+.cp .cp-btn-secondary {
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+  box-shadow: inset 0 0 0 1px var(--ds-line-input);
+}
+.cp .cp-btn-secondary:hover {
+  background: var(--ds-surface-2);
+}
+.cp .cp-btn-ghost {
+  color: var(--ds-ink-2);
+}
+.cp .cp-btn-ghost:hover {
+  background: var(--ds-surface-2);
+  color: var(--ds-ink);
+}
+.cp .cp-btn-quiet-danger {
+  background: var(--ds-surface);
+  color: var(--ds-danger);
+  box-shadow: inset 0 0 0 1px var(--ds-line-input);
+}
+.cp .cp-btn-quiet-danger:hover {
+  background: var(--ds-danger-soft);
+}
+.cp .cp-btn-danger {
+  background: var(--ds-danger);
+  color: var(--ds-on-danger);
+}
+.cp .cp-band .cp-btn-secondary {
+  background: var(--ds-band-2);
+  color: var(--ds-on-band);
+  box-shadow: none;
+}
+.cp .cp-band .cp-btn-ghost {
+  color: var(--ds-on-band-2);
+}
+.cp .cp-band .cp-btn-ghost:hover {
+  background: var(--ds-band-2);
+  color: var(--ds-on-band);
+}
+
+/* Fields: label above, helper or error below. */
+.cp .cp-field {
+  display: grid;
+  gap: 0.375rem;
+}
+.cp .cp-input {
+  height: 2.5rem;
+  width: 100%;
+  padding: 0 0.75rem;
+  border-radius: 6px;
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+  box-shadow: inset 0 0 0 1px var(--ds-line-input);
+  font-size: 1rem;
+}
+@media (min-width: 768px) {
+  .cp .cp-input {
+    font-size: 0.9375rem;
+  }
+}
+.cp .cp-input::placeholder {
+  color: var(--ds-ink-3);
+}
+.cp .cp-input[aria-invalid="true"] {
+  box-shadow: inset 0 0 0 2px var(--ds-danger);
+}
+
+/* Badges: a tone, an icon and a word; 4px corners, because they're labels, not buttons. */
+.cp .cp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.cp .tone-success {
+  background: var(--ds-success-soft);
+  color: var(--ds-success);
+}
+.cp .tone-warning {
+  background: var(--ds-warning-soft);
+  color: var(--ds-warning);
+}
+.cp .tone-danger {
+  background: var(--ds-danger-soft);
+  color: var(--ds-danger);
+}
+.cp .tone-info {
+  background: var(--ds-info-soft);
+  color: var(--ds-info);
+}
+.cp .tone-neutral {
+  background: var(--ds-surface-2);
+  color: var(--ds-ink-2);
+}
+.cp .tone-volt {
+  background: var(--ds-volt-soft);
+  color: var(--ds-ink);
+}
+
+/* Notices (role="status" or "alert"): the message's tone, an icon, the sentence. */
+.cp .cp-notice {
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+}
+.cp .cp-notice > svg {
+  flex: none;
+  margin-top: 0.15rem;
+}
+.cp .cp-notice.tone-success,
+.cp .cp-notice.tone-warning,
+.cp .cp-notice.tone-danger,
+.cp .cp-notice.tone-info,
+.cp .cp-notice.tone-volt {
+  color: var(--ds-ink);
+}
+.cp .cp-notice.tone-success > svg {
+  color: var(--ds-success);
+}
+.cp .cp-notice.tone-warning > svg {
+  color: var(--ds-warning);
+}
+.cp .cp-notice.tone-danger > svg {
+  color: var(--ds-danger);
+}
+.cp .cp-notice.tone-info > svg {
+  color: var(--ds-info);
+}
+
+/* Revenue's "paid - fees = net" row: the signs sit in the gaps between the figures. */
+@media (min-width: 640px) {
+  .cp .cp-equation > .op-minus,
+  .cp .cp-equation > .op-equals {
+    position: relative;
+  }
+  .cp .cp-equation > .op-minus::before,
+  .cp .cp-equation > .op-equals::before {
+    position: absolute;
+    left: -1.75rem;
+    bottom: 0.2rem;
+    color: var(--ds-ink-3);
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+  .cp .cp-equation > .op-minus::before {
+    content: "−" / "";
+  }
+  .cp .cp-equation > .op-equals::before {
+    content: "=" / "";
+    left: -1.25rem;
+    bottom: 0.7rem;
+  }
+}
+
+/* Business tabs on the band: the current one is bright with a volt bar under it. */
+.cp .cp-tabs {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent);
+}
+.cp .cp-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: none;
+  height: 2.75rem;
+  padding: 0 0.75rem;
+  border-bottom: 3px solid transparent;
+  color: var(--ds-on-band-2);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.cp .cp-tab:hover {
+  color: var(--ds-on-band);
+}
+.cp .cp-tab[aria-current="page"] {
+  color: var(--ds-on-band);
+  border-bottom-color: var(--ds-volt);
+}
+
+/* The mark: a volt square with the initial, beside the wordmark. */
+.cp .cp-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 6px;
+  background: var(--ds-volt);
+  color: var(--ds-on-volt);
+  font-weight: 800;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+/* Loading: a placeholder in the shape of what's coming, shimmering only when motion is welcome. */
+.cp .cp-skeleton {
+  border-radius: 10px;
+  background: var(--ds-surface-2);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cp .cp-skeleton {
+    background: linear-gradient(
+        100deg,
+        transparent 30%,
+        oklch(1 0 0 / 0.5) 50%,
+        transparent 70%
+      )
+      var(--ds-surface-2);
+    background-size: 200% 100%;
+    animation: cp-shimmer 1.4s linear infinite;
+  }
+  .cp.ds-dark .cp-skeleton {
+    background-image: linear-gradient(
+      100deg,
+      transparent 30%,
+      oklch(1 0 0 / 0.06) 50%,
+      transparent 70%
+    );
+  }
+}
+@keyframes cp-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp *,
+  .cp *::before,
+  .cp *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

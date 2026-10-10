@@ -18,7 +18,9 @@ test("a new user signs up, confirms their email on another device, and lands on 
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(TEST_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByText("Check your email")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Check your email" }),
+  ).toBeVisible();
 
   // Signing in before confirming explains what to do.
   await page.goto("/login");
@@ -92,7 +94,9 @@ test("an existing user signs in with an email link", async ({ page }) => {
   await expect(page).toHaveURL(/\/magic-link$/);
   await page.getByLabel("Email").fill(user.email);
   await page.getByRole("button", { name: "Email me a link" }).click();
-  await expect(page.getByText("Check your email")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Check your email" }),
+  ).toBeVisible();
 
   await page.goto(await getEmailLink(user.email, "/auth/confirm"));
   await expect(page).toHaveURL(/\/dashboard$/);
@@ -109,7 +113,9 @@ test("asking for a link for an unknown email looks the same and sends nothing", 
   await page.goto("/magic-link");
   await page.getByLabel("Email").fill(email);
   await page.getByRole("button", { name: "Email me a link" }).click();
-  await expect(page.getByText("Check your email")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Check your email" }),
+  ).toBeVisible();
   expect(await countEmails(email)).toBe(0);
 });
 
@@ -127,7 +133,9 @@ test("signing up from a page that needed sign-in comes back to that page after c
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(TEST_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByText("Check your email")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Check your email" }),
+  ).toBeVisible();
 
   await page.goto(await getEmailLink(email, "/auth/confirm"));
   await expect(page).toHaveURL(/\/dashboard\/new-business$/);
@@ -147,7 +155,9 @@ test("an email link sign-in also comes back to the page that needed it", async (
   );
   await page.getByLabel("Email").fill(user.email);
   await page.getByRole("button", { name: "Email me a link" }).click();
-  await expect(page.getByText("Check your email")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Check your email" }),
+  ).toBeVisible();
 
   await page.goto(await getEmailLink(user.email, "/auth/confirm"));
   await expect(page).toHaveURL(/\/dashboard\/new-business$/);

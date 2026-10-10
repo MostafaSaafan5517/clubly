@@ -1,0 +1,98 @@
+{
+  "public-01-home": [],
+  "public-02-home-account-deleted": [],
+  "public-03-join": [],
+  "public-04-join-checkout-canceled": [],
+  "public-05-join-no-plans": [],
+  "public-06-not-found": [],
+  "public-07-join-not-found": [],
+  "public-08-home-signed-in": [],
+  "public-09-join-already-member": [],
+  "public-10-join-suspended": [],
+  "auth-01-login": [],
+  "auth-02-login-wrong-password": [],
+  "auth-03-login-link-error": [],
+  "auth-04-signup": [],
+  "auth-05-signup-weak-password": [],
+  "auth-06-check-email": [],
+  "auth-07-magic-link": [],
+  "auth-08-forgot-password": [],
+  "auth-09-forgot-password-sent": [],
+  "invite-01-valid": [],
+  "invite-02-not-working": [],
+  "member-01-demo": [],
+  "member-02-active": [],
+  "member-03-canceling": [],
+  "member-04-payment-failed": [],
+  "member-05-ended": [],
+  "member-06-suspended": [],
+  "member-07-no-plan": [],
+  "member-08-none": [],
+  "member-09-joined-welcome": [],
+  "member-10-joined-confirming": [],
+  "member-11-joined-not-confirmed": [],
+  "dash-01-businesses": [],
+  "dash-02-overview": [
+    "color-contrast (Elements must meet minimum color contrast ratio thresholds) at .rounded-full"
+  ],
+  "dash-03-members": [
+    "color-contrast (Elements must meet minimum color contrast ratio thresholds) at .bg-destructive\\/10"
+  ],
+  "dash-04-revenue": [],
+  "dash-05-payouts": [],
+  "dash-06-history": [],
+  "dash-08-team": [],
+  "dash-09-new-plan": [],
+  "dash-10-read-only-refused": [
+    "color-contrast (Elements must meet minimum color contrast ratio thresholds) at .rounded-full"
+  ],
+  "role-01-admin-overview": [
+    "color-contrast (Elements must meet minimum color contrast ratio thresholds) at .rounded-full"
+  ],
+  "role-02-admin-team": [],
+  "role-03-staff-overview": [
+    "color-contrast (Elements must meet minimum color contrast ratio thresholds) at .rounded-full"
+  ],
+  "role-04-staff-members": [
+    "color-contrast (Elements must meet minimum color contrast ratio thresholds) at .bg-destructive\\/10"
+  ],
+  "role-05-staff-team": [],
+  "role-06-staff-revenue-not-found": [],
+  "owner-01-businesses": [],
+  "owner-02-overview": [
+    "color-contrast (Elements must meet minimum color contrast ratio thresholds) at li:nth-child(4) > .justify-between.flex-wrap.flex > .flex-wrap.flex.items-center > .rounded-full.bg-muted.text-xs, li:nth-child(5) > .justify-between.flex-wrap.flex > .flex-wrap.flex.items-center > .rounded-full.bg-muted.text-xs"
+  ],
+  "owner-03-overview-rename-open": [
+    "color-contrast (Elements must meet minimum color contrast ratio thresholds) at li:nth-child(4) > .justify-between.flex-wrap.flex > .flex-wrap.flex.items-center > .rounded-full.bg-muted.text-xs, li:nth-child(5) > .justify-between.flex-wrap.flex > .flex-wrap.flex.items-center > .rounded-full.bg-muted.text-xs"
+  ],
+  "owner-04-members": [
+    "color-contrast (Elements must meet minimum color contrast ratio thresholds) at .bg-destructive\\/10"
+  ],
+  "owner-05-revenue": [
+    "definition-list (<dl> elements must only directly contain properly-ordered <dt> and <dd> groups, <script>, <template> or <div> elements) at dl"
+  ],
+  "owner-06-team": [],
+  "owner-07-team-invite-created": [],
+  "empty-01-businesses": [
+    "color-contrast (Elements must meet minimum color contrast ratio thresholds) at .rounded-full"
+  ],
+  "empty-02-overview": [],
+  "empty-03-members": [],
+  "empty-04-revenue": [],
+  "empty-05-payouts": [],
+  "empty-06-history": [],
+  "empty-07-team": [],
+  "empty-08-new-plan": [],
+  "empty-09-back-from-stripe": [],
+  "empty-10-new-plan-form": [],
+  "empty-11-payouts-stripe-error": [],
+  "new-01-no-business": [],
+  "new-02-new-business": [],
+  "new-03-new-business-taken": [],
+  "settings-01-settings": [],
+  "settings-02-saved-and-delete-refused": [],
+  "settings-03-password": [],
+  "settings-04-password-wrong": [],
+  "error-01-not-staff-not-found": [],
+  "error-02-page-failed": []
+}

@@ -1,13 +1,15 @@
+import {
+  IconAlertTriangle,
+  IconBuildingStore,
+  IconPlus,
+} from "@tabler/icons-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Badge } from "@/components/badge";
+import { EmptyState } from "@/components/empty-state";
+import { PageBody } from "@/components/page-body";
+import { SectionHeader } from "@/components/section-header";
 import { buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -45,68 +47,71 @@ export default async function DashboardPage() {
   const staffRoles = staffResult.data;
 
   return (
-    <>
+    <PageBody width="narrow">
       <div className="grid gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-title">
           Welcome{profile.full_name ? `, ${profile.full_name}` : ""}
         </h1>
-        <p className="text-muted-foreground">Signed in as {profile.email}</p>
+        <p className="text-body break-all text-ink-2">
+          Signed in as {profile.email}
+        </p>
       </div>
 
       {staffRoles.length === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>You don&apos;t have a business yet</CardTitle>
-            <CardDescription>
-              Create one to set up membership plans and start taking members.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <EmptyState
+          icon={IconBuildingStore}
+          title="You don't have a business yet"
+          action={
             <Link href="/dashboard/new-business" className={buttonVariants()}>
+              <IconPlus stroke={1.75} aria-hidden />
               Create a business
             </Link>
-          </CardContent>
-        </Card>
+          }
+        >
+          Create one to set up membership plans and start taking members.
+        </EmptyState>
       ) : (
-        <section className="grid gap-3" aria-labelledby="businesses-heading">
-          <div className="flex items-center justify-between gap-4">
-            <h2 id="businesses-heading" className="text-lg font-semibold">
-              Your businesses
-            </h2>
-            <Link
-              href="/dashboard/new-business"
-              className={buttonVariants({ variant: "outline" })}
-            >
-              New business
-            </Link>
-          </div>
-          <ul className="grid gap-3">
+        <section className="grid gap-4" aria-labelledby="businesses-heading">
+          <SectionHeader
+            id="businesses-heading"
+            title="Your businesses"
+            action={
+              <Link
+                href="/dashboard/new-business"
+                className={buttonVariants({ variant: "outline" })}
+              >
+                <IconPlus stroke={1.75} aria-hidden />
+                New business
+              </Link>
+            }
+          />
+          <ul className="divide-y rounded-surface bg-card shadow-level-1">
             {staffRoles.map(({ role, businesses: business }) => (
               <li
                 key={business.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-4"
+                className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-5"
               >
                 <div className="grid gap-0.5">
                   <Link
                     href={`/dashboard/b/${business.slug}`}
-                    className="font-medium underline-offset-4 hover:underline"
+                    className="font-semibold underline-offset-4 hover:underline"
                   >
                     {business.name}
                   </Link>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-small text-ink-2">
                     {roleLabels[role]}
                   </span>
                 </div>
                 {!business.charges_enabled && (
-                  <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                  <Badge tone="warning" icon={IconAlertTriangle}>
                     Payments not set up
-                  </span>
+                  </Badge>
                 )}
               </li>
             ))}
           </ul>
         </section>
       )}
-    </>
+    </PageBody>
   );
 }

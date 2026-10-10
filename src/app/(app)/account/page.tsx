@@ -1,15 +1,14 @@
+import { IconAlertTriangle, IconId } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { openBillingPortal } from "@/app/(app)/account/actions";
 import { ConfirmingPayment } from "@/app/(app)/account/confirming-payment";
 import { ActionButton } from "@/components/action-button";
+import { EmptyState } from "@/components/empty-state";
+import { Notice } from "@/components/notice";
+import { PageBody } from "@/components/page-body";
+import { SubscriptionBadge } from "@/components/subscription-badge";
 import { buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import {
   currentSubscription,
@@ -55,68 +54,67 @@ export default async function AccountPage({
     justJoined?.subscription && isLive(justJoined.subscription.status);
 
   return (
-    <>
-      <h1 className="text-2xl font-semibold tracking-tight">
-        Your memberships
-      </h1>
+    <PageBody width="narrow">
+      <h1 className="text-title">Your memberships</h1>
 
       {justJoined &&
         (joinConfirmed ? (
-          <p role="status" className="rounded-lg border p-4">
+          <Notice tone="success" role="status">
             Welcome to {justJoined.businesses.name}! Your membership is active.
-          </p>
+          </Notice>
         ) : (
           <ConfirmingPayment businessName={justJoined.businesses.name} />
         ))}
 
       {rows.length === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>You&apos;re not a member anywhere yet</CardTitle>
-            <CardDescription>
-              Businesses share their own join page with you. Your memberships
-              show up here once you join.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <EmptyState icon={IconId} title="You're not a member anywhere yet">
+          Businesses share their own join page with you. Your memberships show
+          up here once you join.
+        </EmptyState>
       ) : (
         <ul className="grid gap-4">
           {rows.map(({ id, status, businesses: business, subscription }) => {
             const summary = subscription && describeSubscription(subscription);
             return (
-              <li key={id} className="grid gap-3 rounded-lg border p-5">
-                <div className="grid gap-1">
-                  <h2 className="font-medium">{business.name}</h2>
+              <li
+                key={id}
+                className="grid gap-4 rounded-surface bg-card p-5 shadow-level-1 sm:p-6"
+              >
+                <div className="grid gap-2">
+                  <h2 className="text-heading">{business.name}</h2>
                   {subscription ? (
-                    <p className="text-sm">
+                    <p className="text-body">
                       {subscription.plans.name},{" "}
-                      {formatAmount(
-                        subscription.plans.amount,
-                        subscription.plans.currency,
-                      )}{" "}
+                      <span className="font-semibold">
+                        {formatAmount(
+                          subscription.plans.amount,
+                          subscription.plans.currency,
+                        )}
+                      </span>{" "}
                       per {subscription.plans.billing_interval}
                     </p>
                   ) : (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-body text-ink-3">
                       You haven&apos;t chosen a plan yet.
+                    </p>
+                  )}
+                  {/* The status, then what happens next ("Active", "Renews on ..."). */}
+                  {subscription && (
+                    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-small text-ink-2">
+                      <SubscriptionBadge subscription={subscription} />
+                      {summary?.detail}
                     </p>
                   )}
                 </div>
 
-                {summary && (
-                  <p className="flex flex-wrap items-center gap-2 text-sm">
-                    <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
-                      {summary.label}
-                    </span>
-                    {summary.detail && (
-                      <span className="text-muted-foreground">
-                        {summary.detail}
-                      </span>
-                    )}
-                  </p>
-                )}
                 {status === "suspended" && (
-                  <p className="text-sm text-destructive">
+                  <p className="flex items-start gap-1.5 text-small text-destructive">
+                    <IconAlertTriangle
+                      size={16}
+                      stroke={1.75}
+                      aria-hidden
+                      className="mt-px shrink-0"
+                    />
                     {business.name} has suspended your membership. Please
                     contact them.
                   </p>
@@ -145,6 +143,6 @@ export default async function AccountPage({
           })}
         </ul>
       )}
-    </>
+    </PageBody>
   );
 }

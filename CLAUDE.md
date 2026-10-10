@@ -33,9 +33,12 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 
 - Prettier formats everything (Tailwind classes are sorted automatically). ESLint must pass with zero warnings.
 - Import app code through the `@/` alias, which maps to `src/`.
-- UI primitives come from shadcn/ui (Base UI flavor, `base-nova` style). Add one with `pnpm dlx shadcn@latest add <name>`; it is copied into `src/components/ui/` and becomes our code to edit. Merge class names with `cn` from the `cn` package.
+- UI primitives come from shadcn/ui (Base UI flavor, `base-nova` style). Add one with `pnpm dlx shadcn@latest add <name>`; it is copied into `src/components/ui/` and becomes our code to edit. Merge class names with `cn` from `@/lib/utils`, never the `cn` package directly: ours uses merge tables built from the theme (`src/lib/cn-tables.ts`, written by `pnpm tokens`), without which `text-body` counts as a color and drops the text color beside it.
 - Anything that navigates is a `<Link>`, even when it looks like a button: style it with `buttonVariants()`. Never `<Button render={<Link />}>`, which gives the link `role="button"` and makes screen readers announce it wrongly.
-- Use theme tokens (`bg-background`, `text-muted-foreground`, `border-border`, ...) instead of raw colors, so the palette can change in one place (`src/app/globals.css`).
+- Use theme tokens (`bg-background`, `text-muted-foreground`, `border-border`, ...) instead of raw colors. The design system is docs/design/DESIGN.md; its tokens live in `src/styles/tokens.css` (`--ds-*`, light and dark, named for the design system rather than the product), and `src/app/globals.css` maps shadcn's names and the system's own onto them (the table is in docs/design/TOKENS.md). `primary` is volt: a fill under `text-primary-foreground`, never a text color on a light surface. Text sizes are `text-display` ... `text-caption`, plus `text-figure-xl` and `text-figure` for money; radii `rounded-badge`, `rounded-control`, `rounded-surface`; the `band` utility is the ink signage behind headers and heroes (focus turns volt on it). Colors follow the device's light or dark setting; `.ds-light` and `.ds-dark` force one. After changing a token or a theme name, run `pnpm tokens`; `src/styles/tokens.test.ts` checks the export, the two dark copies, the sRGB gamut and WCAG AA, and `src/lib/utils.test.ts` checks the merge tables.
+- Pages are built from the shared pieces in `src/components/` (docs/design/DESIGN.md, Components): `Notice` for a message a page shows about itself (its tone, an icon, the sentence; give it `role="status"` or `"alert"` when it reports something that happened), `Badge` and `SubscriptionBadge` for statuses (a word and an icon, never color alone; tones from `subscriptionTone` in `src/lib/membership.ts`), `EmptyState`, `AppMark`, `FormError` for what a form says when it fails (an alert with an icon, right under the fields) and `FormDone` for its quiet confirmation ("Saved."), `textLinkClass` for links in text and under forms, and `ActionButton` for one-click Server Actions (`variant="destructive-outline"` for the quiet danger ones: Suspend, Remove, Revoke). Signed-in pages wrap their content in `PageBody` (`wide`, 1120px, for a business's pages; `narrow` for pages about one person or one form): the layout only draws the band, so a page without it runs to the window's edges. A section starts with `SectionHeader` (its `h2`, whose id names the section, what it's for, and its one action). A card that is a page's content gives its title `as="h1"`. The `band` utility is the ink signage behind headers and heroes.
+- Icons are Tabler (`@tabler/icons-react`), stroke 1.75, `aria-hidden`, always beside a word. Focus is a global 2px outline in `--ds-focus` (`globals.css`); components don't draw their own ring. Motion goes behind `motion-safe:`, and a `prefers-reduced-motion` rule in `globals.css` stops whatever forgets. Tailwind's `translate-*` utilities set the CSS `translate` property, not `transform`, so a transition meant to ease them lists `translate`; and `transition-colors` includes `outline-color` in Tailwind 4, so controls use `transition-[color,background-color,border-color]` to keep the focus outline from fading in.
+- App icons (`src/app/icon.tsx`, `src/app/apple-icon.tsx`) are the mark, drawn by `markImage` (`src/lib/mark-image.tsx`) with `next/og`'s `ImageResponse` and prerendered at build time. The renderer needs ttf, otf or woff and has no oklch, so it takes Archivo 800 from the pinned `@fontsource/archivo` woff and its colors as hex from `docs/design/tokens.json`; there's no `favicon.ico` (Next can't generate one, and a static file would put the product's initial outside `src/config/app.ts`).
 - No `console.log` in app code, no commented-out code, no unused code. Unexpected server-side failures are logged with `console.error("What failed", { code, status })` (Vercel collects them); users get a plain message, never raw provider errors.
 - Handle errors explicitly; no empty `catch` blocks.
 - `src/proxy.ts` (Next.js 16's name for middleware) only refreshes the Supabase session. It never makes authorization decisions: every page and Server Action checks the user itself, and RLS checks again in the database.
@@ -51,6 +54,7 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Signing in without a `next` page lands on `SIGNED_IN_HOME` (`/start`), which sends staff to `/dashboard`, people who are only members to `/account`, and everyone else to `/dashboard` (to create a business). Every auth flow uses that constant as its fallback.
 - No `loading.tsx` around pages that can 404: a loading boundary streams the response, and once streaming has started `notFound()` still shows the not-found page but with status 200. Access checks run before anything streams; a slow part (Stripe calls on the payouts page) streams inside its own `<Suspense>` after them. Errors in signed-in pages land in `(app)/error.tsx`, which keeps the header and offers `retry()` (Next 16's name for the old `reset`).
 - Business pages (`/dashboard/b/[slug]/...`) start with `requireStaffBusiness(slug, path, roles?)`: sign-in redirect back to the page, then a 404 for anyone who isn't staff there or whose role isn't allowed (a 404, not a 403, so outsiders can't tell the business or page exists). They render `BusinessHeader`, whose tabs are filtered by role; hiding a tab is only a convenience, the page and RLS are the real checks.
+- Two not-found pages: `src/app/not-found.tsx` for unknown addresses and `notFound()` outside the signed-in pages, and `src/app/(app)/not-found.tsx`, which keeps the signed-in header (once a root not-found exists, Next stops putting its default into first-level route groups, so without it signed-in 404s lose their frame). Their copy is fixed and never says why, so a business someone can't see reads exactly like one that doesn't exist (`e2e/not-found.spec.ts` compares the two); the nested one can't set a title, so the page's own stays, which depends only on the address.
 - Server Actions take their arguments from the browser even when bound on the server, so each one re-checks the user's role and relies on RLS for the write. Helpers shared between actions live outside `"use server"` files: every export of such a file becomes a callable endpoint.
 - Production sends no auth email (`NEXT_PUBLIC_AUTH_EMAILS=off`, `appConfig.authEmails`): on Supabase's free plan the built-in email only reaches the project's team, and custom templates need a custom SMTP sender. So the hosted project confirms sign-ups at once (`enable_confirmations = false` in `[remotes.production.auth.email]`), sign-up then signs the user straight in, and the email-link sign-in and password reset are hidden (their pages 404, their actions refuse; changing a password while signed in still works). Locally and in CI everything email-related stays on and tested. Production auth settings live in `[remotes.production...]` blocks of `supabase/config.toml`: run `supabase config diff` before `supabase config push`.
 - Passwords: `/forgot-password` (only where `appConfig.authEmails`) emails a reset link and always answers the same way, whether or not the address has an account. `/settings/password` sets a new password: it asks for the current one unless the session began from an email link in the last hour (`cameFromEmailLink`: Supabase records reset and sign-in links as an `otp` sign-in, and following one proves the user owns the address). The current password is checked with a separate client that keeps no session, so the browser's own sign-in is untouched. Supabase ends the user's other sessions when the password changes; with tokens checked locally (`getClaims`), another device notices when its access token next renews, within the hour. New password rules live in one place, `newPasswordSchema` (`src/lib/password.ts`), mirroring `supabase/config.toml`.
@@ -132,12 +136,14 @@ src/
     (app)/           Signed-in pages (/dashboard for staff, /account for members, /settings), one shared header
     b/[slug]/        A business's public join page
   components/ui/     shadcn/ui components (owned code, edited freely)
+  styles/            The design tokens (tokens.css)
   config/            App-wide constants (the product name lives here)
-  lib/               Helpers (money, memberships, slugs, safe redirects, ...)
+  lib/               Helpers (money, memberships, slugs, safe redirects, cn, ...)
   lib/supabase/      Supabase settings, clients (incl. server-only admin) and generated types
   lib/stripe/        Server-only Stripe client; Connect, plan, Checkout, portal and webhook helpers
   proxy.ts           Runs before every request; refreshes the Supabase session
 scripts/             Dev tooling (writing .env.local)
+  screens/           `pnpm screens`: screenshots, axe and Lighthouse for the design docs (docs/design/)
 vercel.json          Vercel settings: functions in Frankfurt (next to the database), the daily cron
 e2e/                 Playwright end-to-end specs (*.spec.ts)
   support/           E2E helpers (test users and businesses, Mailpit links, Stripe sandbox)
@@ -155,24 +161,26 @@ Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks insi
 
 ## Commands
 
-| Command                             | What it does                                                                    |
-| ----------------------------------- | ------------------------------------------------------------------------------- |
-| `pnpm dev`                          | Dev server at http://localhost:3000                                             |
-| `pnpm build` / `pnpm start`         | Production build / serve that build                                             |
-| `pnpm lint`                         | ESLint; fails on any warning                                                    |
-| `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`                                  |
-| `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check)                            |
-| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode                                      |
-| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running                             |
-| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)                                 |
-| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)                              |
-| `pnpm env:local`                    | Write local Supabase URL and keys (and a cron secret, once) into `.env.local`   |
-| `pnpm supabase db reset`            | Rebuild the local database from migrations                                      |
-| `pnpm db:types`                     | Regenerate TypeScript types from the local database                             |
-| `pnpm seed:demo`                    | Seed the demo climbing gym (people, plans, paid members); safe to rerun         |
-| `pnpm test:smoke`                   | Read-only Playwright checks of a deployed, demo-seeded app (`E2E_BASE_URL=...`) |
-| `pnpm env:stripe`                   | Write the Stripe CLI's webhook secret to `.env.local`                           |
-| `pnpm stripe:listen`                | Forward sandbox webhooks to the local app                                       |
+| Command                             | What it does                                                                                                                                        |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                          | Dev server at http://localhost:3000                                                                                                                 |
+| `pnpm build` / `pnpm start`         | Production build / serve that build                                                                                                                 |
+| `pnpm lint`                         | ESLint; fails on any warning                                                                                                                        |
+| `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`                                                                                                      |
+| `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check)                                                                                                |
+| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode                                                                                                          |
+| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running                                                                                                 |
+| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)                                                                                                     |
+| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)                                                                                                  |
+| `pnpm env:local`                    | Write local Supabase URL and keys (and a cron secret, once) into `.env.local`                                                                       |
+| `pnpm supabase db reset`            | Rebuild the local database from migrations                                                                                                          |
+| `pnpm db:types`                     | Regenerate TypeScript types from the local database                                                                                                 |
+| `pnpm seed:demo`                    | Seed the demo climbing gym (people, plans, paid members); safe to rerun                                                                             |
+| `pnpm test:smoke`                   | Read-only Playwright checks of a deployed, demo-seeded app (`E2E_BASE_URL=...`)                                                                     |
+| `pnpm env:stripe`                   | Write the Stripe CLI's webhook secret to `.env.local`                                                                                               |
+| `pnpm stripe:listen`                | Forward sandbox webhooks to the local app                                                                                                           |
+| `pnpm tokens`                       | Export the design tokens to `docs/design/tokens.json` and rebuild `cn`'s merge tables from the theme                                                |
+| `SCREENS_DIR=<dir> pnpm screens`    | Screenshots of every screen and state at desktop and phone size, with axe (`pnpm build` and `pnpm seed:demo` first; `LIGHTHOUSE=1` adds Lighthouse) |
 
 First Playwright run on a machine: `pnpm exec playwright install chromium`. E2E tests need the full local Supabase (`pnpm supabase start`, then `pnpm env:local`). With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.
 

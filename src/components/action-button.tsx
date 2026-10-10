@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
+import { FormError } from "@/components/form-error";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 /** What a Server Action behind an ActionButton returns. */
 export type ActionState = { error: string | null };
@@ -14,24 +16,28 @@ export function ActionButton({
   label,
   pendingLabel,
   variant = "default",
+  size = "default",
+  className,
 }: {
   action: () => Promise<ActionState>;
   label: string;
   pendingLabel: string;
-  variant?: "default" | "outline";
+  variant?: "default" | "outline" | "destructive-outline";
+  size?: "default" | "lg";
+  /** For the form: `contents` lets a row's grid place the button and its error itself. */
+  className?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
   return (
-    <form action={formAction} className="grid justify-items-start gap-2">
-      <Button type="submit" variant={variant} disabled={pending}>
+    <form
+      action={formAction}
+      className={cn("grid justify-items-start gap-2", className)}
+    >
+      <Button type="submit" variant={variant} size={size} disabled={pending}>
         {pending ? pendingLabel : label}
       </Button>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      {state.error && <FormError>{state.error}</FormError>}
     </form>
   );
 }

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { readNext, withNext } from "@/app/(auth)/next-param";
 import { SignUpForm } from "@/app/(auth)/signup/signup-form";
+import { textLinkClass } from "@/components/text-link";
 import {
   Card,
   CardContent,
@@ -27,19 +28,16 @@ export default async function SignUpPage({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create your account</CardTitle>
+        <CardTitle as="h1">Create your account</CardTitle>
         <CardDescription>
           Run your memberships, or join a club you love.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         <SignUpForm next={nextPath} />
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-small text-ink-2">
           Already have an account?{" "}
-          <Link
-            href={withNext("/login", nextPath)}
-            className="text-foreground underline"
-          >
+          <Link href={withNext("/login", nextPath)} className={textLinkClass}>
             Sign in
           </Link>
         </p>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ForgotPasswordForm } from "@/app/(auth)/forgot-password/forgot-password-form";
+import { textLinkClass } from "@/components/text-link";
 import {
   Card,
   CardContent,
@@ -22,15 +23,15 @@ export default function ForgotPasswordPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Reset your password</CardTitle>
+        <CardTitle as="h1">Reset your password</CardTitle>
         <CardDescription>
           We&apos;ll email you a link to choose a new one.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         <ForgotPasswordForm />
-        <p className="text-center text-sm text-muted-foreground">
-          <Link href="/login" className="text-foreground underline">
+        <p className="text-center text-small text-ink-2">
+          <Link href="/login" className={textLinkClass}>
             Back to sign in
           </Link>
         </p>

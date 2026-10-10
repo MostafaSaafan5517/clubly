@@ -5,6 +5,7 @@ import {
   createBusiness,
   type NewBusinessFormState,
 } from "@/app/(app)/dashboard/new-business/actions";
+import { FormError } from "@/components/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,16 +61,12 @@ export function NewBusinessForm() {
           maxLength={MAX_SLUG_LENGTH}
           required
         />
-        <p id="slug-hint" className="text-xs text-muted-foreground">
+        <p id="slug-hint" className="text-caption text-ink-3">
           Used in the link to your public join page. Lowercase letters, numbers
           and dashes.
         </p>
       </div>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      {state.error && <FormError>{state.error}</FormError>}
       <Button type="submit" size="lg" disabled={pending}>
         {pending ? "Creating business..." : "Create business"}
       </Button>

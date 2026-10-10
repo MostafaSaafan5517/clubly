@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { signIn, type AuthFormState } from "@/app/(auth)/actions";
+import { FormError } from "@/components/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,11 +39,7 @@ export function LoginForm({ next }: { next: string | undefined }) {
           required
         />
       </div>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      {state.error && <FormError>{state.error}</FormError>}
       <Button type="submit" size="lg" disabled={pending}>
         {pending ? "Signing in..." : "Sign in"}
       </Button>
