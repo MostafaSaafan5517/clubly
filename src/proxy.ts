@@ -41,8 +41,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip static files, images and Stripe's webhook calls; none of them carry a user session.
+  // Skip static files, images (the generated app icons are served at /icon and /apple-icon, with
+  // no extension) and Stripe's webhook calls; none of them carry a user session.
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api/stripe/webhook|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon$|apple-icon$|api/stripe/webhook|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

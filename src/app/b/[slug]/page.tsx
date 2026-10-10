@@ -43,7 +43,7 @@ export async function generateMetadata({
   params,
 }: PageProps<"/b/[slug]">): Promise<Metadata> {
   const page = await getJoinPage((await params).slug);
-  if (!page) return { title: "Not found" };
+  if (!page) return { title: "Page not found" };
   return {
     title: `Join ${page.business.name}`,
     description: `Memberships at ${page.business.name}, billed through ${appConfig.name}.`,

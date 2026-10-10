@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 /**
  * What a list shows before it has anything in it (DESIGN.md, Empty states): an icon on a soft
  * volt square, a short title, what to do next, and the action the page already offers. Inside a
- * section that has its own heading, the title is an h3.
+ * section that has its own heading, the title is an h3; when it's all the page has, an h1.
  */
 export function EmptyState({
   icon: Icon,
@@ -15,7 +15,7 @@ export function EmptyState({
 }: {
   icon: TablerIcon;
   title: string;
-  titleAs?: "h2" | "h3";
+  titleAs?: "h1" | "h2" | "h3";
   children?: ReactNode;
   action?: ReactNode;
 }) {

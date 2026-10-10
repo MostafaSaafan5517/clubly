@@ -103,6 +103,7 @@ test("every page passes axe's WCAG 2.1 AA checks, for visitors, owners and membe
         "/forgot-password",
         "/check-email",
         `/b/${business.slug}`,
+        "/no-such-page",
       ],
     },
     {
@@ -120,6 +121,7 @@ test("every page passes axe's WCAG 2.1 AA checks, for visitors, owners and membe
         `/dashboard/b/${newBusiness.slug}`,
         `/dashboard/b/${newBusiness.slug}/payouts`,
         `/dashboard/b/${newBusiness.slug}/plans/new`,
+        "/dashboard/b/no-such-business",
         "/settings",
         "/settings/password",
       ],
