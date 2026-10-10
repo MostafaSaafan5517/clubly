@@ -22,7 +22,7 @@ export function ActionButton({
   action: () => Promise<ActionState>;
   label: string;
   pendingLabel: string;
-  variant?: "default" | "outline";
+  variant?: "default" | "outline" | "destructive-outline";
   size?: "default" | "lg";
   /** For the form: `contents` lets a row's grid place the button and its error itself. */
   className?: string;

@@ -1,6 +1,10 @@
+import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BusinessHeader } from "@/app/(app)/dashboard/b/[slug]/business-header";
+import { PageBody } from "@/components/page-body";
+import { SectionHeader } from "@/components/section-header";
+import { buttonVariants } from "@/components/ui/button";
 import {
   describeActor,
   describeChange,
@@ -86,53 +90,56 @@ export default async function HistoryPage({
   return (
     <>
       <BusinessHeader business={business} role={role} current="history" />
-
-      <section className="grid gap-3" aria-labelledby="history-heading">
-        <h2 id="history-heading" className="text-lg font-semibold">
-          History
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Every change to this business, newest first. Entries can&apos;t be
-          edited or deleted.
-        </p>
-        {entries.length === 0 ? (
-          <p className="rounded-lg border p-4 text-sm text-muted-foreground">
-            Nothing here yet.
-          </p>
-        ) : (
-          <ol className="grid gap-2">
-            {entries.map((entry) => (
-              <li key={entry.id} className="grid gap-0.5 rounded-lg border p-3">
-                <span className="text-sm font-medium">
-                  {describeChange(entry, names)}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {describeActor(entry, names)} ·{" "}
-                  {formatDateTime(entry.created_at)}
-                </span>
-              </li>
-            ))}
-          </ol>
-        )}
-        <div className="flex gap-4 text-sm">
-          {beforeId !== null && (
-            <Link
-              href={`/dashboard/b/${business.slug}/history`}
-              className="underline"
-            >
-              Newest
-            </Link>
+      <PageBody>
+        <section className="grid gap-4" aria-labelledby="history-heading">
+          <SectionHeader
+            id="history-heading"
+            title="History"
+            description="Every change to this business, newest first. Entries can't be edited or deleted."
+          />
+          {entries.length === 0 ? (
+            <p className="text-body text-ink-2">Nothing here yet.</p>
+          ) : (
+            <ol className="divide-y rounded-surface bg-card shadow-level-1">
+              {entries.map((entry) => (
+                <li key={entry.id} className="grid gap-1 px-4 py-3 sm:px-5">
+                  <span className="font-semibold">
+                    {describeChange(entry, names)}
+                  </span>
+                  <span className="text-small text-ink-3">
+                    <span className="font-semibold text-ink-2">
+                      {describeActor(entry, names)}
+                    </span>{" "}
+                    · {formatDateTime(entry.created_at)}
+                  </span>
+                </li>
+              ))}
+            </ol>
           )}
-          {olderFrom !== undefined && (
-            <Link
-              href={`/dashboard/b/${business.slug}/history?before=${olderFrom}`}
-              className="underline"
-            >
-              Older
-            </Link>
+          {(beforeId !== null || olderFrom !== undefined) && (
+            <div className="flex flex-wrap gap-3">
+              {beforeId !== null && (
+                <Link
+                  href={`/dashboard/b/${business.slug}/history`}
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  <IconArrowLeft stroke={1.75} aria-hidden />
+                  Newest
+                </Link>
+              )}
+              {olderFrom !== undefined && (
+                <Link
+                  href={`/dashboard/b/${business.slug}/history?before=${olderFrom}`}
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  Older
+                  <IconArrowRight stroke={1.75} aria-hidden />
+                </Link>
+              )}
+            </div>
           )}
-        </div>
-      </section>
+        </section>
+      </PageBody>
     </>
   );
 }

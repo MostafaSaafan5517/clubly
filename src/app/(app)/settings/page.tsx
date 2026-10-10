@@ -4,6 +4,8 @@ import {
   DeleteAccountForm,
   NameForm,
 } from "@/app/(app)/settings/settings-forms";
+import { PageBody } from "@/components/page-body";
+import { SectionHeader } from "@/components/section-header";
 import { buttonVariants } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 
@@ -19,28 +21,24 @@ export default async function SettingsPage() {
   if (error) throw new Error(`Could not load your profile: ${error.message}`);
 
   return (
-    <>
-      <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+    <PageBody width="narrow">
+      <h1 className="text-title">Settings</h1>
 
-      <section aria-labelledby="account-heading" className="grid gap-3">
-        <h2 id="account-heading" className="text-lg font-semibold">
-          Your account
-        </h2>
-        <div className="grid gap-4 rounded-lg border p-4">
+      <section aria-labelledby="account-heading" className="grid gap-4">
+        <SectionHeader id="account-heading" title="Your account" />
+        <div className="grid gap-5 rounded-surface bg-card p-5 shadow-level-1">
           <NameForm currentName={profile.full_name ?? ""} />
-          <p className="grid gap-1 text-sm">
-            <span className="font-medium">Email</span>
-            <span className="break-all text-muted-foreground">
+          <p className="grid gap-1">
+            <span className="text-label">Email</span>
+            <span className="text-body break-all text-ink-2">
               {profile.email}
             </span>
           </p>
         </div>
       </section>
 
-      <section aria-labelledby="password-heading" className="grid gap-3">
-        <h2 id="password-heading" className="text-lg font-semibold">
-          Password
-        </h2>
+      <section aria-labelledby="password-heading" className="grid gap-4">
+        <SectionHeader id="password-heading" title="Password" />
         <div>
           <Link
             href="/settings/password"
@@ -51,20 +49,17 @@ export default async function SettingsPage() {
         </div>
       </section>
 
-      <section aria-labelledby="delete-heading" className="grid gap-3">
-        <h2 id="delete-heading" className="text-lg font-semibold">
-          Delete your account
-        </h2>
-        <div className="grid gap-4 rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">
-            This can&apos;t be undone. You&apos;ll be taken off any team
-            you&apos;re on. While you own a business or hold a membership, your
-            account stays: a business needs its owner, and businesses keep their
-            members&apos; billing records.
-          </p>
+      <section aria-labelledby="delete-heading" className="grid gap-4">
+        <SectionHeader
+          id="delete-heading"
+          title="Delete your account"
+          description="This can't be undone. You'll be taken off any team you're on. While you own a business or hold a membership, your account stays: a business needs its owner, and businesses keep their members' billing records."
+        />
+        {/* Danger-toned (DESIGN.md, The pages): the one thing on this page that can't be undone. */}
+        <div className="rounded-surface bg-danger-soft p-5">
           <DeleteAccountForm email={profile.email} />
         </div>
       </section>
-    </>
+    </PageBody>
   );
 }

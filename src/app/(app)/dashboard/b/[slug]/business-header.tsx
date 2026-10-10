@@ -56,7 +56,10 @@ const sections = [
 
 export type BusinessSection = (typeof sections)[number]["key"];
 
-/** The business's name, the user's role there, and the tabs their role can open. */
+/**
+ * The business's name, the user's role there, and the tabs their role can open: the band
+ * continuing under the app's header (DESIGN.md, The pages).
+ */
 export function BusinessHeader({
   business,
   role,
@@ -69,20 +72,21 @@ export function BusinessHeader({
   const tabs = sections
     .filter((section) => (section.roles as readonly StaffRole[]).includes(role))
     .map((section) => ({
+      key: section.key,
       href: `/dashboard/b/${business.slug}${section.path}`,
       label: section.label,
       current: section.key === current,
     }));
 
   return (
-    <div className="grid gap-4">
-      <div className="grid gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {business.name}
-        </h1>
-        <p className="text-muted-foreground">{roleDescriptions[role]}</p>
+    <div className="band">
+      <div className="mx-auto grid max-w-[1120px] gap-1 px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
+        <h1 className="text-title text-balance">{business.name}</h1>
+        <p className="text-small text-on-band-2">{roleDescriptions[role]}</p>
       </div>
-      <BusinessTabs tabs={tabs} />
+      <div className="mx-auto mt-4 max-w-[1120px] px-2 sm:px-4 lg:px-6">
+        <BusinessTabs tabs={tabs} />
+      </div>
     </div>
   );
 }

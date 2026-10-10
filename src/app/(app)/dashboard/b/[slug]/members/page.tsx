@@ -1,9 +1,16 @@
+import { IconBan, IconUserPlus } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import { BusinessHeader } from "@/app/(app)/dashboard/b/[slug]/business-header";
 import { setMemberStatus } from "@/app/(app)/dashboard/b/[slug]/members/actions";
 import { ActionButton } from "@/components/action-button";
+import { Badge } from "@/components/badge";
+import { EmptyState } from "@/components/empty-state";
+import { PageBody } from "@/components/page-body";
+import { SectionHeader } from "@/components/section-header";
+import { SubscriptionBadge } from "@/components/subscription-badge";
 import { requireStaffBusiness } from "@/lib/business";
 import { formatDate } from "@/lib/dates";
+import { initials } from "@/lib/names";
 import {
   currentSubscription,
   describeSubscription,
@@ -53,99 +60,117 @@ export default async function MembersPage({
   return (
     <>
       <BusinessHeader business={business} role={role} current="members" />
+      <PageBody>
+        <section className="grid gap-4" aria-labelledby="members-heading">
+          <SectionHeader
+            id="members-heading"
+            title="Members"
+            action={
+              <p className="text-small text-ink-2">
+                {plural(rows.length, "member")}, {subscribed} subscribed
+              </p>
+            }
+          />
 
-      <section className="grid gap-3" aria-labelledby="members-heading">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id="members-heading" className="text-lg font-semibold">
-            Members
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {plural(rows.length, "member")}, {subscribed} subscribed
-          </p>
-        </div>
-
-        {rows.length === 0 ? (
-          <p className="rounded-lg border p-4 text-sm text-muted-foreground">
-            No members yet. People join from your public page.
-          </p>
-        ) : (
-          <ul className="grid gap-3">
-            {rows.map((row) => {
-              const summary =
-                row.subscription && describeSubscription(row.subscription);
-              // The member-facing advice (e.g. "update your payment method") isn't for staff;
-              // dates are.
-              const showDetail =
-                row.subscription?.status === "active" ||
-                row.subscription?.status === "trialing";
-              const suspended = row.status === "suspended";
-              return (
-                <li
-                  key={row.id}
-                  className="grid grid-cols-[1fr_auto] items-start gap-3 rounded-lg border p-4"
-                >
-                  <div className="grid min-w-0 gap-1">
-                    <span className="font-medium">
-                      {row.profiles.full_name ?? row.profiles.email}
+          {rows.length === 0 ? (
+            <EmptyState
+              icon={IconUserPlus}
+              title="No members yet."
+              titleAs="h3"
+            >
+              People join from your public page.
+            </EmptyState>
+          ) : (
+            <ul className="divide-y rounded-surface bg-card shadow-level-1">
+              {rows.map((row) => {
+                const name = row.profiles.full_name ?? row.profiles.email;
+                const summary =
+                  row.subscription && describeSubscription(row.subscription);
+                // The member-facing advice (e.g. "update your payment method") isn't for staff;
+                // dates are.
+                const showDetail =
+                  row.subscription?.status === "active" ||
+                  row.subscription?.status === "trialing";
+                const suspended = row.status === "suspended";
+                return (
+                  <li
+                    key={row.id}
+                    className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-2 px-4 py-4 sm:px-5 md:grid-cols-[auto_minmax(0,1.3fr)_minmax(0,1.6fr)_7.5rem] md:items-center md:[&_[role=alert]]:col-span-full md:[&>div>form>button]:justify-self-end"
+                  >
+                    <span
+                      aria-hidden
+                      className="grid size-10 place-items-center rounded-control bg-surface-3 text-label text-ink-2"
+                    >
+                      {initials(name)}
                     </span>
-                    {row.profiles.full_name && (
-                      <span className="text-sm wrap-anywhere text-muted-foreground">
-                        {row.profiles.email}
+                    <div className="grid min-w-0 gap-0.5">
+                      <span className="font-semibold">{name}</span>
+                      {row.profiles.full_name && (
+                        <span className="text-small wrap-anywhere text-ink-2">
+                          {row.profiles.email}
+                        </span>
+                      )}
+                      <span className="text-caption text-ink-3">
+                        Joined {formatDate(row.created_at)}
                       </span>
+                    </div>
+                    <div className="col-span-2 grid gap-1.5 md:col-span-1">
+                      <span className="text-small">
+                        {row.subscription?.plans.name ?? "No plan yet"}
+                      </span>
+                      {(summary || suspended) && (
+                        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-small text-ink-2">
+                          {row.subscription && (
+                            <SubscriptionBadge
+                              subscription={row.subscription}
+                            />
+                          )}
+                          {suspended && (
+                            <Badge tone="danger" icon={IconBan}>
+                              Suspended
+                            </Badge>
+                          )}
+                          {showDetail && summary?.detail}
+                        </p>
+                      )}
+                    </div>
+                    {canManage && (
+                      // On phones the button and any refusal stack under the member; from 768px
+                      // the button takes the last column and a refusal gets a line of its own.
+                      <div className="col-span-2 grid justify-items-start gap-2 md:contents">
+                        <ActionButton
+                          action={setMemberStatus.bind(
+                            null,
+                            business.slug,
+                            row.id,
+                            suspended ? "active" : "suspended",
+                          )}
+                          label={suspended ? "Reactivate" : "Suspend"}
+                          pendingLabel={
+                            suspended ? "Reactivating..." : "Suspending..."
+                          }
+                          variant={
+                            suspended ? "outline" : "destructive-outline"
+                          }
+                          className="contents"
+                        />
+                      </div>
                     )}
-                    <span className="text-sm">
-                      {row.subscription?.plans.name ?? "No plan yet"}
-                    </span>
-                    <p className="flex flex-wrap items-center gap-2 text-sm">
-                      {summary && (
-                        <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
-                          {summary.label}
-                        </span>
-                      )}
-                      {suspended && (
-                        <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
-                          Suspended
-                        </span>
-                      )}
-                      {showDetail && summary?.detail && (
-                        <span className="text-muted-foreground">
-                          {summary.detail}
-                        </span>
-                      )}
-                    </p>
-                    <span className="text-xs text-muted-foreground">
-                      Joined {formatDate(row.created_at)}
-                    </span>
-                  </div>
-                  {canManage && (
-                    <ActionButton
-                      action={setMemberStatus.bind(
-                        null,
-                        business.slug,
-                        row.id,
-                        suspended ? "active" : "suspended",
-                      )}
-                      label={suspended ? "Reactivate" : "Suspend"}
-                      pendingLabel={
-                        suspended ? "Reactivating..." : "Suspending..."
-                      }
-                      variant="outline"
-                    />
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
 
-        {canManage && rows.length > 0 && (
-          <p className="text-sm text-muted-foreground">
-            A suspended member can&apos;t start a new membership here.
-            Suspending doesn&apos;t change their billing: Stripe keeps charging
-            any subscription they have until it&apos;s canceled.
-          </p>
-        )}
-      </section>
+          {canManage && rows.length > 0 && (
+            <p className="max-w-[68ch] text-small text-ink-2">
+              A suspended member can&apos;t start a new membership here.
+              Suspending doesn&apos;t change their billing: Stripe keeps
+              charging any subscription they have until it&apos;s canceled.
+            </p>
+          )}
+        </section>
+      </PageBody>
     </>
   );
 }

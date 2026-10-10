@@ -2,6 +2,8 @@
 
 import { useActionState, useId } from "react";
 import type { RenameState } from "@/app/(app)/dashboard/b/[slug]/actions";
+import { FormDone } from "@/components/form-done";
+import { FormError } from "@/components/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,15 +44,9 @@ export function RenameForm({
         </Button>
       </div>
       {state.error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
+        <FormError>{state.error}</FormError>
       ) : (
-        state.saved && (
-          <p role="status" className="text-sm text-muted-foreground">
-            Saved.
-          </p>
-        )
+        state.saved && <FormDone>Saved.</FormDone>
       )}
     </form>
   );

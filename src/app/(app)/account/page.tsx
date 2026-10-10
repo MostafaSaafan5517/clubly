@@ -6,6 +6,7 @@ import { ConfirmingPayment } from "@/app/(app)/account/confirming-payment";
 import { ActionButton } from "@/components/action-button";
 import { EmptyState } from "@/components/empty-state";
 import { Notice } from "@/components/notice";
+import { PageBody } from "@/components/page-body";
 import { SubscriptionBadge } from "@/components/subscription-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
@@ -53,7 +54,7 @@ export default async function AccountPage({
     justJoined?.subscription && isLive(justJoined.subscription.status);
 
   return (
-    <>
+    <PageBody width="narrow">
       <h1 className="text-title">Your memberships</h1>
 
       {justJoined &&
@@ -142,6 +143,6 @@ export default async function AccountPage({
           })}
         </ul>
       )}
-    </>
+    </PageBody>
   );
 }

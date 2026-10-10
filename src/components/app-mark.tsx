@@ -9,11 +9,11 @@ export function AppMark() {
     <span className="inline-flex items-center gap-2">
       <span
         aria-hidden
-        className="grid size-7 place-items-center rounded-control bg-primary text-[1.05rem] leading-none font-extrabold text-primary-foreground"
+        className="grid size-7 place-items-center rounded-control bg-primary text-lead leading-none font-extrabold tracking-[-0.01em] text-primary-foreground"
       >
         {appConfig.name[0]}
       </span>
-      <span className="text-[1.0625rem] font-extrabold tracking-[-0.01em]">
+      <span className="text-lead leading-none font-extrabold tracking-[-0.01em]">
         {appConfig.name}
       </span>
     </span>

@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import type { NewPlanFormState } from "@/app/(app)/dashboard/b/[slug]/plans/new/actions";
+import { FormError } from "@/components/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,15 +69,11 @@ export function NewPlanForm({
           </NativeSelect>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-caption text-ink-3">
         The price can&apos;t change after the plan is created. To change it,
         archive the plan and create a new one; current members keep their price.
       </p>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      {state.error && <FormError>{state.error}</FormError>}
       <Button type="submit" size="lg" disabled={pending}>
         {pending ? "Creating plan..." : "Create plan"}
       </Button>

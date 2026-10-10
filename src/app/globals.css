@@ -149,8 +149,9 @@
     outline: 2px solid var(--ds-focus);
     outline-offset: 2px;
   }
+  /* Body is the size of everything that doesn't set its own (DESIGN.md, Type). */
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-body text-foreground;
   }
   html {
     @apply font-sans;

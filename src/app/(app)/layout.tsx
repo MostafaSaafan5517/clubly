@@ -1,7 +1,9 @@
+import { IconInfoCircle, IconLogout } from "@tabler/icons-react";
 import Link from "next/link";
+import { MainNav } from "@/app/(app)/main-nav";
 import { signOut } from "@/app/(auth)/actions";
+import { AppMark } from "@/components/app-mark";
 import { Button } from "@/components/ui/button";
-import { appConfig } from "@/config/app";
 import { SIGNED_IN_HOME } from "@/lib/auth";
 import { DEMO_READ_ONLY_MESSAGE, isDemoAccount } from "@/lib/demo";
 import { createServerComponentClient } from "@/lib/supabase/server";
@@ -9,6 +11,9 @@ import { createServerComponentClient } from "@/lib/supabase/server";
 // The signed-in part of the app: businesses people run (/dashboard), memberships they hold
 // (/account) and their own settings (/settings). Each page checks the user itself
 // (requireUser); a layout is not re-run on every navigation, so it must never be the only guard.
+//
+// The frame (DESIGN.md, The pages): a skip link, the demo note, then the ink band with the mark,
+// the navigation and Sign out. Business pages continue the band with their name and tabs.
 export default async function SignedInLayout({ children }: LayoutProps<"/">) {
   const supabase = await createServerComponentClient();
   const { data } = await supabase.auth.getClaims();
@@ -16,44 +21,42 @@ export default async function SignedInLayout({ children }: LayoutProps<"/">) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:gap-x-6 sm:px-6">
-        <div className="flex items-center gap-4 sm:gap-6">
-          <Link href={SIGNED_IN_HOME} className="font-semibold tracking-tight">
-            {appConfig.name}
-          </Link>
-          <nav aria-label="Main" className="flex gap-3 text-sm sm:gap-4">
-            <Link
-              href="/dashboard"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Businesses
-            </Link>
-            <Link
-              href="/account"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Memberships
-            </Link>
-            <Link
-              href="/settings"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Settings
-            </Link>
-          </nav>
-        </div>
-        <form action={signOut}>
-          <Button type="submit" variant="outline" size="sm">
-            Sign out
-          </Button>
-        </form>
-      </header>
+      <a
+        href="#main"
+        className="sr-only rounded-control bg-primary px-4 py-2 font-semibold text-primary-foreground focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-10"
+      >
+        Skip to content
+      </a>
       {demo && (
-        <p className="border-b bg-muted px-4 py-2 text-center text-sm sm:px-6">
+        <p className="flex items-start gap-2 bg-volt-soft px-4 py-2 text-small text-foreground sm:items-center sm:justify-center sm:px-6 lg:px-8">
+          <IconInfoCircle
+            size={16}
+            stroke={1.75}
+            aria-hidden
+            className="mt-px shrink-0 sm:mt-0"
+          />
           {DEMO_READ_ONLY_MESSAGE}
         </p>
       )}
-      <main className="mx-auto grid w-full max-w-3xl gap-8 p-4 sm:p-6">
+      <header className="band">
+        <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-2 sm:h-14 sm:flex-nowrap sm:px-6 sm:py-0 lg:px-8">
+          <Link href={SIGNED_IN_HOME} className="rounded-control">
+            <AppMark />
+          </Link>
+          <MainNav />
+          <form action={signOut}>
+            <Button type="submit" variant="band" size="sm">
+              <IconLogout stroke={1.75} aria-hidden />
+              Sign out
+            </Button>
+          </form>
+        </div>
+      </header>
+      <main
+        id="main"
+        tabIndex={-1}
+        className="flex flex-1 flex-col focus:outline-none"
+      >
         {children}
       </main>
     </div>

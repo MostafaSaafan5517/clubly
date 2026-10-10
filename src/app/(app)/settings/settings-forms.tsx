@@ -6,6 +6,8 @@ import {
   type SettingsFormState,
   updateName,
 } from "@/app/(app)/settings/actions";
+import { FormDone } from "@/components/form-done";
+import { FormError } from "@/components/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,15 +37,9 @@ export function NameForm({ currentName }: { currentName: string }) {
         </Button>
       </div>
       {state.error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
+        <FormError>{state.error}</FormError>
       ) : (
-        state.saved && (
-          <p role="status" className="text-sm text-muted-foreground">
-            Saved.
-          </p>
-        )
+        state.saved && <FormDone>Saved.</FormDone>
       )}
     </form>
   );
@@ -69,11 +65,7 @@ export function DeleteAccountForm({ email }: { email: string }) {
           required
         />
       </div>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      {state.error && <FormError>{state.error}</FormError>}
       <div>
         <Button type="submit" variant="destructive" disabled={pending}>
           {pending ? "Deleting..." : "Delete my account"}
