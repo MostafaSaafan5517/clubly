@@ -174,15 +174,17 @@ Step 6 put every piece of text on the type scale: the page defaults to Body (15/
 
 ### The live demo, signed-out pages
 
-Lighthouse never signs in to the live site, so only the home, join and sign-in pages are measured there. Before is `before/lighthouse-site.json` (2026-10-09). The redesign reaches the live demo when it's merged, so its after numbers are measured then, with the same command (`LIGHTHOUSE_SITE=https://clubly-nine.vercel.app`), and added here.
+Lighthouse never signs in to the live site, so only the home, join and sign-in pages are measured there, with the same command (`LIGHTHOUSE_SITE=https://clubly-nine.vercel.app`). Before is `before/lighthouse-site.json` (2026-10-09); after is `after/lighthouse-site.json` (2026-10-10, right after the merge deployed). A second run on the warm site a few minutes later is in brackets where it differs.
 
-| Page    | Mobile performance | Desktop performance | Mobile LCP | Mobile TBT |
-| ------- | ------------------ | ------------------- | ---------- | ---------- |
-| Home    | 96                 | 100                 | 1.6 s      | 220 ms     |
-| Join    | 94                 | 100                 | 1.8 s      | 232 ms     |
-| Sign-in | 95                 | 100                 | 1.7 s      | 229 ms     |
+| Page    | Mobile performance | Desktop performance | Mobile LCP          | Mobile TBT            |
+| ------- | ------------------ | ------------------- | ------------------- | --------------------- |
+| Home    | 96 / 96            | 100 / 91 (100)      | 1.6 s / 2.1 s (2.2) | 220 ms / 176 ms (191) |
+| Join    | 94 / 92 (91)       | 100 / 100           | 1.8 s / 2.4 s (2.2) | 232 ms / 196 ms (356) |
+| Sign-in | 95 / 97 (95)       | 100 / 100 (99)      | 1.7 s / 2.1 s (2.2) | 229 ms / 174 ms (263) |
 
-Accessibility, best practices and SEO were 100 on all three, mobile and desktop.
+Accessibility, best practices and SEO are 100 on all three, mobile and desktop, before and after.
+
+The scores are within a few points of before; home's 91 on desktop was one run, and the next gave 100. The largest paint on mobile is about half a second later than before on every page, and still under 2.5 s, the threshold Google calls good. On the home page that paint is the sentence under the name: it waits for the stylesheet and the font on the simulated slow connection. The local build doesn't show the same shift (home 2.5 s before, 2.4 s after), so it is likely about how the live site delivers those files, and is left as an open question rather than explained.
 
 The live demo scores higher on mobile than the local build because it sits behind Vercel's CDN, while the local mobile score simulates a slow phone from this machine. That's why the redesign is compared local against local.
 
@@ -210,5 +212,5 @@ The live demo scores higher on mobile than the local build because it sits behin
 - **The audit's proposals** (a home page that explains Clubly, an overview with numbers, the business's own logo and description, Stripe branding, confirming destructive actions, a refunded state, finding a member, a copy button for the join link) were never part of the redesign, and none was built.
 - **"Refunded"** has its color and icon, but nothing in the app shows it yet.
 - **Revenue on mobile** is a few points below where it started on the simulated slow phone (above). Members is above it.
-- **The live demo's after numbers** are measured once the redesign is merged and deployed.
+- **The live demo's largest paint on mobile** moved from about 1.7 s to about 2.2 s on its signed-out pages (above), still under 2.5 s. Worth a closer look at how the stylesheet and font reach the browser there.
 - **Not captured:** Stripe's hosted pages (not ours to restyle), pending button labels, and the payouts placeholder, which shows only while Stripe answers and locally is too quick to catch.
