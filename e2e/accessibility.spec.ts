@@ -151,3 +151,41 @@ test("every page passes axe's WCAG 2.1 AA checks, for visitors, owners and membe
   }
   expect(violations).toEqual([]);
 });
+
+test("with reduced motion asked for, nothing animates and buttons don't move when pressed", async ({
+  browser,
+}) => {
+  for (const [reducedMotion, moves] of [
+    ["no-preference", true],
+    ["reduce", false],
+  ] as const) {
+    const context = await browser.newContext({ reducedMotion });
+    const page = await context.newPage();
+    await page.goto("/login");
+    const button = page.getByRole("button", { name: "Sign in" });
+    const { duration, properties } = await button.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        duration: parseFloat(style.transitionDuration),
+        properties: style.transitionProperty,
+      };
+    });
+    expect(duration > 0.05, `${reducedMotion}: transition`).toBe(moves);
+    // The press moves the `translate` property, so that's what has to transition.
+    expect(properties, reducedMotion).toContain("translate");
+
+    // Hold the press (and release away from the button, so nothing is submitted). The press
+    // settles over 120ms, so wait for where it ends up.
+    await button.hover();
+    await page.mouse.down();
+    await expect
+      .poll(
+        () => button.evaluate((element) => getComputedStyle(element).translate),
+        { message: `${reducedMotion}: press` },
+      )
+      .toBe(moves ? "0px 1px" : "none");
+    await page.mouse.move(0, 0);
+    await page.mouse.up();
+    await context.close();
+  }
+});

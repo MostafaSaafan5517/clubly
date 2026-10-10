@@ -62,7 +62,7 @@ export function BusinessTabs({
             aria-current={tab.current ? "page" : undefined}
             className={cn(
               // The row scrolls, which clips anything outside it, so focus draws inside the tab.
-              "inline-flex h-11 shrink-0 items-center gap-1.5 border-b-3 px-3 text-body font-semibold whitespace-nowrap transition-colors focus-visible:-outline-offset-4",
+              "inline-flex h-11 shrink-0 items-center gap-1.5 border-b-3 px-3 text-body font-semibold whitespace-nowrap transition-[color,background-color,border-color] focus-visible:-outline-offset-4",
               tab.current
                 ? "border-volt text-on-band"
                 : "border-transparent text-on-band-2 hover:text-on-band",

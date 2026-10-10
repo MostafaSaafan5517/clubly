@@ -31,7 +31,7 @@ export function MainNav() {
             href={href}
             aria-current={onPage ? "page" : current ? "true" : undefined}
             className={cn(
-              "rounded-control px-2.5 py-2 text-body font-semibold transition-colors sm:py-1.5",
+              "rounded-control px-2.5 py-2 text-body font-semibold transition-[color,background-color,border-color] sm:py-1.5",
               current
                 ? "bg-band-2 text-on-band"
                 : "text-on-band-2 hover:text-on-band",

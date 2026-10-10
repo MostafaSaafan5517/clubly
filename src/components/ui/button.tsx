@@ -4,9 +4,10 @@ import { cn } from "@/lib/utils";
 
 // DESIGN.md, Components: 40px controls (44px for a page's main action), 6px corners, labels in
 // Body at 600 (Label on small ones). Only colors and position transition, so the focus outline
-// appears at once instead of animating in.
+// appears at once instead of animating in. The press moves `translate` (Tailwind's translate-*
+// utilities set that property, not `transform`), and only when motion is welcome.
 const buttonClasses = cva(
-  "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-control border border-transparent bg-clip-padding font-semibold whitespace-nowrap transition-[background-color,border-color,color,transform] select-none active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-control border border-transparent bg-clip-padding font-semibold whitespace-nowrap transition-[background-color,border-color,color,translate] select-none disabled:pointer-events-none disabled:opacity-50 motion-safe:active:not-aria-[haspopup]:translate-y-px [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {

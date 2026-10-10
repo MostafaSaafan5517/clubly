@@ -161,13 +161,17 @@
     cursor: pointer;
   }
   /* Reduced motion: nothing moves (DESIGN.md, Motion). Components ask with motion-safe: where
-     they animate; this catches whatever doesn't, transitions included. */
+     they animate; this catches whatever doesn't, transitions and delays included. Durations are
+     near zero rather than none, so transitionend and animationend still fire. */
   @media (prefers-reduced-motion: reduce) {
     *,
     ::before,
-    ::after {
+    ::after,
+    ::backdrop {
+      animation-delay: 0s !important;
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
+      transition-delay: 0s !important;
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
