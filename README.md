@@ -32,20 +32,49 @@ Production habits on a real multi-tenant billing product:
 - **A daily reconciliation job** that re-reads Stripe and logs every correction it makes.
 - **An append-only audit log** written by database triggers: no role, not even the server's, can edit or delete it.
 - **Team invites without email or enumeration.** Owners and admins invite staff with single-use links that expire in a week; only a hash of each link is stored, and nothing in the app reveals whether an email address has an account.
-- **Accessible and fast.** Every page passes axe's automated WCAG 2.1 AA checks in the test suite, for visitors, owners and members. Lighthouse on the live demo (mobile): 94 to 98 for performance and 100 for accessibility, best practices and SEO.
+- **Accessible and fast.** Every page passes axe's automated WCAG 2.1 AA checks in the test suite, for visitors, owners, staff and members, and axe checks every screen and state again in light and dark, at desktop and phone width (74 screens, none with violations). Lighthouse on the live demo before the redesign (mobile): 94 to 96 for performance and 100 for accessibility, best practices and SEO; the redesign's numbers, page by page, are in [the results](docs/design/results.md). More under [Interface design](#interface-design).
 - **Tests against the real Stripe sandbox:** a real Checkout payment, the billing portal, and a failed renewal on a Stripe test clock, with Stripe's own webhooks, locally and in CI.
 
 ## Screenshots
 
-| Revenue (owner)                                    | Members (staff)                               |
-| -------------------------------------------------- | --------------------------------------------- |
-| ![Revenue dashboard](docs/screenshots/revenue.png) | ![Members list](docs/screenshots/members.png) |
+| Revenue (owner)                                                     | Members (owner)                                                |
+| ------------------------------------------------------------------- | -------------------------------------------------------------- |
+| ![Revenue dashboard](docs/design/after/dash-04-revenue-desktop.jpg) | ![Members list](docs/design/after/dash-03-members-desktop.jpg) |
 
-| History (owners and admins)                             | A member's account                                     |
-| ------------------------------------------------------- | ------------------------------------------------------ |
-| ![Audit log as sentences](docs/screenshots/history.png) | ![Member account](docs/screenshots/member-account.png) |
+| History (owners and admins)                                              | A member's account                                                |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| ![Audit log as sentences](docs/design/after/dash-06-history-desktop.jpg) | ![Member account](docs/design/after/member-02-active-desktop.jpg) |
 
-![Public join page](docs/screenshots/join-page.png)
+![Public join page](docs/design/after/public-03-join-desktop.jpg)
+
+## Interface design
+
+Clubly should feel like a well-run gym floor: energetic, confident and organized, with money screens that stay calm and precise. The interface started as shadcn/ui's starter theme and now has a design system of its own. Every flow stayed the same, and so did the existing wording; the look changed.
+
+| Desktop                                                                                                                                                                   | Phone                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="docs/design/after/public-01-home-desktop.jpg" width="560" alt="The home page: the mark, the name and its sentence on the ink band">                             | <img src="docs/design/after/public-03-join-mobile.jpg" width="200" alt="The join page on a phone: the gym's name on the band, its plans below"> |
+| <img src="docs/design/after/dark/dash-04-revenue-desktop.jpg" width="560" alt="Revenue in dark mode: monthly recurring revenue first, then paid, minus fees, equals net"> | <img src="docs/design/after/auth-01-login-mobile.jpg" width="200" alt="Sign-in on a phone: a strip of the band above the form">                 |
+
+- **An ink band, one volt accent, cool chalk neutrals.** The header and the hero sit on an ink band that reads like a gym's signage. Volt, a bright lime, is kept for the main action, the current tab and the mark. It is only ever a fill under dark text, never text on a light background (where it would be unreadable). The neutrals are cool chalk and graphite, and the four status colors only ever mean status.
+- **Numbers that line up.** One typeface, [Archivo](https://fonts.google.com/specimen/Archivo), from one variable font file. Its figures are tabular, so amounts line up in columns. A page about money leads with its one number (monthly recurring revenue, the balance available to pay out), and revenue reads as an equation: paid, minus the platform's fee, equals what reaches the Stripe balance.
+- **Every state has a word.** Membership and payment states are badges with a tone, an icon and their word, so nothing depends on color alone. Icons are [Tabler](https://tabler.io/icons), rendered on the server, always beside a word and hidden from screen readers.
+- **Light and dark.** Every page follows the device's setting.
+- **Accessible, and checked.** The target is WCAG 2.1 AA. Unit tests check 34 color pairs in each mode against it. axe runs on every page in the end-to-end suite, as a visitor, an owner, staff and a member, and on all 74 screens and states in light and dark, at desktop and phone width. Focus is a 2px outline with at least 11:1 contrast, a page's main action is 44px tall, signed-in pages start with a skip link, and nothing moves when the device asks for reduced motion.
+- **Finished edges.** The browser and home screen icons are the mark, drawn at build time. An unknown address gets a 404 page with a way home; inside the signed-in pages, the 404 keeps the header. Both say the same thing whatever the reason, so nobody can tell whether a business they can't see exists.
+- **A small budget.** One font file (the old theme loaded two), icons with no client JavaScript, CSS-only motion and no images on the pages. The before and after numbers are in [the results](docs/design/results.md).
+
+It was done in seven steps, each committed on its own:
+
+- **Audit.** Every screen and state at desktop and phone width before any change (74 screens), with axe's findings and Lighthouse baselines. It found three WCAG failures the test suite never reached, two of them on the live demo, and nine pages without a heading.
+- **Design system.** Color, type, space, shape, motion, icons and components, with every color pair computed against WCAG AA, and a preview page that only runs in development.
+- **Tokens.** The design system became the app's CSS variables, light and dark, with tests that fail if a pair drops below AA.
+- **Pages, in three steps:** the join page, the member's account and the home page; then sign-in and the other auth pages; then the dashboards.
+- **Finish and measure:** the app icons, the 404 pages, a reduced-motion fix, and the before and after comparison.
+
+Every step that changed the app passed the full test suite (Vitest, pgTAP, and Playwright with real Stripe test payments), was checked with axe on every screen, and was measured with Lighthouse against the audit's baseline before it was committed. On this machine a single Lighthouse mobile run can move by several points, so close calls were settled A/B: both builds served side by side, measured in alternating order, medians compared.
+
+Each step is written down, with the reasoning and the screenshots, in [the audit](docs/design/audit.md), [the design system](docs/design/DESIGN.md) and [the results](docs/design/results.md). To capture the screens yourself, seed the demo data, run `pnpm build`, then `SCREENS_DIR=<dir> pnpm screens` (add `SCREENS_COLOR_SCHEME=dark` for dark mode, `LIGHTHOUSE=1` for Lighthouse). `pnpm dev` serves the design system's preview at http://localhost:3000/design-preview.
 
 ## How it works
 
@@ -115,7 +144,8 @@ Each of these is written down, with the reasoning, in [CLAUDE.md](CLAUDE.md), th
 ## Stack
 
 - [Next.js](https://nextjs.org) 16 (App Router, Server Actions) and TypeScript in strict mode
-- [Tailwind CSS](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com)
+- [Tailwind CSS](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com), themed by the project's own design tokens
+- [Archivo](https://fonts.google.com/specimen/Archivo) (one variable font) and [Tabler icons](https://tabler.io/icons), rendered on the server
 - [Supabase](https://supabase.com): Postgres, Auth, Row-Level Security, SQL migrations
 - [Stripe](https://stripe.com): Connect, Checkout, Billing, Customer Portal, webhooks, test clocks
 - [Vitest](https://vitest.dev), [Playwright](https://playwright.dev) and [pgTAP](https://pgtap.org) for tests
@@ -125,13 +155,17 @@ Each of these is written down, with the reasoning, in [CLAUDE.md](CLAUDE.md), th
 
 ```
 src/app/            Pages and routes: public join page, auth, member account, business dashboard,
-                    Stripe webhook, reconciliation cron
+                    404 pages, app icons, Stripe webhook, reconciliation cron
+src/components/     Shared interface pieces (notices, badges, empty states, section headers) and
+                    the shadcn/ui primitives they build on (ui/)
 src/lib/            Helpers: money, dates, memberships, audit log wording, redaction
 src/lib/stripe/     Server-only Stripe code: Connect, plans, Checkout, portal, payouts,
                     webhooks, reconciliation
+src/styles/         Design tokens, light and dark (tokens.css)
 supabase/migrations SQL migrations: tables, grants, RLS policies, triggers, functions
 supabase/tests      pgTAP tests for privileges, RLS and every SQL function
 e2e/                Playwright tests, including real Stripe sandbox flows
+docs/design/        Design audit, design system, tokens and results, with before and after screens
 ```
 
 ## Running locally
@@ -183,3 +217,4 @@ curl -H "Authorization: Bearer <CRON_SECRET>" http://localhost:3000/api/cron/rec
 - [x] **Phase 5:** business and member dashboards
 - [x] **Phase 6:** end-to-end test flows
 - [x] **Phase 7:** documentation, demo data and live demo
+- [x] **Phase 8:** interface redesign (audit, design system, tokens, every page, icons and results)

@@ -1,6 +1,6 @@
 # Clubly design system
 
-**Status:** approved (step 2 of the redesign, after the [audit](audit.md)). Step 3 made it the app's tokens: [TOKENS.md](TOKENS.md) explains the files, the names used in code, and how another project uses them. Steps 4 to 6 apply it to the public pages, the sign-in pages and the dashboards, and step 7 adds the icons and the 404 page and measures the result.
+**Status:** approved (step 2 of the redesign, after the [audit](audit.md)). Step 3 made it the app's tokens: [TOKENS.md](TOKENS.md) explains the files, the names used in code, and how another project uses them. Steps 4 to 6 apply it to the public pages, the sign-in pages and the dashboards, and step 7 adds the icons and the 404 pages, fixes reduced motion, and measures the result ([results.md](results.md)).
 
 **See it:** `pnpm dev`, then http://localhost:3000/design-preview (development only: a production build answers 404). Screenshots of each section at desktop and phone width are in [`preview/`](preview/).
 
@@ -159,9 +159,9 @@ Rows inside a surface are separated by `line` dividers: one surface per list, ne
 
 Quick and mechanical, CSS only (no animation library).
 
-- **Durations:** 120ms (hover, press), 180ms (state changes). **Easing:** `cubic-bezier(0.2, 0, 0, 1)`. Only `transform`, `opacity` and colors change.
-- **What moves:** a button settles 1px when pressed; the payouts placeholder shimmers while Stripe answers. Nothing else loops, and nothing animates on scroll.
-- **Reduced motion:** a global rule stops every animation and transition (`prefers-reduced-motion: reduce`), so a later addition can't forget it; the shimmer only runs when motion is welcome.
+- **Durations:** 120ms (hover, press), 180ms (state changes). **Easing:** `cubic-bezier(0.2, 0, 0, 1)`. Only position (the CSS `translate` property), `opacity` and colors change. Focus never animates: the outline appears at once.
+- **What moves:** a button settles 1px when pressed, when motion is welcome; the payouts placeholder shimmers while Stripe answers. Nothing else loops, and nothing animates on scroll.
+- **Reduced motion:** a global rule stops every animation and transition, delays included (`prefers-reduced-motion: reduce`), so a later addition can't forget it; the press and the shimmer only run when motion is welcome.
 
 ## Icons
 
@@ -222,6 +222,12 @@ Quick and mechanical, CSS only (no animation library).
 ## Marks (step 7)
 
 The mark is a volt 6px-rounded square with "C" in Archivo 800 `on-volt`; beside it, the wordmark "Clubly" in Archivo 800. The favicon and app icons are the mark, drawn from Archivo so small sizes stay clean. Unknown pages get a designed 404 with a way back.
+
+**As built (step 7).** Three pieces: the app icons, two 404 pages, and two fixes to motion. There is no separate favicon: the browser icon is the generated one.
+
+- **Icons:** the mark, drawn at build time with `next/og`'s `ImageResponse` from one shared function (`src/lib/mark-image.tsx`). `src/app/icon.tsx` is the 32px browser icon, its corners rounded in the header mark's proportions; `src/app/apple-icon.tsx` is the 180px home screen icon for iPhones and iPads, square because iOS rounds icons itself. The renderer reads only ttf, otf and woff fonts and has no oklch, so Archivo 800 comes as woff from `@fontsource/archivo` (a dev dependency pinned at 5.3.0), and the colors are the hex values in [`tokens.json`](tokens.json), which `src/styles/tokens.test.ts` keeps in step with `tokens.css`. Both icons are prerendered. The create-next-app `favicon.ico` is deleted: Next can't generate an `.ico`, and a static one would put the product's initial outside `src/config/app.ts`. `src/proxy.ts` skips `/icon` and `/apple-icon`, so fetching an icon doesn't refresh the session.
+- **404 pages:** two, and both say the same fixed thing and never why. Business pages answer 404 to outsiders so they can't tell a business exists, and a 404 that explained itself would give that away. The public one (`src/app/not-found.tsx`) is the home page's band: the mark linking home, "Page not found" in Display, one sentence, and "Go to the home page"; its title is "Page not found". It answers every unknown address and `notFound()` outside the signed-in pages, such as an unknown join page. The signed-in one (`src/app/(app)/not-found.tsx`) keeps the header and is an empty state whose title is the page's `h1` (`EmptyState` now takes `titleAs="h1"`), with "Go to your home page". It has to exist: once there is a root not-found, Next stops putting its default not-found inside first-level route groups, so signed-in 404s would lose their frame. A nested not-found can't set the page's title, so the page keeps its own, which depends only on the address.
+- **Motion:** the button's 1px press is Tailwind's `translate-y-px`, which sets the CSS `translate` property, but the button's transition listed `transform`, so the press never animated. It now transitions `translate`, and presses only when motion is welcome (`motion-safe:`). The navigation, tabs, fields and selects used `transition-colors`, which in Tailwind 4 includes `outline-color`, so the focus outline faded in; they now transition only color, background and border, and focus appears at once. The global reduced-motion rule also zeroes animation and transition delays and covers `::backdrop`.
 
 ## Performance
 
