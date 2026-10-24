@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { appConfig } from "@/config/app";
 import {
   type AuditEntry,
   describeActor,
@@ -34,7 +35,9 @@ describe("describeActor", () => {
     expect(describeActor(entry({ actor: "reconciliation" }), names)).toBe(
       "Daily check with Stripe",
     );
-    expect(describeActor(entry({ actor: "server" }), names)).toBe("Clubly");
+    expect(describeActor(entry({ actor: "server" }), names)).toBe(
+      appConfig.name,
+    );
     expect(describeActor(entry({ actor: "database" }), names)).toBe("Database");
   });
 
